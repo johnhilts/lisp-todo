@@ -1,0 +1,7 @@
+* Todo List
+** This is a web app to manage a todo list using Common Lisp.
+** Features
+- cl-who for html generation.
+- parenscript for JS generation.
+- cl-json for JSON serialization / deserialization.
+- hunchentoot to host web app.
