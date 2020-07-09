@@ -28,13 +28,23 @@
                    :rel "stylesheet"
                    :href "/styles.css")
             (:script :type "text/javascript"
-                     (str "")))
+                     (str (ps (defun add-todo (evt)
+                                (chain evt (prevent-default))
+                                (setf todo (chain document (get-element-by-id "todo-content")))
+                                (alert (@ todo value)))
+                              (defun init ()
+                                (setf add-button (chain document
+                                                      (get-element-by-id "todo-add-btn")))
+                                (chain add-button
+                                       (add-event-listener "click" add-todo false)))
+                              (setf (chain window onload) init)))))
            (:body
             (:div
              (:h1 "Todo List"
                   (:div
-                   (:input :type "checkbox" :onclick (ps #'(lambda () (alert "You clicked me!"))))
+                   (:input :id "todo-check" :type "checkbox" :onclick (ps-inline (alert "You clicked the checkbox!")))
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here.")
+                   (:button :id "todo-add-btn" "Add")
                    )))))))
 
 (define-easy-handler (todo-page :uri "/todos") ()
