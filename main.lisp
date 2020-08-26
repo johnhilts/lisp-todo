@@ -58,6 +58,8 @@ output: javascript that creates the elements in DOM based on the sexprs
        (let ((parent-element (chain document (get-element-by-id "todo-list"))))
          (create-elements parent-element)))))
 
+(import-macros-from-lisp 'with-html-elements)
+
 (defun setup-client-info ()
   (ps
     (defun init-info ()
