@@ -1,3 +1,4 @@
+
 ;; install these: (ql:quickload '(cl-who hunchentoot parenscript cl-json))
 (defpackage :todo-webapp
   (:use :cl :cl-who :hunchentoot :parenscript))
@@ -26,39 +27,39 @@
 (defun cons-pair-p (possible-cons)
   (and (consp possible-cons) (atom (cdr possible-cons)) (not (null (cdr possible-cons)))))
 
-(defmacro with-html-elements (elements)
-  "
-input: html elements as sexprs
-output: javascript that creates the elements in DOM based on the sexprs
-"
-  (labels
-      ((process-tag-r (element &optional (parent nil parent-supplied-p))
-         (let* ((tag (car element))
-                (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
-                (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element"))))
-           (cons
-            `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
-            (mapcar
-             #'(lambda (e)
-                 (cond
-                   ((cons-pair-p e)
-                    `(set-an-attribute ,parent-element ,(string (car e))  ,(string (cdr e))))
-                   ((stringp e)
-                    `(set-text-node ,parent-element ,e))
-                   ((listp e)
-                    `(progn
-                       ,@(process-tag-r e parent-element)))
-                   ((atom e)
-                    `(set-text-node ,parent-element ,e))))
-             (cdr element))))))
-    `(ps
-       (defun create-elements (parent-element)
-         ,@(process-tag-r elements)
-         parent-element)
-       (let ((parent-element (chain document (get-element-by-id "todo-list"))))
-         (create-elements parent-element)))))
-
-(import-macros-from-lisp 'with-html-elements)
+(defun define-ps-with-html-macro ()
+  (ps
+    (defun create-an-element (parent-element tag)
+      (let ((new-element (chain document (create-element tag))))
+        (chain parent-element (append-child new-element))
+        new-element))
+    (defun set-an-attribute (parent-element key value)
+      (chain parent-element (set-attribute key value)))
+    (defun set-text-node (parent-element text)
+      (let ((a-text-node (chain document (create-text-node text))))
+        (chain parent-element (append-child a-text-node))))
+    (defmacro with-html-elements (elements)
+      (labels
+          ((process-tag-r (element &optional (parent nil parent-supplied-p))
+             (let* ((tag (car element))
+                    (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
+                    (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element"))))
+               (cons
+                `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
+                (mapcar
+                 #'(lambda (e)
+                     (cond
+                       ((cons-pair-p e)
+                        `(set-an-attribute ,parent-element ,(string (car e))  ,(string (cdr e))))
+                       ((stringp e)
+                        `(set-text-node ,parent-element ,e))
+                       ((listp e)
+                        `(progn
+                           ,@(process-tag-r e parent-element)))
+                       ((symbolp e)
+                        `(set-text-node ,parent-element ,e))))
+                 (cdr element))))))
+        `(progn ,@(process-tag-r elements))))))
 
 (defun setup-client-info ()
   (ps
@@ -66,6 +67,35 @@ output: javascript that creates the elements in DOM based on the sexprs
       (let ((todo-list ([])))
         todo-list))
     (defvar todo-list (init-info))))
+
+(defun todo-list-interaction ()
+  (ps
+    (defun clear-field (field)
+      (setf (chain field value) "")
+      t)
+    (defun add-todo (evt)
+      (chain evt (prevent-default))
+      (let* ((todo (chain document (get-element-by-id "todo-content")))
+             (todo-text (chain todo value)))
+        (chain todo-list (push todo-text))
+        (clear-field todo)
+        ;; clear table
+        (render-todo-list todo-list)
+        t))
+    (defun init ()
+      (setf add-button (chain document
+                              (get-element-by-id "todo-add-btn")))
+      (chain add-button
+             (add-event-listener "click" add-todo false)))
+    (defun render-todo-list (todo-list)
+      (let* ((todo-list-div (chain document (get-element-by-id "todo-list")))
+             (parent-element todo-list-div))
+        (chain todo-list (map
+                          #'(lambda (todo)
+                              (with-html-elements
+                                  (table (tr (td todo))))
+                              t)))))
+    (setf (chain window onload) init)))
 
 (defun make-todo-page ()
   (with-html-output-to-string
@@ -79,23 +109,8 @@ output: javascript that creates the elements in DOM based on the sexprs
                    :href "/styles.css")
             (:script :type "text/javascript"
                      (str (setup-client-info))
-                     (str (ps (defun add-todo (evt)
-                                (chain evt (prevent-default))
-                                (let* ((todo (chain document (get-element-by-id "todo-content")))
-                                       (todo-text (chain todo value)))
-                                  (chain todo-list (push todo-text))))
-                              (defun init ()
-                                (setf add-button (chain document
-                                                        (get-element-by-id "todo-add-btn")))
-                                (chain add-button
-                                       (add-event-listener "click" add-todo false)))
-                              (defun render-todo-list ()
-                                (let ((todo-list-div (chain document (get-element-by-id "todo-list"))))
-                                  (chain todo-list (map
-                                                    #'(lambda (todo)
-                                                        (with-html-elements
-                                                            (tr (td todo))))))))
-                              (setf (chain window onload) init)))))
+                     (str (define-ps-with-html-macro))
+                     (str (todo-list-interaction))))
            (:body
             (:div
              (:h1 "Todo List"
