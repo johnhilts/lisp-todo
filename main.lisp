@@ -73,29 +73,42 @@
     (defun clear-field (field)
       (setf (chain field value) "")
       t)
+    
+    (defun clear-children (parent-element)
+      (while (chain parent-element (has-child-nodes))
+        (chain parent-element (remove-child (@ parent-element first-child)))))
+
     (defun add-todo (evt)
       (chain evt (prevent-default))
       (let* ((todo (chain document (get-element-by-id "todo-content")))
              (todo-text (chain todo value)))
         (chain todo-list (push todo-text))
         (clear-field todo)
-        ;; clear table
         (render-todo-list todo-list)
         t))
+    
     (defun init ()
       (setf add-button (chain document
                               (get-element-by-id "todo-add-btn")))
       (chain add-button
              (add-event-listener "click" add-todo false)))
+    
     (defun render-todo-list (todo-list)
-      (let* ((todo-list-div (chain document (get-element-by-id "todo-list")))
-             (parent-element todo-list-div))
+      (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
+             (parent-element todo-list-table-body)
+             (column-header (chain document (get-element-by-id "todo-list-column-header")))
+             (count (length todo-list))
+             (has-mulitple-items (> count 1)))
+        (clear-children parent-element)
+        (setf (chain column-header inner-text)
+              (if (or has-mulitple-items (= 0 count)) "To-do Items" "To-do Item"))
         (chain todo-list (map
                           #'(lambda (todo)
                               (with-html-elements
-                                  (table (tr (td todo))))
+                                  (tr (td todo)))
                               t)))))
-    (setf (chain window onload) init)))
+    
+    (setf (chain window onload) init))))
 
 (defun make-todo-page ()
   (with-html-output-to-string
@@ -118,9 +131,10 @@
                    (:input :id "todo-check" :type "checkbox" :onclick (ps-inline (alert "You clicked the checkbox!")))
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here.")
                    (:button :id "todo-add-btn" "Add"))
-                  (:div :id "todo-list"
-                        (:table
-                         (:tr (:td "To-do"))))))))))
+                  (:div
+                   (:table :id "todo-list"
+                           (:thead (:th :id "todo-list-column-header" "To-do Items"))
+                           (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)")))))))))))
 
 (define-easy-handler (todo-page :uri "/todos") ()
   (make-todo-page))
