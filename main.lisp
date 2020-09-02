@@ -25,7 +25,9 @@
          "/styles.css" "static/styles.css") *dispatch-table*))
 
 (defun cons-pair-p (possible-cons)
-  (and (consp possible-cons) (atom (cdr possible-cons)) (not (null (cdr possible-cons)))))
+  (or
+   (and (consp possible-cons) (atom (cdr possible-cons)))
+   (and (consp possible-cons) (listp (cdr possible-cons)) (equal '~f (cadr possible-cons)))))
 
 (defun define-ps-with-html-macro ()
   (ps
@@ -50,7 +52,9 @@
                  #'(lambda (e)
                      (cond
                        ((cons-pair-p e)
-                        `(set-an-attribute ,parent-element ,(string (car e))  ,(string (cdr e))))
+                        (if (and (listp (cdr e)) (equal '~f (cadr e)))
+                            `(set-an-attribute ,parent-element ,(string (car e))  ,(chain (subseq (cdr e) 1))) ;; (subseq (cdr e) 2))
+                            `(set-an-attribute ,parent-element ,(string (car e))  ,(string (cdr e)))))
                        ((stringp e)
                         `(set-text-node ,parent-element ,e))
                        ((listp e)
@@ -58,6 +62,7 @@
                            ,@(process-tag-r e parent-element)))
                        ((symbolp e)
                         `(set-text-node ,parent-element ,e))))
+
                  (cdr element))))))
         `(progn ,@(process-tag-r elements))))))
 
@@ -98,14 +103,14 @@
              (parent-element todo-list-table-body)
              (column-header (chain document (get-element-by-id "todo-list-column-header")))
              (count (length todo-list))
-             (has-mulitple-items (> count 1)))
+             (use-plural-form (or (> 1 count) (= 0 count))))
         (clear-children parent-element)
         (setf (chain column-header inner-text)
-              (if (or has-mulitple-items (= 0 count)) "To-do Items" "To-do Item"))
+              (if use-plural-form "To-do Items" "To-do Item"))
         (chain todo-list (map
                           #'(lambda (todo)
                               (with-html-elements
-                                  (tr (td todo)))
+                                  (tr (td (input (id . "todo-check") (type . "checkbox") (onclick . (~f (alert "You clicked the checkbox!")))) todo)))
                               t)))))
     
     (setf (chain window onload) init))))
@@ -128,7 +133,6 @@
             (:div
              (:h1 "Todo List"
                   (:div
-                   (:input :id "todo-check" :type "checkbox" :onclick (ps-inline (alert "You clicked the checkbox!")))
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here.")
                    (:button :id "todo-add-btn" "Add"))
                   (:div
