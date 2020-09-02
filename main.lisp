@@ -53,7 +53,7 @@
                      (cond
                        ((cons-pair-p e)
                         (if (and (listp (cdr e)) (equal '~f (cadr e)))
-                            `(set-an-attribute ,parent-element ,(string (car e))  ,(chain (subseq (cdr e) 1))) ;; (subseq (cdr e) 2))
+                            `(set-an-attribute ,parent-element ,(string (car e))  ,(chain (subseq (cdr e) 1)))
                             `(set-an-attribute ,parent-element ,(string (car e))  ,(string (cdr e)))))
                        ((stringp e)
                         `(set-text-node ,parent-element ,e))
@@ -110,7 +110,7 @@
         (chain todo-list (map
                           #'(lambda (todo)
                               (with-html-elements
-                                  (tr (td (input (id . "todo-check") (type . "checkbox") (onclick . (~f (alert "You clicked the checkbox!")))) todo)))
+                                  (tr (td (input (id . "todo-check") (type . "checkbox") (onclick . "alert('You clicked the checkbox!')")) todo)))
                               t)))))
     
     (setf (chain window onload) init))))
