@@ -97,6 +97,14 @@
                               (get-element-by-id "todo-add-btn")))
       (chain add-button
              (add-event-listener "click" add-todo false)))
+
+    (defun update-todo ()
+      (let* ((checked (@ (chain document (get-element-by-id "todo-check")) checked))
+             (label (chain document (get-element-by-id "todo-label"))))
+        (if checked
+            (setf (@ label style "text-decoration") "line-through")
+            (setf (@ label style "text-decoration") "")))
+      t)
     
     (defun render-todo-list (todo-list)
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
@@ -110,7 +118,10 @@
         (chain todo-list (map
                           #'(lambda (todo)
                               (with-html-elements
-                                  (tr (td (input (id . "todo-check") (type . "checkbox") (onclick . "alert('You clicked the checkbox!')")) todo)))
+                                  (tr
+                                   (td
+                                    (input (id . "todo-check") (type . "checkbox") (onclick . "updateTodo()"))
+                                    (label (id . "todo-label") (for . "todo-check") todo))))
                               t)))))
     
     (setf (chain window onload) init))))
