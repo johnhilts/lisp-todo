@@ -42,28 +42,33 @@
         (chain parent-element (append-child a-text-node))))
     (defmacro with-html-elements (elements)
       (labels
-          ((process-tag-r (element &optional (parent nil parent-supplied-p))
+          ((process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
              (let* ((tag (car element))
                     (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
-                    (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element"))))
+                    (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element")))
+                    (key-id-parameter (if key-id-supplied-p key-id (if (some #'(lambda (e) (equal (car e) 'key)) (cdr element)) (ps-gensym "-")))))
                (cons
                 `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
                 (mapcar
                  #'(lambda (e)
                      (cond
                        ((cons-pair-p e)
-                        (let* ((id-prefix (string parent-element))
+                        (let* ((id-suffix (string key-id-parameter))
                                (key (string (car e)))
                                (value (string (cdr e)))
                                (unique-value (if (some #'(lambda (e) (string-equal e key)) '("for" "id"))
-                                                 (concatenate 'string id-prefix value)
-                                                 value)))
-                          `(set-an-attribute ,parent-element ,key ,unique-value)))
+                                                 (concatenate 'string value id-suffix)
+                                                 (if (string-equal key "key")
+                                                     id-suffix
+                                                     value))))
+                          `(progn ,@(list
+                            (when (string-equal key "key") `(let ((key ,id-suffix))))
+                            `(set-an-attribute ,parent-element ,key ,unique-value)))))
                        ((stringp e)
                         `(set-text-node ,parent-element ,e))
                        ((listp e)
                         `(progn
-                           ,@(process-tag-r e parent-element)))
+                           ,@(process-tag-r e parent-element key-id-parameter)))
                        ((symbolp e)
                         `(set-text-node ,parent-element ,e))))
 
@@ -122,13 +127,13 @@
         (chain todo-list (map
                           #'(lambda (todo)
                               (with-html-elements
-                                  (tr
-                                   (td
-                                    (input (id . "todo-check") (type . "checkbox") (onclick . "updateTodo()"))
-                                    (label (id . "todo-label") (for . "todo-check") todo))))
+                                  (tr (key . "")
+                                      (td
+                                       (input (id . "todo-check") (type . "checkbox") (onclick . "updateTodo(##key##)"))
+                                       (label (id . "todo-label") (for . "todo-check") todo))))
                               t)))))
-    
-    (setf (chain window onload) init))))
+
+    (setf (chain window onload) init)))
 
 (defun make-todo-page ()
   (with-html-output-to-string
