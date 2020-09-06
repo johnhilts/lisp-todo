@@ -53,17 +53,9 @@
                  #'(lambda (e)
                      (cond
                        ((cons-pair-p e)
-                        (let* ((id-suffix (string key-id-parameter))
-                               (key (string (car e)))
-                               (value (string (cdr e)))
-                               (unique-value (if (some #'(lambda (e) (string-equal e key)) '("for" "id"))
-                                                 (concatenate 'string value id-suffix)
-                                                 (if (string-equal key "key")
-                                                     id-suffix
-                                                     value))))
-                          `(progn ,@(list
-                            (when (string-equal key "key") `(let ((key ,id-suffix))))
-                            `(set-an-attribute ,parent-element ,key ,unique-value)))))
+                        (let* ((key (string (car e)))
+                               (value (string (cdr e))))
+                          `(set-an-attribute ,parent-element ,key ,value)))
                        ((stringp e)
                         `(set-text-node ,parent-element ,e))
                        ((listp e)
@@ -84,6 +76,7 @@
 
 (defun todo-list-interaction ()
   (ps
+
     (defun clear-field (field)
       (setf (chain field value) "")
       t)
@@ -107,9 +100,9 @@
       (chain add-button
              (add-event-listener "click" add-todo false)))
 
-    (defun update-todo ()
-      (let* ((checked (@ (chain document (get-element-by-id "todo-check")) checked))
-             (label (chain document (get-element-by-id "todo-label"))))
+    (defun update-todo (index)
+      (let* ((checked (@ (chain document (get-element-by-id (+ "todo-check" index))) checked))
+             (label (chain document (get-element-by-id (+ "todo-label" index)))))
         (if checked
             (setf (@ label style "text-decoration") "line-through")
             (setf (@ label style "text-decoration") "")))
@@ -125,13 +118,24 @@
         (setf (chain column-header inner-text)
               (if use-plural-form "To-do Items" "To-do Item"))
         (chain todo-list (map
-                          #'(lambda (todo)
-                              (with-html-elements
-                                  (tr (key . "")
-                                      (td
-                                       (input (id . "todo-check") (type . "checkbox") (onclick . "updateTodo(##key##)"))
-                                       (label (id . "todo-label") (for . "todo-check") todo))))
-                              t)))))
+                          #'(lambda (todo index)
+                              (let ((checkbox-id (+ "todo-check" index))
+                                    (label-id (+ "todo-label" index)))                                
+                                (with-html-elements
+                                    (tr (key . index)
+                                        (td
+                                         (input (id . "todo-check") (type . "checkbox"))
+                                         (label (id . "todo-label") todo))))
+                                
+                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
+                                      (todo-label (chain document (get-element-by-id "todo-label"))))
+                                  (setf (@ todo-check-box id) checkbox-id
+                                        (@ todo-label id) label-id
+                                        (@ todo-label html-for) checkbox-id)
+                                (chain todo-check-box
+                                       (add-event-listener "click" (chain update-todo (bind null index)) false)))
+
+                                t))))))
 
     (setf (chain window onload) init)))
 
