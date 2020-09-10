@@ -41,31 +41,35 @@
       (let ((a-text-node (chain document (create-text-node text))))
         (chain parent-element (append-child a-text-node))))
     (defmacro with-html-elements (elements)
-      (labels
-          ((process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
-             (let* ((tag (car element))
-                    (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
-                    (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element")))
-                    (key-id-parameter (if key-id-supplied-p key-id (if (some #'(lambda (e) (equal (car e) 'key)) (cdr element)) (ps-gensym "-")))))
-               (cons
-                `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
-                (mapcar
-                 #'(lambda (e)
-                     (cond
-                       ((cons-pair-p e)
-                        (let* ((key (string (car e)))
-                               (value (string (cdr e))))
-                          `(set-an-attribute ,parent-element ,key ,value)))
-                       ((stringp e)
-                        `(set-text-node ,parent-element ,e))
-                       ((listp e)
-                        `(progn
-                           ,@(process-tag-r e parent-element key-id-parameter)))
-                       ((symbolp e)
-                        `(set-text-node ,parent-element ,e))))
-
-                 (cdr element))))))
-        `(progn ,@(process-tag-r elements))))))
+      (flet
+          ((get-attribute-value (value)
+             (if (char= #\( (aref value 0))
+                 (read-from-string value)
+                 value)))
+        (labels
+            ((process-tag-r (element &optional (parent nil parent-supplied-p) (key-id nil key-id-supplied-p))
+               (let* ((tag (car element))
+                      (parent-element (gensym (concatenate 'string (string-downcase tag) "Element")))
+                      (parent-element-parameter (if parent-supplied-p parent (make-symbol "parent-element")))
+                      (key-id-parameter (if key-id-supplied-p key-id (if (some #'(lambda (e) (equal (car e) 'key)) (cdr element)) (ps-gensym "-")))))
+                 (cons
+                  `(let ((,parent-element (create-an-element ,parent-element-parameter ,(string tag)))))
+                  (mapcar
+                   #'(lambda (e)
+                       (cond
+                         ((cons-pair-p e)
+                          (let* ((key (string (car e)))
+                                 (value (get-attribute-value (string (cdr e)))))
+                            `(set-an-attribute ,parent-element ,key ,value)))
+                         ((stringp e)
+                          `(set-text-node ,parent-element ,e))
+                         ((listp e)
+                          `(progn
+                             ,@(process-tag-r e parent-element key-id-parameter)))
+                         ((symbolp e)
+                          `(set-text-node ,parent-element ,e))))
+                   (cdr element))))))
+          `(progn ,@(process-tag-r elements)))))))
 
 (defun setup-client-info ()
   (ps
@@ -124,18 +128,18 @@
                                 (with-html-elements
                                     (tr (key . index)
                                         (td
-                                         (input (id . "todo-check") (type . "checkbox"))
-                                         (label (id . "todo-label") todo))))
-                                
-                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
-                                      (todo-label (chain document (get-element-by-id "todo-label"))))
-                                  (setf (@ todo-check-box id) checkbox-id
-                                        (@ todo-label id) label-id
-                                        (@ todo-label html-for) checkbox-id)
-                                (chain todo-check-box
-                                       (add-event-listener "click" (chain update-todo (bind null index)) false)))
+                                         (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")"))
+                                  (label (id . "todo-label") todo))))
+                          
+                          (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
+                                (todo-label (chain document (get-element-by-id "todo-label"))))
+                            (setf (@ todo-check-box id) checkbox-id
+                                  (@ todo-label id) label-id
+                                  (@ todo-label html-for) checkbox-id)
+                            ;; (chain todo-check-box (add-event-listener "click" (chain update-todo (bind null index)) false)))
+                            ))
 
-                                t))))))
+                          t)))))
 
     (setf (chain window onload) init)))
 
