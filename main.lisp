@@ -128,7 +128,12 @@
                                 (with-html-elements
                                     (tr (key . index)
                                         (td
+                                         ;; idea: pass like this: "(updateTodo(chain index (to-string)))"
+                                         ;; reformat into this: "(+ \"updateTodo(\" (chain index (to-string)) \")\")"
+                                         ;; BUT this is really: "(+ "updateTodo(" (chain index (to-string)) ")")" <-- parenscript inside javascript is really "updateTodo(123)"
+                                         ;; then send that mess to read-from-string
                                          (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")"))
+                                         (input (id . "test-check") (type . "button") (onclick . "(updateTodo 123)"))
                                   (label (id . "todo-label") todo))))
                           
                           (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
@@ -158,6 +163,20 @@
                      (str (define-ps-with-html-macro))
                      (str (todo-list-interaction))))
            (:body
+            (:div :id "div123"
+                  "test area start"
+                  (:br)
+                  (:script :type "text/javascript"
+                           (str
+                            (ps
+                              (let ((parent-element (chain document (get-element-by-id "div123"))))
+                                (with-html-elements
+                                    (table
+                                     (tr
+                                      (td
+                                       (input (type . "button") (onclick . "alert('you clicked me!')"))))))))))
+                  (:br)
+                  "test area end")
             (:div
              (:h1 "Todo List"
                   (:div
