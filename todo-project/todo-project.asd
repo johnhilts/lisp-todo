@@ -1,4 +1,5 @@
 ;;;; todo-project.asd
+;;;; (asdf:load-system "todo-project")
 
 (asdf:defsystem #:todo-project
   :description "Web App to manage To-Do List"

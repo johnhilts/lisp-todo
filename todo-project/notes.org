@@ -1,0 +1,41 @@
+* todo project
+
+** Desired Features
+
+- [ ] cross out done items
+- [ ] hide done items
+- [ ] save all items on server
+
+** Technical details
+
+*** To-do object
+#+BEGIN_SRC "javascript"
+todoOject = {
+  text: 'go shopping',
+  done: true | false,
+}
+
+appSettings = {
+  hideDoneItems: true | false,
+  useDarkMode: true | false,
+}
+#+END_SRC
+
+*** Flow
+**** Client side
+- enter / edit text
+- toggle done
+- display list
+  - respect app settings
+- sync list with server
+  - on save / edit etc
+
+**** Server side
+- read list
+- send list
+- save list
+
+***** OOP (CLOS) 
+- todo object "DTO"
+- generic methods for I/O
+  - call from http handler

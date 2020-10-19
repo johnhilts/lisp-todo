@@ -17,6 +17,9 @@
 *.wx32fsl
 *.lisp~
 *.org~
+*.fasl~
+*.md~
+*.asd~
 \#*.*\#
 .\#*.lisp
 *.swp

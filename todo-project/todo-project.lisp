@@ -2,6 +2,8 @@
 
 (in-package #:todo-project)
 
+(import-macros-from-lisp 'with-html-elements)
+
 (defun start-server (port)
   (restart-case (start (make-instance 'easy-acceptor :port port))
     (re-start-server ()
@@ -75,21 +77,20 @@
                           #'(lambda (todo index)
                               (let ((checkbox-id (+ "todo-check" index))
                                     (label-id (+ "todo-label" index)))                                
-                                (with-html-elements
-                                    (tr (key . index)
-                                        (td
-                                         (input (id . "todo-check") (type . "checkbox") (onclick . "(+ \"updateTodo(\" (chain index (to-string)) \")\")"))
-                                         (input (id . "test-check") (type . "button") (onclick . "(updateTodo 123)"))
-                                  (label (id . "todo-label") todo))))
-                          
-                          (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
-                                (todo-label (chain document (get-element-by-id "todo-label"))))
-                            (setf (@ todo-check-box id) checkbox-id
-                                  (@ todo-label id) label-id
-                                  (@ todo-label html-for) checkbox-id)
-                            ))
+                                (jfh-web::with-html-elements
+                                    (tr
+                                     (td
+                                      (input (id . "todo-check") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
+                                      (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
+                                      (label (id . "todo-label") todo))))
+                                
+                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
+                                      (todo-label (chain document (get-element-by-id "todo-label"))))
+                                  (setf (@ todo-check-box id) checkbox-id
+                                        (@ todo-label id) label-id
+                                        (@ todo-label html-for) checkbox-id)))
 
-                          t)))))
+                              t)))))
 
     (setf (chain window onload) init)))
 
@@ -105,7 +106,7 @@
                    :href "/styles.css")
             (:script :type "text/javascript"
                      (str (setup-client-info))
-                     (str (define-ps-with-html-macro))
+                     (str (jfh-web:define-ps-with-html-macro))
                      (str (todo-list-interaction))))
            (:body
             (:div :id "div123"
@@ -115,11 +116,11 @@
                            (str
                             (ps
                               (let ((parent-element (chain document (get-element-by-id "div123"))))
-                                (with-html-elements
+                                (jfh-web::with-html-elements
                                     (table
                                      (tr
                                       (td
-                                       (input (type . "button") (onclick . "alert('you clicked me!')"))))))))))
+                                       (input (type . "button") (onclick . "(alert \"you clicked me!\")"))))))))))
                   (:br)
                   "test area end")
             (:div
@@ -141,4 +142,3 @@
   (stop server))
 
 (start-web-app)
-
