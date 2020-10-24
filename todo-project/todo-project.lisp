@@ -33,6 +33,9 @@
 (defun todo-list-interaction ()
   (ps
 
+    (defparameter *todo-checkbox* "todo-check")
+    (defparameter *todo-label* "todo-label")
+
     (defun clear-field (field)
       (setf (chain field value) "")
       t)
@@ -41,29 +44,53 @@
       (while (chain parent-element (has-child-nodes))
         (chain parent-element (remove-child (@ parent-element first-child)))))
 
+    (defun get-next-index (todo-list)
+      (let ((id-list (chain todo-list (map #'(lambda (todo) (@ todo id)))))
+            (max-fn (@ -Math max)))
+        (if (length id-list)
+            (+ 1 (chain max-fn (apply null id-list)))
+            1)))
+
     (defun add-todo (evt)
       (chain evt (prevent-default))
       (let* ((todo (chain document (get-element-by-id "todo-content")))
-             (todo-text (chain todo value)))
-        (chain todo-list (push todo-text))
+             (todo-text (chain todo value))
+             (next-id (get-next-index todo-list)))
+        (chain todo-list (push (create text todo-text done false id next-id)))
         (clear-field todo)
         (render-todo-list todo-list)
         t))
     
+    (defun update-app-settings ()
+      (let ((input-hide-done-items (@ (chain document (get-element-by-id "hide-done")) checked)))
+        (setf *hide-done-items* input-hide-done-items)
+        (render-todo-list todo-list)))
+
+    (var *hide-done-items* false)
+
+    (defun render-app-settings ()
+      (let ((parent-element (chain document (get-element-by-id "app-settings"))))
+        (jfh-web::with-html-elements
+            (div (span (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)")) "Hide Done Items.")))))
+
     (defun init ()
+      (render-app-settings)
       (setf add-button (chain document
                               (get-element-by-id "todo-add-btn")))
       (chain add-button
              (add-event-listener "click" add-todo false)))
 
-    (defun update-todo (index)
+    (defun update-todo (index todo-id)
       (let* ((checked (@ (chain document (get-element-by-id (+ "todo-check" index))) checked))
-             (label (chain document (get-element-by-id (+ "todo-label" index)))))
+             (label (chain document (get-element-by-id (+ "todo-label" index))))
+             (todo-list-index (@ (chain todo-list (find-index #'(lambda (todo) (= todo-id (@ todo id)))))))
+             (todo-item (aref todo-list todo-list-index)))
         (if checked
             (setf (@ label style "text-decoration") "line-through")
-            (setf (@ label style "text-decoration") "")))
+            (setf (@ label style "text-decoration") ""))
+        (setf (@ todo-item done) checked))
       t)
-    
+
     (defun render-todo-list (todo-list)
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
              (parent-element todo-list-table-body)
@@ -73,24 +100,25 @@
         (clear-children parent-element)
         (setf (chain column-header inner-text)
               (if use-plural-form "To-do Items" "To-do Item"))
-        (chain todo-list (map
-                          #'(lambda (todo index)
-                              (let ((checkbox-id (+ "todo-check" index))
-                                    (label-id (+ "todo-label" index)))                                
-                                (jfh-web::with-html-elements
-                                    (tr
-                                     (td
-                                      (input (id . "todo-check") (type . "checkbox") (onclick . "(update-todo (chain index (to-string)))"))
-                                      (input (id . "test-check") (type . "button") (onclick . "(update-todo 123)"))
-                                      (label (id . "todo-label") todo))))
-                                
-                                (let ((todo-check-box (chain document (get-element-by-id "todo-check")))
-                                      (todo-label (chain document (get-element-by-id "todo-label"))))
-                                  (setf (@ todo-check-box id) checkbox-id
-                                        (@ todo-label id) label-id
-                                        (@ todo-label html-for) checkbox-id)))
-
-                              t)))))
+        (chain todo-list
+               (filter
+                #'(lambda (todo)
+                    (or (not *hide-done-items*)
+                        (not (@ todo done)))))
+               (map
+                #'(lambda (todo index)
+                    (let ((todo-checkbox-id (+ *todo-checkbox* index))
+                          (todo-label-id (+ *todo-label* index)))
+                      (jfh-web::with-html-elements
+                          (tr
+                           (td
+                            (input
+                             (id . "(chain todo-checkbox-id (to-string))")
+                             (type . "checkbox")
+                             (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
+                             (checked . "(@ todo done)"))
+                            (label (id . "(chain todo-label-id (to-string))") (html-for . "(chain todo-checkbox-id (to-string))") "(@ todo text)"))))
+                      t))))))
 
     (setf (chain window onload) init)))
 
@@ -109,20 +137,7 @@
                      (str (jfh-web:define-ps-with-html-macro))
                      (str (todo-list-interaction))))
            (:body
-            (:div :id "div123"
-                  "test area start"
-                  (:br)
-                  (:script :type "text/javascript"
-                           (str
-                            (ps
-                              (let ((parent-element (chain document (get-element-by-id "div123"))))
-                                (jfh-web::with-html-elements
-                                    (table
-                                     (tr
-                                      (td
-                                       (input (type . "button") (onclick . "(alert \"you clicked me!\")"))))))))))
-                  (:br)
-                  "test area end")
+            (:div :id "app-settings")
             (:div
              (:h1 "Todo List"
                   (:div
