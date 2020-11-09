@@ -151,6 +151,151 @@
 (define-easy-handler (todo-page :uri "/todos") ()
   (make-todo-page))
 
+(defun test-json-data ()
+  (list
+   (list :id 1 :done T :text "Go Shopping")
+   (list :id 2 :done 0 :text "Water Plants")))
+
+
+(defun string-replace (string search replace)
+  (labels
+      ((replace-r (string search replace)
+         (if (zerop (length string))
+             string
+             (let ((search-position (search search string)))
+               (if (null search-position)
+                   string
+                   (concatenate 'string
+                                (subseq string 0 search-position)
+                                replace
+                                (replace-r (subseq string  (+ search-position (length search))) search replace)))))))
+    (replace-r string search replace)))
+
+(defun encode-plist-to-json-as-string (plist)
+  (string-replace (json:encode-json-plist-to-string plist) "\"done\":0," "\"done\":false,"))
+
+(defun encode-multiple-plists-to-json-as-string (plists)
+  (labels
+      ((concat-plists (plists)
+         (cond
+           ((= 1 (length plists))
+            (encode-plist-to-json-as-string (car plists)))
+           (t (concatenate 'string
+                           (encode-plist-to-json-as-string (car plists))
+                           ", "
+                           (concat-plists (cdr plists)))))))
+
+    (if plists
+        (concatenate 'string
+                     "["
+                     (concat-plists plists)
+                     "]")
+        "[]")))
+
+#||
+;; test in REPL
+(format t "~s~%" (encode-json-multiple-plist-to-string (test-json-data)))
+(format t "~a~%" (get-todo 2))
+(format t "~a~%" (get-todo 1))
+(format t "~a~%" (get-todo-list))
+(string-replace "ABCDEFGHI" "CDE" "XYZ")
+(string-replace "ABCDEFGHI" "CDE" "WXYZ")
+(string-replace (encode-json-multiple-plist-to-string (test-json-data)) "done" "done-zo")
+(string-replace (encode-json-multiple-plist-to-string (test-json-data)) "\"done\":0," "\"done\":false,")
+(format t "~s~%" (read-complete-file "./test3.sexp"))
+(write-complete-file "./test3.sexp" (list (list :text "Go Shopping" :done t :id 1) (list :text "Clean house" :done nil :id 2) (list :text "Make lunch" :done nil :id 3)))
+(format t "~s~%" (read-complete-file-at-once "./test4.sexp"))
+(write-complete-file-at-once "./test4.sexp" (list (list :text "Go Shopping" :done t :id 1) (list :text "Clean house" :done nil :id 2) (list :text "Make lunch" :done nil :id 3)))
+||#
+
+(defun read-complete-file-by-line (path)
+  (let ((file ()))
+    (with-open-file (in path)
+      (do ((line (read in nil) (read in nil)))
+          ((null line) file)
+        (setf file (append file (list line)))))))
+
+(defun write-complete-file-by-line (path list)
+  (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (dolist (line list)
+      (print line out))))
+
+(defun read-complete-file (path)
+  (with-open-file (in path :if-does-not-exist :create)
+    (read in nil)))
+
+(defun write-complete-file (path list)
+  (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
+
+(defun get-todo-by-id (id)
+  (let ((todos (test-json-data)))
+         (find-if
+          #'(lambda (e)
+              (let ((search-id (getf e :id)))
+                (equal search-id id))) todos)))
+
+(defun get-todo (id)
+  (let ((todo (get-todo-by-id id)))
+    (encode-plist-to-json-as-string todo)))
+
+(defun fetch-or-create-todos ()
+   (read-complete-file "./todo-list.sexp"))
+
+(defun get-todo-list ()
+  (encode-multiple-plists-to-json-as-string (fetch-or-create-todos)))
+
+(defun todo-data-get (id)
+  (if id
+      (get-todo (parse-integer id))
+      (get-todo-list)))
+
+(define-easy-handler (todo-data :uri "/todo-data") (id)
+  (setf (content-type*) "application/json")
+  (let* ((raw-data  (raw-post-data :force-text t))
+         (json-data (json:decode-json-from-string raw-data))
+         (verb (request-method *request*)))
+    (case verb
+      ("post"
+       (print "post!"))
+      ("get"
+       (print "get!")
+       (todo-data-get id)))))
+
+(defun convert-nil-to-zero (keyword value)
+  (list keyword (if (and (equal :done keyword) (null value)) 0 value)))
+
+(defun join-pairs (acc cur)
+  (append
+   acc
+   (convert-nil-to-zero
+    (car cur)
+    (cdr cur))))
+
+(defun iterate-through-pairs (acc cur)
+  (append
+        acc
+        (list (reduce #'join-pairs cur :initial-value ()))))
+
+(defun convert-input-to-todo-list (input)
+  (reduce #'iterate-through-pairs input :initial-value ()))
+
+(convert-input-to-todo-list  '(((:TEXT . "Go Shopping") (:DONE . T) (:ID . 1))
+                               ((:TEXT . "Water some plants") (:DONE) (:ID . 2))))
+
+(define-easy-handler (test-verbs :uri "/test-verbs") (id name)
+  (setf (content-type*) "application/json")
+  (let* ((raw-data  (raw-post-data :force-text t))
+         ;; (json-data (json:decode-json-from-string raw-data))
+         (verb (request-method *request*)))
+    ;; (format t "~&verb: ~s~%id=~a~%name=~a~%raw post data: ~a~%lisp: ~s~%" (request-method *request*) id name raw-data json-data)
+    (case verb
+      (:post
+       (print "post!"))
+      (:get
+       (print "get!"))
+      (otherwise (print "no matches!")))))
+
 (defparameter *the-http-server* (start-server 5050))
 
 (defun stop-server (server)
