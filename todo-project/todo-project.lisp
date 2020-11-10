@@ -228,6 +228,27 @@
   (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
     (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
 
+(defun convert-nil-to-zero (keyword value)
+  (list keyword (if (and (equal :done keyword) (null value)) 0 value)))
+
+(defun join-pairs (acc cur)
+  (append
+   acc
+   (convert-nil-to-zero
+    (car cur)
+    (cdr cur))))
+
+(defun iterate-through-pairs (acc cur)
+  (append
+        acc
+        (list (reduce #'join-pairs cur :initial-value ()))))
+
+(defun convert-input-to-todo-list (input)
+  (reduce #'iterate-through-pairs input :initial-value ()))
+
+(defun convert-input-to-todo (input)
+  (reduce #'join-pairs  input :initial-value ()))
+
 (defun get-todo-by-id (id)
   (let ((todos (test-json-data)))
          (find-if
@@ -250,51 +271,55 @@
       (get-todo (parse-integer id))
       (get-todo-list)))
 
+(defun todo-data-add (raw-data)
+  (let* ((new-todo (convert-input-to-todo (json:decode-json-from-string raw-data)))
+         (new-id (getf new-todo :id))
+        (existing-todos (fetch-or-create-todos)))
+    (write-complete-file "./todo-list.sexp" (append existing-todos new-todo))
+    new-id))
+
 (define-easy-handler (todo-data :uri "/todo-data") (id)
   (setf (content-type*) "application/json")
   (let* ((raw-data  (raw-post-data :force-text t))
-         (json-data (json:decode-json-from-string raw-data))
          (verb (request-method *request*)))
     (case verb
-      ("post"
-       (print "post!"))
-      ("get"
-       (print "get!")
+      (:post
+       (todo-data-add raw-data)) ;; WRAP THIS IN JSON!! and I guess it has to be a list??
+      (:get
        (todo-data-get id)))))
-
-(defun convert-nil-to-zero (keyword value)
-  (list keyword (if (and (equal :done keyword) (null value)) 0 value)))
-
-(defun join-pairs (acc cur)
-  (append
-   acc
-   (convert-nil-to-zero
-    (car cur)
-    (cdr cur))))
-
-(defun iterate-through-pairs (acc cur)
-  (append
-        acc
-        (list (reduce #'join-pairs cur :initial-value ()))))
-
-(defun convert-input-to-todo-list (input)
-  (reduce #'iterate-through-pairs input :initial-value ()))
 
 (convert-input-to-todo-list  '(((:TEXT . "Go Shopping") (:DONE . T) (:ID . 1))
                                ((:TEXT . "Water some plants") (:DONE) (:ID . 2))))
 
-(define-easy-handler (test-verbs :uri "/test-verbs") (id name)
+(car (convert-input-to-todo-list  '(((:TEXT . "Go Shopping") (:DONE . T) (:ID . 1)))))
+
+(reduce #'join-pairs  '((:TEXT . "Go Shopping") (:DONE . T) (:ID . 1)) :initial-value ())
+
+(defun handle-test-get (id)
+  (format t "The ID is: ~d~%" id))
+
+(defun handle-test-post (raw-data)
+  (let* ((json-data (json:decode-json-from-string raw-data))
+         (id (car json-data))
+         (name (cadr json-data)))
+    (format t "The ID is ~d, and the name is ~a~%" id name)))
+
+(define-easy-handler (test-verbs :uri "/test-verbs") (id)
   (setf (content-type*) "application/json")
   (let* ((raw-data  (raw-post-data :force-text t))
-         ;; (json-data (json:decode-json-from-string raw-data))
          (verb (request-method *request*)))
     ;; (format t "~&verb: ~s~%id=~a~%name=~a~%raw post data: ~a~%lisp: ~s~%" (request-method *request*) id name raw-data json-data)
     (case verb
       (:post
-       (print "post!"))
+       (format t "post!~%")
+       (handle-test-post raw-data))
+      (:put
+       (format t "put!~%")
+       (handle-test-post raw-data))
       (:get
-       (print "get!"))
-      (otherwise (print "no matches!")))))
+       (format t "get!~%")
+       (handle-test-get id))
+      (otherwise (format t "no matches!~%")))))
 
 (defparameter *the-http-server* (start-server 5050))
 
