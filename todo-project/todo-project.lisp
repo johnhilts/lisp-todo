@@ -274,17 +274,29 @@
 (defun todo-data-add (raw-data)
   (let* ((new-todo (convert-input-to-todo (json:decode-json-from-string raw-data)))
          (new-id (getf new-todo :id))
-        (existing-todos (fetch-or-create-todos)))
-    (write-complete-file "./todo-list.sexp" (append existing-todos new-todo))
-    new-id))
+         (existing-todos (fetch-or-create-todos)))
+    (write-complete-file "./todo-list.sexp" (append existing-todos (list new-todo)))
+    (json:encode-json-to-string (list new-id))))
+
+(defun todo-data-update (raw-data)
+  (let* ((update-todo (convert-input-to-todo (json:decode-json-from-string raw-data)))
+         (update-id (getf update-todo :id))
+         (existing-todos (fetch-or-create-todos))
+         (non-update-todos (remove-if #'(lambda (e) (= update-id (getf e :id))) existing-todos))
+         (updated-todos (append (list update-todo) non-update-todos)))
+    
+    (write-complete-file "./todo-list.sexp" updated-todos)
+    (json:encode-json-to-string (list update-id))))
 
 (define-easy-handler (todo-data :uri "/todo-data") (id)
   (setf (content-type*) "application/json")
   (let* ((raw-data  (raw-post-data :force-text t))
          (verb (request-method *request*)))
     (case verb
+      (:put
+       (todo-data-update raw-data))
       (:post
-       (todo-data-add raw-data)) ;; WRAP THIS IN JSON!! and I guess it has to be a list??
+       (todo-data-add raw-data))
       (:get
        (todo-data-get id)))))
 
