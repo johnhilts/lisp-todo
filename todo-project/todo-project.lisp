@@ -73,8 +73,19 @@
         (jfh-web::with-html-elements
             (div (span (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)")) "Hide Done Items.")))))
 
+    (defun get-todo-list-from-server ()
+      (flet ((req-listener ()
+               (let ((server-todo-list (chain -j-s-o-n (parse (@ this response-text)))))
+                 (render-todo-list server-todo-list)
+                 (setf todo-list server-todo-list))))
+        (let ((o-req (new (-x-m-l-http-request))))
+          (chain o-req (add-event-listener "load" req-listener))
+          (chain o-req (open "GET" "/todo-data"))
+          (chain o-req (send)))))
+    
     (defun init ()
       (render-app-settings)
+      (get-todo-list-from-server)
       (setf add-button (chain document
                               (get-element-by-id "todo-add-btn")))
       (chain add-button
