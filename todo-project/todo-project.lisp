@@ -51,21 +51,20 @@
             (+ 1 (chain max-fn (apply null id-list)))
             1)))
 
-    (defun push-todo-item-to-server (todo-item)
-      (let ((xmlhttp (new (-x-m-l-http-request)))
+    (defun send-todo-item-to-server (todo-item http-method)
+      "Do AJAX request using PUSH or PUT"
+      (let ((xml-http (new (-x-m-l-http-request)))
              (the-url "/todo-data"))
-        (chain xmlhttp (open "POST" the-url))
-        (chain xmlhttp (set-request-header "Content-Type" "application/json;charset=UTF-8"))
-        (chain xmlhttp (send (chain -j-s-o-n (stringify todo-item)))))
+        (chain xml-http (open http-method the-url))
+        (chain xml-http (set-request-header "Content-Type" "application/json;charset=UTF-8"))
+        (chain xml-http (send (chain -j-s-o-n (stringify todo-item)))))
       t)
 
-    (defun put-todo-item-to-server (todo-item)
-      (let ((xmlhttp (new (-x-m-l-http-request)))
-             (the-url "/todo-data"))
-        (chain xmlhttp (open "PUT" the-url))
-        (chain xmlhttp (set-request-header "Content-Type" "application/json;charset=UTF-8"))
-        (chain xmlhttp (send (chain -j-s-o-n (stringify todo-item)))))
-      t)
+    (defun send-new-todo-item-to-server (todo-item)
+      (send-todo-item-to-server todo-item "PUSH"))
+
+    (defun send-updated-item-to-server (todo-item)
+      (send-todo-item-to-server todo-item "PUT"))
     
     (defun add-todo (evt)
       (chain evt (prevent-default))
@@ -76,7 +75,7 @@
         (chain todo-list (push todo-item))
         (clear-field todo)
         (render-todo-list todo-list)
-        (push-todo-item-to-server todo-item)
+        (send-new-todo-item-to-server todo-item)
         t))
     
     (defun update-app-settings ()
@@ -119,7 +118,7 @@
             (setf (@ label style "text-decoration") "line-through")
             (setf (@ label style "text-decoration") ""))
         (setf (@ todo-item done) checked)
-        (put-todo-item-to-server todo-item))
+        (send-updated-item-to-server todo-item))
       t)
 
     (defun render-todo-list (todo-list)
