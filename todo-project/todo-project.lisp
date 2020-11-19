@@ -147,7 +147,10 @@
                              (type . "checkbox")
                              (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
                              (checked . "(@ todo done)"))
-                            (label (id . "(chain todo-label-id (to-string))") (for . "(chain todo-checkbox-id (to-string))") "(@ todo text)"))))
+                            (label
+                             (id . "(chain todo-label-id (to-string))")
+                             (for . "(chain todo-checkbox-id (to-string))")
+                             (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)"))))
                       t))))))
 
     (setf (chain window onload) init)))
