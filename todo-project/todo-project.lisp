@@ -58,6 +58,14 @@
         (chain xmlhttp (set-request-header "Content-Type" "application/json;charset=UTF-8"))
         (chain xmlhttp (send (chain -j-s-o-n (stringify todo-item)))))
       t)
+
+    (defun put-todo-item-to-server (todo-item)
+      (let ((xmlhttp (new (-x-m-l-http-request)))
+             (the-url "/todo-data"))
+        (chain xmlhttp (open "PUT" the-url))
+        (chain xmlhttp (set-request-header "Content-Type" "application/json;charset=UTF-8"))
+        (chain xmlhttp (send (chain -j-s-o-n (stringify todo-item)))))
+      t)
     
     (defun add-todo (evt)
       (chain evt (prevent-default))
@@ -110,7 +118,8 @@
         (if checked
             (setf (@ label style "text-decoration") "line-through")
             (setf (@ label style "text-decoration") ""))
-        (setf (@ todo-item done) checked))
+        (setf (@ todo-item done) checked)
+        (put-todo-item-to-server todo-item))
       t)
 
     (defun render-todo-list (todo-list)
