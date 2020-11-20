@@ -9,4 +9,9 @@
   :serial t
   :depends-on (#:cl-who #:hunchentoot #:parenscript #:cl-json #:jfh-web)
   :components ((:file "package")
+               (:file "client/ajax")
+               (:file "client/util")
+               (:file "client/app-settings")
+               (:file "client/todo")
+               (:file "client/ui")
                (:file "todo-project")))
