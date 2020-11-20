@@ -23,6 +23,14 @@
         (send-new-todo-item-to-server todo-item)
         t))
 
+    (defun get-todo-list-from-server ()
+      (flet ((call-back ()
+               (let ((server-todo-list (chain -j-s-o-n (parse (@ this response-text)))))
+                 (render-todo-list server-todo-list)
+                 (setf todo-list server-todo-list)
+                 t)))
+        (get-from-server "/todo-data" call-back)))
+
     (defun update-todo (index todo-id)
       (let* ((checked (@ (chain document (get-element-by-id (+ "todo-check" index))) checked))
              (label (chain document (get-element-by-id (+ "todo-label" index))))
