@@ -23,20 +23,6 @@
   (push (create-static-file-dispatcher-and-handler
          "/styles.css" "static/styles.css") *dispatch-table*))
 
-(defmacro defun-ps (js-function-name args &body body)
-  `(defun ,js-function-name ()
-     (ps
-       (defun ,js-function-name ,args ,@body))))
-
-(defun js-wrapper ()
-  (defun-ps some-function (arg1 arg2)
-    (alert (chain arg1 (to-string)))
-    (alert (chain arg2 (to-string)))
-    t)
-
-  (defun-ps some-other-function ()
-    (some-function "hello" "John")))
-
 (defun setup-client-info ()
   (ps
     (defun init-info ()
