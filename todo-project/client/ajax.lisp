@@ -1,6 +1,7 @@
 (in-package #:todo-project)
 
 (defun ajax ()
+  "define all AJAX related functions"
   (ps
 
     (defun send-to-server (the-url http-method data)
@@ -13,6 +14,7 @@
 
     
     (defun get-from-server (the-url call-back)
+      "Do AJAX request using GET"
       (let ((http-request (new (-x-m-l-http-request))))
         (chain http-request (add-event-listener "load" call-back))
         (chain http-request (open "GET" the-url))

@@ -1,21 +1,25 @@
 (in-package #:todo-project)
 
 (defun client-ui ()
+  "define client side UI functions"
   (ps
 
     (defparameter *todo-checkbox* "todo-check")
     (defparameter *todo-label* "todo-label")
 
     (defun clear-field (field)
+      "clear input field's value"
       (setf (chain field value) "")
       t)
     
     (defun clear-children (parent-element)
+      "remove all child nodes of a parent element"
       (while (chain parent-element (has-child-nodes))
         (chain parent-element (remove-child (@ parent-element first-child)))))
     
     (defun init ()
-      (get-settings-from-server)
+      "initialize html elements and JS objects on page load"
+      (get-app-settings-from-server)
       (get-todo-list-from-server)
       (setf add-button (chain document
                               (get-element-by-id "todo-add-btn")))
@@ -23,6 +27,7 @@
              (add-event-listener "click" add-todo false)))
 
     (defun render-app-settings ()
+      "render html elements for app settings"
       (let ((parent-element (chain document (get-element-by-id "app-settings"))))
         (jfh-web::with-html-elements
             (div
@@ -30,6 +35,7 @@
              (label (for . "hide-done") "Hide Done Items.")))))
 
     (defun render-todo-list (todo-list)
+      "render html elements for todo list"
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
              (parent-element todo-list-table-body)
              (column-header (chain document (get-element-by-id "todo-list-column-header")))
