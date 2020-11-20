@@ -28,7 +28,8 @@
     (defun init-info ()
       (let ((todo-list ([])))
         todo-list))
-    (defvar todo-list (init-info))))
+    (defvar todo-list (init-info))
+    (defvar *app-settings* (create hide-done-items false))))
 
 (defun todo-list-interaction ()
   (ps
@@ -51,6 +52,15 @@
             (+ 1 (chain max-fn (apply null id-list)))
             1)))
 
+    (defun send-settings-to-server (settings http-method)
+      "Do AJAX request using PUSH or PUT"
+      (let ((xml-http (new (-x-m-l-http-request)))
+             (the-url "/setting-data"))
+        (chain xml-http (open http-method the-url))
+        (chain xml-http (set-request-header "Content-Type" "application/json;charset=UTF-8"))
+        (chain xml-http (send (chain -j-s-o-n (stringify settings)))))
+      t)
+
     (defun send-todo-item-to-server (todo-item http-method)
       "Do AJAX request using PUSH or PUT"
       (let ((xml-http (new (-x-m-l-http-request)))
@@ -63,7 +73,7 @@
     (defun send-new-todo-item-to-server (todo-item)
       (send-todo-item-to-server todo-item "PUSH"))
 
-    (defun send-updated-item-to-server (todo-item)
+    (defun send-updated-todo-item-to-server (todo-item)
       (send-todo-item-to-server todo-item "PUT"))
     
     (defun add-todo (evt)
@@ -80,15 +90,27 @@
     
     (defun update-app-settings ()
       (let ((input-hide-done-items (@ (chain document (get-element-by-id "hide-done")) checked)))
-        (setf *hide-done-items* input-hide-done-items)
+        (setf (@ *app-settings* hide-done-items) input-hide-done-items)
+        (send-settings-to-server *app-settings* "PUT")
         (render-todo-list todo-list)))
-
-    (var *hide-done-items* false)
 
     (defun render-app-settings ()
       (let ((parent-element (chain document (get-element-by-id "app-settings"))))
         (jfh-web::with-html-elements
-            (div (span (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)")) "Hide Done Items.")))))
+            (div
+             (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
+             (label (for . "hide-done") "Hide Done Items.")))))
+
+    (defun get-settings-from-server ()
+      (flet ((req-listener ()
+               (let ((server-app-settings (chain -j-s-o-n (parse (@ this response-text)))))
+                 (setf *app-settings* server-app-settings)
+                 (render-app-settings)
+                 t)))
+        (let ((o-req (new (-x-m-l-http-request))))
+          (chain o-req (add-event-listener "load" req-listener))
+          (chain o-req (open "GET" "/setting-data"))
+          (chain o-req (send)))))
 
     (defun get-todo-list-from-server ()
       (flet ((req-listener ()
@@ -102,7 +124,7 @@
           (chain o-req (send)))))
     
     (defun init ()
-      (render-app-settings)
+      (get-settings-from-server)
       (get-todo-list-from-server)
       (setf add-button (chain document
                               (get-element-by-id "todo-add-btn")))
@@ -118,7 +140,7 @@
             (setf (@ label style "text-decoration") "line-through")
             (setf (@ label style "text-decoration") ""))
         (setf (@ todo-item done) checked)
-        (send-updated-item-to-server todo-item))
+        (send-updated-todo-item-to-server todo-item))
       t)
 
     (defun render-todo-list (todo-list)
@@ -133,7 +155,7 @@
         (chain todo-list
                (filter
                 #'(lambda (todo)
-                    (or (not *hide-done-items*)
+                    (or (not (@ *app-settings* hide-done-items))
                         (not (@ todo done)))))
                (map
                 #'(lambda (todo index)
@@ -276,6 +298,27 @@
         acc
         (list (reduce #'join-pairs cur :initial-value ()))))
 
+(defun fetch-or-create-settings ()
+  (let ((settings (read-complete-file "./setting-list.sexp")))
+    (if settings
+        settings
+        (list :hide-done-items 0))))
+
+(defun get-setting ()
+  ;; todo - put the string replace inside of encode-plist-to-json-as-string (it's my function!)
+  (string-replace (encode-plist-to-json-as-string (fetch-or-create-settings)) "\"hideDoneItems\":0" "\"hideDoneItems\":false"))
+
+(defun setting-data-get ()
+  (get-setting))
+
+(defun convert-input-to-setting (input)
+  (reduce #'join-pairs  input :initial-value ()))
+
+(defun setting-data-update (raw-data)
+  (let ((updated-setting (convert-input-to-setting (json:decode-json-from-string raw-data))))
+    (write-complete-file "./setting-list.sexp" updated-setting)
+    (json:encode-json-to-string updated-setting)))
+
 (defun convert-input-to-todo-list (input)
   (reduce #'iterate-through-pairs input :initial-value ()))
 
@@ -332,6 +375,16 @@
        (todo-data-add raw-data))
       (:get
        (todo-data-get id)))))
+
+(define-easy-handler (setting-data :uri "/setting-data") ()
+  (setf (content-type*) "application/json")
+  (let* ((raw-data  (raw-post-data :force-text t))
+         (verb (request-method *request*)))
+    (case verb
+      (:put
+       (setting-data-update raw-data))
+      (:get
+       (setting-data-get)))))
 
 (convert-input-to-todo-list  '(((:TEXT . "Go Shopping") (:DONE . T) (:ID . 1))
                                ((:TEXT . "Water some plants") (:DONE) (:ID . 2))))
