@@ -46,6 +46,19 @@
             (setf (@ label style "text-decoration") ""))
         (setf (@ todo-item done) checked)
         (send-updated-todo-item-to-server todo-item))
+      t)
+
+    (defun update-todo-from-edit (todo)
+      "update todo on client and server and re-render html elements"
+      (send-updated-todo-item-to-server todo)
+      (render-todo-list todo-list)
+      t)))
+
+    (defun delete-todo (todo)
+      "delete todo on client and server and re-render html elements"
+      (delete-todo-item-on-server todo)
+      ;; delete todo on client here
+      (render-todo-list todo-list)
       t)))
 
     

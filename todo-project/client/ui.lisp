@@ -6,7 +6,10 @@
 
     (defparameter *todo-checkbox* "todo-check")
     (defparameter *todo-label* "todo-label")
+    (defparameter *todo-anchor* "todo-anchor")
     (defparameter *todo-text* "todo-text")
+    (defparameter *todo-save-button* "todo-save-button")
+    (defparameter *todo-delete--button* "todo-delete-button")
 
     (defun clear-field (field)
       "clear input field's value"
@@ -35,12 +38,6 @@
              (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
              (label (for . "hide-done") "Hide Done Items.")))))
 
-    (defun show-input-for (todo-element-id todo)
-      "render text input for todo to edit it"
-      (let ((todo-edit-element (chain document (get-element-by-id todo-element-id))))
-        (setf (@ todo-element hidden) false))
-      t)
-
     (defun render-todo-list (todo-list)
       "render html elements for todo list"
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
@@ -60,21 +57,57 @@
                 #'(lambda (todo index)
                     (let ((todo-checkbox-id (+ *todo-checkbox* index))
                           (todo-label-id (+ *todo-label* index))
-                          (todo-text-id (+ *todo-text* index)))
-                      (jfh-web::with-html-elements
-                          (tr
-                           (td
-                            (input
-                             (id . "(chain todo-checkbox-id (to-string))")
-                             (type . "checkbox")
-                             (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
-                             (checked . "(@ todo done)"))
-                            (label
-                             (id . "(chain todo-label-id (to-string))")
-                             (for . "(chain todo-checkbox-id (to-string))")
-                             (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)")
-                            (a (onclick . "(show-input-for (chain todo-text-id (to-string)) todo)") "  ...")
-                            (input (id . "(chain todo-text-id (to-string))") (type . "text") (hidden . "t"))))))
-                    t)))))
+                          (todo-anchor-id (+ *todo-anchor* index))
+                          (todo-text-id (+ *todo-text* index))
+                          (todo-save-button-id (+ *todo-save-button* index))
+                          (todo-delete-button-id (+ *todo-delete-button* index)))
+                      (labels (
+                               (show-input-for (todo show-edit)
+                                 "render text input for todo to edit it"
+                                 (let ((todo-checkbox-element (chain document (get-element-by-id todo-checkbox-id)))
+                                       (todo-label-element (chain document (get-element-by-id todo-label-id)))
+                                       (todo-anchor-element (chain document (get-element-by-id todo-anchor-id)))
+                                       (todo-text-element (chain document (get-element-by-id todo-text-id)))
+                                       (todo-save-button-element (chain document (get-element-by-id todo-save-button-id)))
+                                       (todo-delete-button-element (chain document (get-element-by-id todo-delete-button-id))))
+                                   (setf (@ todo-checkbox-element hidden) show-edit)
+                                   (setf (@ todo-label-element hidden) show-edit)
+                                   (setf (@ todo-anchor-element hidden) show-edit)
+                                   (setf (@ todo-text-element hidden) (not show-edit))
+                                   (setf (@ todo-text-element value) (@ todo text))
+                                   (setf (@ todo-save-button-element hidden) (not show-edit))
+                                   (setf (@ todo-delete-button-element hidden) (not show-edit))
+                                   (chain todo-text-element (focus)))
+                                 t)
+                               (save-input-for (todo)
+                                 (let* ((todo-text-element (chain document (get-element-by-id todo-text-id)))
+                                        (updated-text (@ todo-text-element value)))
+                                   (setf (@ todo text) updated-text)
+                                   (update-todo-from-edit todo)
+                                   (show-input-for todo false))
+                                 t)
+                               (delete (todo)
+                                 (delete-todo todo)
+                                 (show-input-for todo false)
+                                 t))
+                        (jfh-web::with-html-elements
+                            (tr
+                             (td
+                              (input
+                               (id . "(chain todo-checkbox-id (to-string))")
+                               (type . "checkbox")
+                               (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
+                               (checked . "(@ todo done)"))
+                              (label
+                               (id . "(chain todo-label-id (to-string))")
+                               (for . "(chain todo-checkbox-id (to-string))")
+                               (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)")
+                              (a (id . "(chain todo-anchor-id (to-string))") (onclick . "(show-input-for todo t)") "  ...")
+                              (textarea (id . "(chain todo-text-id (to-string))") (hidden . "t"))
+                              (span "  ")
+                              (button (id . "(chain todo-save-button-id (to-string))") (hidden . "t") (onclick . "(save-input-for todo)") "Save")
+                              (span "  ")
+                              (button (id . "(chain todo-delete-button-id (to-string))") (hidden . "t") (onclick . "(delete todo)") "Delete")))))
+                      t))))))
 
     (setf (chain window onload) init)))
