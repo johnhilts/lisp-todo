@@ -6,6 +6,7 @@
 
     (defparameter *todo-checkbox* "todo-check")
     (defparameter *todo-label* "todo-label")
+    (defparameter *todo-text* "todo-text")
 
     (defun clear-field (field)
       "clear input field's value"
@@ -34,6 +35,12 @@
              (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
              (label (for . "hide-done") "Hide Done Items.")))))
 
+    (defun show-input-for (todo-element-id todo)
+      "render text input for todo to edit it"
+      (let ((todo-edit-element (chain document (get-element-by-id todo-element-id))))
+        (setf (@ todo-element hidden) false))
+      t)
+
     (defun render-todo-list (todo-list)
       "render html elements for todo list"
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
@@ -52,7 +59,8 @@
                (map
                 #'(lambda (todo index)
                     (let ((todo-checkbox-id (+ *todo-checkbox* index))
-                          (todo-label-id (+ *todo-label* index)))
+                          (todo-label-id (+ *todo-label* index))
+                          (todo-text-id (+ *todo-text* index)))
                       (jfh-web::with-html-elements
                           (tr
                            (td
@@ -64,7 +72,9 @@
                             (label
                              (id . "(chain todo-label-id (to-string))")
                              (for . "(chain todo-checkbox-id (to-string))")
-                             (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)"))))
-                      t))))))
+                             (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)")
+                            (a (onclick . "(show-input-for (chain todo-text-id (to-string)) todo)") "  ...")
+                            (input (id . "(chain todo-text-id (to-string))") (type . "text") (hidden . "t"))))))
+                    t)))))
 
     (setf (chain window onload) init)))
