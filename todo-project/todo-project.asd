@@ -10,6 +10,8 @@
   :serial t
   :depends-on (#:cl-who #:hunchentoot #:parenscript #:cl-json #:jfh-web)
   :components ((:file "package")
+               (:file "common/constants")
+               (:file "server/web-common")
                (:file "server/util")
                (:file "server/io")
                (:file "server/web-infrastructure")

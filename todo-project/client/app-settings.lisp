@@ -13,11 +13,11 @@
                  (setf *app-settings* server-app-settings)
                  (render-app-settings)
                  t)))
-        (get-from-server "/app-settings-data" call-back)))
+        (get-from-server *app-settings-api-endpoint* call-back)))
 
     (defun update-app-settings ()
       "update app settings on client and server and re-render html elements"
       (let ((input-hide-done-items (@ (chain document (get-element-by-id "hide-done")) checked)))
         (setf (@ *app-settings* hide-done-items) input-hide-done-items)
-        (send-to-server "/app-settings-data" "PUT" *app-settings*)
+        (send-to-server *app-settings-api-endpoint* "PUT" *app-settings*)
         (render-todo-list todo-list)))))

@@ -13,7 +13,13 @@
       (stop-server *the-http-server*)
       (start-server port))))
 
-(defparameter *the-http-server* (start-server 5050))
+(defun fetch-or-create-web-settings ()
+  "read web-settings from persistence store; create default if doesn't exist yet"
+  (let* ((default-web-settings  (list :web-port 80))
+         (call-back #'(lambda (web-settings) (if web-settings web-settings default-web-settings))))
+    (fetch-or-create-data *web-settings-file-path* call-back)))
+
+(defparameter *the-http-server* (start-server (getf (fetch-or-create-web-settings) :web-port)))
 
 (defun stop-server (server)
   "Stop the server"

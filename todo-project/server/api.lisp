@@ -1,15 +1,8 @@
 
 (in-package #:todo-project)
 
-(defmacro define-api-endpoint (name end-point params &body body)
-  `(define-easy-handler (,name :uri ,end-point) (,@params)
-     "macro to DRY REST endpoint declarations"
-     (setf (content-type*) "application/json")
-     (let* ((raw-data  (raw-post-data :force-text t))
-            (verb (request-method *request*)))
-       ,@body)))
-
-(define-api-endpoint todo-data "/todo-data" (id)
+(define-api-endpoint todo-data *todo-api-endpoint* (id)
+  "REST endpoint for todos"
   (case verb
     (:put
      (todo-data-update raw-data))
@@ -18,7 +11,8 @@
     (:get
      (todo-data-get id))))
 
-(define-api-endpoint app-settings-data "/app-settings-data" ()
+(define-api-endpoint app-settings-data *app-settings-api-endpoint* ()
+  "REST endpoint for app settings"
   (case verb
     (:put
      (app-settings-data-update raw-data))

@@ -7,11 +7,11 @@
 
     (defun send-new-todo-item-to-server (todo-item)
       "save new todo on server"
-      (send-to-server "/todo-data" "PUSH" todo-item))
+      (send-to-server *todo-api-endpoint* "POST" todo-item))
 
     (defun send-updated-todo-item-to-server (todo-item)
       "save updated todo on server"
-      (send-to-server "/todo-data" "PUT" todo-item))
+      (send-to-server *todo-api-endpoint* "PUT" todo-item))
     
     (defun add-todo (evt)
       "add todo on client and server and re-render html elements"
@@ -33,7 +33,7 @@
                  (render-todo-list server-todo-list)
                  (setf todo-list server-todo-list)
                  t)))
-        (get-from-server "/todo-data" call-back)))
+        (get-from-server *todo-api-endpoint* call-back)))
 
     (defun update-todo (index todo-id)
       "update todo on client and server and re-render html elements"

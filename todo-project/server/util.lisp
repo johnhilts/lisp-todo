@@ -26,7 +26,12 @@ key points:
 
 (defun encode-plist-to-json-as-string (plist)
   "wrapper to cl-json's encode-json-plist-to-string to support JS false"
-  (string-replace (json:encode-json-plist-to-string plist) "\"done\":0," "\"done\":false,"))
+  (let ((json (json:encode-json-plist-to-string plist)))
+    (string-replace
+     (string-replace
+      json
+      "\"done\":0," "\"done\":false,")
+     "\"hideDoneItems\":0" "\"hideDoneItems\":false")))
 
 (defun encode-multiple-plists-to-json-as-string (plists)
   "wrapper to this app's encode-plist-to-json-as-string to support a list of plists"
@@ -59,8 +64,13 @@ key points:
     (car cur)
     (cdr cur))))
 
-(defun iterate-through-pairs (acc cur)
-  "iterate through plist pairs"
-  (append
-        acc
-        (list (reduce #'join-pairs cur :initial-value ()))))
+(defun fetch-or-create-data (file-path &optional call-back)
+  "read data from persistence store; call call back if provided"
+  (let ((data (read-complete-file file-path)))
+    (if call-back
+        (funcall call-back data)
+        data)))
+
+(defun convert-dotted-pair-to-plist (input)
+  "convert list of cons dotted pairs (input) to plist (app-specific format)"
+  (reduce #'join-pairs  input :initial-value ()))
