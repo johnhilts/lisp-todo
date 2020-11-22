@@ -43,16 +43,16 @@
       (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
              (parent-element todo-list-table-body)
              (column-header (chain document (get-element-by-id "todo-list-column-header")))
-             (count (length todo-list))
-             (use-plural-form (or (> 1 count) (= 0 count))))
+             (filtered-todos (chain todo-list (filter
+                                               #'(lambda (todo)
+                                                   (or (not (@ *app-settings* hide-done-items))
+                                                       (not (@ todo done)))))))
+             (count (length filtered-todos))
+             (use-plural-form (or (> count 1) (= 0 count))))
         (clear-children parent-element)
         (setf (chain column-header inner-text)
               (if use-plural-form "To-do Items" "To-do Item"))
-        (chain todo-list
-               (filter
-                #'(lambda (todo)
-                    (or (not (@ *app-settings* hide-done-items))
-                        (not (@ todo done)))))
+        (chain filtered-todos
                (map
                 #'(lambda (todo index)
                     (let ((todo-checkbox-id (+ *todo-checkbox* index))
@@ -86,7 +86,7 @@
                                    (update-todo-from-edit todo)
                                    (show-input-for todo false))
                                  t)
-                               (delete (todo)
+                               (delete-todo (todo)
                                  (delete-todo todo)
                                  (show-input-for todo false)
                                  t))
@@ -107,7 +107,7 @@
                               (span "  ")
                               (button (id . "(chain todo-save-button-id (to-string))") (hidden . "t") (onclick . "(save-input-for todo)") "Save")
                               (span "  ")
-                              (button (id . "(chain todo-delete-button-id (to-string))") (hidden . "t") (onclick . "(delete todo)") "Delete")))))
+                              (button (id . "(chain todo-delete-button-id (to-string))") (hidden . "t") (onclick . "(delete-todo todo)") "Delete")))))
                       t))))))
 
     (setf (chain window onload) init)))
