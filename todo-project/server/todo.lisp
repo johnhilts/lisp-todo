@@ -47,10 +47,9 @@
 
 (define-data-update-handler todo-data-delete (model)
   "delete todo by ID"
-  (let ((request-id (getf model :id)))
-    (when request-id
-      (let* ((delete-id (parse-integer request-id))
-             (existing-todos (fetch-or-create-todos))
+  (let ((delete-id (getf model :id)))
+    (when delete-id
+      (let* ((existing-todos (fetch-or-create-todos))
              (deleted-item-position (position-if #'(lambda (e) (= (getf e :id) delete-id)) existing-todos))
              (updated-todos (splice-and-remove-item-in-list existing-todos deleted-item-position)))
         (write-complete-file *todo-file-path* updated-todos)
