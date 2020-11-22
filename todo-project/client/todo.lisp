@@ -13,9 +13,9 @@
       "save updated todo on server"
       (send-to-server *todo-api-endpoint* "PUT" todo-item))
 
-    (defun delete-todo-item-on-server (delete-id)
+    (defun delete-todo-item-on-server (delete-id-object)
       "save updated todo on server"
-      (send-to-server *todo-api-endpoint* "DELETE" delete-id))
+      (send-to-server *todo-api-endpoint* "DELETE" delete-id-object))
     
     (defun add-todo (evt)
       "add todo on client and server and re-render html elements"
@@ -60,8 +60,8 @@
 
     (defun delete-todo-by-id (delete-id)
       "delete todo on client and server and re-render html elements"
-      (delete-todo-item-on-server delete-id)
-      (let ((delete-item-index todo-list.find-index(#'(lambda (todo) (= (@ todo id) delete-id)))))
+      (delete-todo-item-on-server (create id delete-id))
+      (let ((delete-item-index (chain todo-list (find-index #'(lambda (todo) (= (@ todo id) delete-id))))))
         (chain todo-list (splice delete-item-index 1)))
       (render-todo-list todo-list)
       t)))

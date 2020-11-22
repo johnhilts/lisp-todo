@@ -9,7 +9,7 @@
     (:post
      (todo-data-add raw-data))
     (:delete
-     (todo-data-delete id))
+     (todo-data-delete raw-data))
     (:get
      (todo-data-get id))))
 
