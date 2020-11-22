@@ -39,8 +39,8 @@
   "update todo data and persisted data"
   (let* ((update-id (getf model :id))
          (existing-todos (fetch-or-create-todos))
-         (non-update-todos (remove-if #'(lambda (e) (= update-id (getf e :id))) existing-todos))
-         (updated-todos (append (list model) non-update-todos)))
+         (updated-item-position (position-if #'(lambda (e) (= (getf e :id) update-id)) existing-todos))
+         (updated-todos (splice-and-replace-item-in-list existing-todos model updated-item-position)))
     
     (write-complete-file *todo-file-path* updated-todos)
     (json:encode-json-to-string (list update-id))))

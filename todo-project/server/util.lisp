@@ -1,6 +1,17 @@
 
 (in-package #:todo-project)
 
+(defun split-list (list first-part-length)
+  "split a list into 2 parts"
+  (list
+   (subseq list 0 first-part-length)
+   (subseq list first-part-length)))
+
+(defun splice-and-replace-item-in-list (list item-to-replace replace-item-position)
+  "splice list and replace item at position where splitting"
+  (let ((split-list (split-list list replace-item-position)))
+    (append (car split-list) (list item-to-replace) (cdadr split-list))))
+
 (defun string-replace (string search replace)
   "replace part of a string
 usage:
