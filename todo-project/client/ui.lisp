@@ -103,7 +103,7 @@
                                (for . "(chain todo-checkbox-id (to-string))")
                                (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")") "(@ todo text)")
                               (a (id . "(chain todo-anchor-id (to-string))") (onclick . "(show-input-for todo t)") "  ...")
-                              (textarea (id . "(chain todo-text-id (to-string))") (hidden . "t"))
+                              (textarea (id . "(chain todo-text-id (to-string))") (hidden . "t") (rows . "5") (cols . "100"))
                               (span "  ")
                               (button (id . "(chain todo-save-button-id (to-string))") (hidden . "t") (onclick . "(save-input-for todo)") "Save")
                               (span "  ")
