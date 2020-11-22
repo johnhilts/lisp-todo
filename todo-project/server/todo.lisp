@@ -28,14 +28,14 @@
       (get-todo (parse-integer id))
       (get-todo-list)))
 
-(define-data-update-handler todo-data-add ()
+(define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
   (let ((new-id (getf model :id))
         (existing-todos (fetch-or-create-todos)))
     (write-complete-file *todo-file-path* (append existing-todos (list model)))
     (json:encode-json-to-string (list new-id))))
 
-(define-data-update-handler todo-data-update ()
+(define-data-update-handler todo-data-update (model)
   "update todo data and persisted data"
   (let* ((update-id (getf model :id))
          (existing-todos (fetch-or-create-todos))

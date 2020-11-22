@@ -11,7 +11,7 @@
   "get app settings and convert to json"
   (encode-plist-to-json-as-string (fetch-or-create-app-settings)))
 
-(define-data-update-handler app-settings-data-update ()
+(define-data-update-handler app-settings-data-update (model)
   "persist updated app settings"
   (write-complete-file *app-settings-file-path* model)
   (json:encode-json-to-string model))
