@@ -18,7 +18,6 @@
                    :rel "stylesheet"
                    :href "/styles.css")
             (:script :type "text/javascript"
-                     (str (setup-client-info))
                      (str (jfh-web:define-ps-with-html-macro))
                      (str (share-server-side-constants))
                      (str (ajax))
