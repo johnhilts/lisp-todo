@@ -12,6 +12,11 @@
   (let ((split-list (split-list list replace-item-position)))
     (append (car split-list) (list item-to-replace) (cdadr split-list))))
 
+(defun splice-and-remove-item-in-list (list remove-item-position)
+  "splice list and remove item at position where splitting"
+  (let ((split-list (split-list list remove-item-position)))
+    (append (car split-list) (cdadr split-list))))
+
 (defun string-replace (string search replace)
   "replace part of a string
 usage:

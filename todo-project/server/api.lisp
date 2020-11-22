@@ -8,6 +8,8 @@
      (todo-data-update raw-data))
     (:post
      (todo-data-add raw-data))
+    (:delete
+     (todo-data-delete id))
     (:get
      (todo-data-get id))))
 

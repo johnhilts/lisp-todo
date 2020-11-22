@@ -28,6 +28,16 @@
       (get-todo (parse-integer id))
       (get-todo-list)))
 
+(defun todo-data-delete (id)
+  "delete todo by ID"
+  (when id
+    (let* ((delete-id (parse-integer id))
+           (existing-todos (fetch-or-create-todos))
+           (deleted-item-position (position-if #'(lambda (e) (= (getf e :id) delete-id)) existing-todos))
+           (updated-todos (splice-and-remove-item-in-list existing-todos deleted-item-position)))
+      (write-complete-file *todo-file-path* updated-todos)
+      (json:encode-json-to-string (list id)))))
+
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
   (let ((new-id (getf model :id))
