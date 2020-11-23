@@ -1,3 +1,4 @@
+;; remember to cd to the app directory!!
 (push #p"/home/jfh/code/lisp/source/util-lib/web/jfh-web/" asdf:*central-registry*)
 (push #p"/home/jfh/code/lisp/source/util-lib/testing/jfh-testing/" asdf:*central-registry*)
 (push #p"/home/jfh/code/lisp/source/util-lib/web/test/jfh-web-test/" asdf:*central-registry*)
@@ -7,3 +8,4 @@
 (asdf:load-system "jfh-testing")
 (asdf:load-system "jfh-web-test")
 (asdf:load-system "todo-project")
+(in-package #:todo-project)
