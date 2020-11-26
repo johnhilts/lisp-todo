@@ -100,6 +100,7 @@
                            (type . "checkbox")
                            (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
                            (checked . "(@ todo done)"))
+                          (span "  ")
                           (label
                            (id . "(chain todo-label-id (to-string))")
                            (for . "(chain todo-checkbox-id (to-string))")
