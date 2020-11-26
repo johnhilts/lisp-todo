@@ -10,9 +10,9 @@
 
     
 (define-for-ps get-from-server (the-url call-back)
-      "Do AJAX request using GET"
-      (let ((http-request (new (-x-m-l-http-request))))
-        (chain http-request (add-event-listener "load" call-back))
-        (chain http-request (open "GET" the-url))
-        (chain http-request (send)))
-      t)
+  "Do AJAX request using GET"
+  (let ((http-request (new (-x-m-l-http-request))))
+    (chain http-request (add-event-listener "load" call-back))
+    (chain http-request (open "GET" the-url))
+    (chain http-request (send)))
+  t)
