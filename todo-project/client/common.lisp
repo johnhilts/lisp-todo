@@ -9,5 +9,7 @@
            (ps
              (defun ,name (,@args)
                ,@body)))
-        `(unless (member ',name *registered-ps-functions*)
+        `(let ((function (member ',name *registered-ps-functions*)))
+           (when function
+             (remove (car (member ',name *registered-ps-functions*)) (remove (cadr (member ',name *registered-ps-functions*)) *registered-ps-functions*)))
            (setf (getf *registered-ps-functions* ',name) #',name))))
