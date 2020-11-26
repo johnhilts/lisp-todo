@@ -1,12 +1,13 @@
 
 (in-package #:todo-project)
 
-(defmacro defun-for-ps (name args &body body)
-  `(defun ,name ()
-     (ps
-       (defun ,name (,@args)
-         ,@body))))
+(defparameter *registered-ps-functions* ())
 
-(defun-for-ps my-test-function (arg1 arg2)
-  (let ((result (create field1 arg1 field2 arg2)))
-    result))
+(defmacro define-for-ps (name args &body body)
+  (list 'progn
+        `(defun ,name ()
+           (ps
+             (defun ,name (,@args)
+               ,@body)))
+        `(unless (member ',name *registered-ps-functions*)
+           (setf (getf *registered-ps-functions* ',name) #',name))))

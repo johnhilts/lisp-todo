@@ -1,4 +1,4 @@
-;; remember to cd to the app directory!!
+(swank:set-default-directory "/home/jfh/code/lisp/source/web/todo/todo-project/")
 (push #p"/home/jfh/code/lisp/source/util-lib/web/jfh-web/" asdf:*central-registry*)
 (push #p"/home/jfh/code/lisp/source/util-lib/testing/jfh-testing/" asdf:*central-registry*)
 (push #p"/home/jfh/code/lisp/source/util-lib/web/test/jfh-web-test/" asdf:*central-registry*)
