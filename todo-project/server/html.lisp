@@ -28,12 +28,11 @@
               (:script :type "text/javascript"
                        (str (jfh-web:define-ps-with-html-macro))
                        (str (share-server-side-constants))
-                       (dolist (e (invoke-registered-ps-functions))
-                         (str (funcall e)))
-                       (str (client-util))
                        (str (client-todo))
                        (str (client-app-settings))
-                       (str (client-ui))))
+                       (str (client-ui))
+                       (dolist (e (invoke-registered-ps-functions))
+                         (str (funcall e)))))
              (:body
               (:div :id "app-settings")
               (:div
