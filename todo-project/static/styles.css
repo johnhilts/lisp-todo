@@ -24,7 +24,7 @@ body {
 h1,
 h2,
 strong {
-    color: #333;
+    color: #ccc;
 }
 
 code,
@@ -46,7 +46,8 @@ a {
 }
 
 body {
-    color: #566b78;
+    background-color: #000;
+    color: #00FF00;
 }
 
 code,
@@ -60,3 +61,13 @@ pre {
     border-left: 2px solid #69c;
 }
 
+button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    // display: inline-block;
+    font-size: 16px;
+}
