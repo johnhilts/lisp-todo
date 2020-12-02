@@ -38,7 +38,7 @@
               (:div
                (:h1 "Todo List"
                     (:div
-                     (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
+                     (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100" :style "background-color:#eeeeee;")
                      (:button :id "todo-add-btn" "Add"))
                     (:div
                      (:table :id "todo-list"
