@@ -28,7 +28,7 @@ strong {
 }
 
 code,
-pre {
+pre-old {
     background: #eee;
 }
 
@@ -37,7 +37,7 @@ code {
     vertical-align: text-bottom;
 }
 
-pre {
+pre-old {
     padding: 1em;
 }
 
@@ -58,14 +58,18 @@ textarea {
 }
 
 code,
-pre {
+pre-old {
     background: #f5f7f9;
     border-bottom: 1px solid #d8dee9;
     color: #a7adba;
 }
 
-pre {
+pre-old {
     border-left: 2px solid #69c;
+}
+
+todo-pre {
+    display:inline;
 }
 
 button {

@@ -60,7 +60,8 @@
                       (todo-label-id (+ *todo-label* index))
                       (show-todo-edit-class-name (+ *show-todo-edit* index))
                       (hide-todo-edit-class-name (+ *hide-todo-edit* index))
-                      (todo-text-id (+ *todo-text* index)))
+                      (todo-text-id (+ *todo-text* index))
+                      (pre-style (if (@ todo done) "text-decoration: line-through;display:inline;" "display:inline;")))
                   (labels (
                            (show-input-for (todo show-edit)
                              "render text input for todo to edit it"
@@ -87,23 +88,25 @@
                         (tr
                          (td
                           (input
-                           (id . "(chain todo-checkbox-id (to-string))")
+                           (id . "(echo todo-checkbox-id)")
                            (type . "checkbox")
-                           (onclick . "(update-todo (chain index (to-string)) (@ todo id)))")
+                           (onclick . "(update-todo (echo index) (@ todo id)))")
                            (checked . "(@ todo done)")
-                           (class . "(chain hide-todo-edit-class-name (to-string))"))
+                           (class . "(echo hide-todo-edit-class-name)"))
                           (span "  ")
                           (label
-                           (id . "(chain todo-label-id (to-string))")
-                           (for . "(chain todo-checkbox-id (to-string))")
-                           (style . "(if (@ todo done) \"text-decoration: line-through;\" \"\")")
-                           (class . "(chain hide-todo-edit-class-name (to-string))") "(@ todo text)")
-                          (a (onclick . "(show-input-for todo t)") (class . "(chain hide-todo-edit-class-name (to-string))") "  ...")
-                          (textarea (id . "(chain todo-text-id (to-string))") (hidden . "t") (rows . "5") (cols . "100") (class . "(chain show-todo-edit-class-name (to-string))"))
+                           (id . "(echo todo-label-id)")
+                           (for . "(echo todo-checkbox-id)")
+                           (class . "(echo hide-todo-edit-class-name)")
+                           (pre
+                            (style . "(echo pre-style)")
+                            (class . "(echo hide-todo-edit-class-name)") "(@ todo text)"))
+                          (a (onclick . "(show-input-for todo t)") (class . "(echo hide-todo-edit-class-name)") "  ...")
+                          (textarea (id . "(echo todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(echo show-todo-edit-class-name)"))
+                          (span (br (ref . "(echo index)")))
+                          (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(echo show-todo-edit-class-name)") "Save")
                           (span "  ")
-                          (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(chain show-todo-edit-class-name (to-string))") "Save")
-                          (span "  ")
-                          (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(chain show-todo-edit-class-name (to-string))") "Delete")))))
+                          (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(echo show-todo-edit-class-name)") "Delete")))))
                   t))))))
 
 
