@@ -42,7 +42,7 @@
 
 (define-for-ps filter-todos ()
   (let* ((filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
-         (filtered-todos (chain todo-list (filter (lambda (todo) (>= (chain (@ todo text) (index-of filter-text)) 0))))))
+         (filtered-todos (chain todo-list (filter (lambda (todo) (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
     (render-todo-list filtered-todos))
   t)
 
@@ -51,9 +51,11 @@
   (let ((parent-element (chain document (get-element-by-id "todo-filter"))))
     (jfh-web::with-html-elements
         (div
-         (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Search"))
-         (span (br (ref . "br1")) (br (ref . "br2")))
-         (button (onclick . "(filter-todos)") "Filter"))))
+         (div
+          (span (br (ref . "br")))
+          (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here"))
+          (span "  ")
+          (button (onclick . "(filter-todos)") "Filter")))))
   t)
 
 (define-for-ps render-todo-list (todo-list)
