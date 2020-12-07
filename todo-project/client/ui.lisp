@@ -24,6 +24,7 @@
     
 (define-for-ps init ()
   "initialize html elements and JS objects on page load"
+  (render-todo-filter)
   (get-app-settings-from-server)
   (get-todo-list-from-server)
   (setf add-button (chain document
@@ -38,6 +39,22 @@
         (div
          (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
          (label (for . "hide-done") "Hide Done Items.")))))
+
+(define-for-ps filter-todos ()
+  (let* ((filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
+         (filtered-todos (chain todo-list (filter (lambda (todo) (>= (chain (@ todo text) (index-of filter-text)) 0))))))
+    (render-todo-list filtered-todos))
+  t)
+
+(define-for-ps render-todo-filter ()
+  "render html elements for todo filter"
+  (let ((parent-element (chain document (get-element-by-id "todo-filter"))))
+    (jfh-web::with-html-elements
+        (div
+         (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Search"))
+         (span (br (ref . "br1")) (br (ref . "br2")))
+         (button (onclick . "(filter-todos)") "Filter"))))
+  t)
 
 (define-for-ps render-todo-list (todo-list)
   "render html elements for todo list"
