@@ -4,4 +4,10 @@
 
 (import-macros-from-lisp 'with-html-elements)
 
-(start-web-app)
+
+(in-package #:cl-user)
+
+(defun main ()
+  (todo-project::start-web-app)
+  (sb-impl::toplevel-repl nil))
+

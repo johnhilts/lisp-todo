@@ -28,9 +28,8 @@
          (call-back #'(lambda (web-settings) (if web-settings web-settings default-web-settings))))
     (fetch-or-create-data *web-settings-file-path* call-back)))
 
-(start-server (getf (fetch-or-create-web-settings) :web-port))
-
 (defun start-web-app ()
   "start the web app"
+  (start-server (getf (fetch-or-create-web-settings) :web-port))
   (publish-static-content))
 
