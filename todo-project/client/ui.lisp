@@ -53,7 +53,7 @@
         (div
          (div
           (span (br (ref . "br")))
-          (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here"))
+          (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here") (value . "(@ *app-settings* filter-text)")))
           (span "  ")
           (button (onclick . "(filter-todos)") "Filter")))))
   t)
@@ -63,10 +63,13 @@
   (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
          (parent-element todo-list-table-body)
          (column-header (chain document (get-element-by-id "todo-list-column-header")))
+         (filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
          (filtered-todos (chain todo-list (filter
                                            #'(lambda (todo)
-                                               (or (not (@ *app-settings* hide-done-items))
-                                                   (not (@ todo done)))))))
+                                               (and
+                                                (or (not (@ *app-settings* hide-done-items))
+                                                    (not (@ todo done)))
+                                                (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
          (count (length filtered-todos))
          (use-plural-form (or (> count 1) (= 0 count))))
     (clear-children parent-element)

@@ -3,7 +3,7 @@
 (defun client-app-settings ()
   "define functions related to app settings"
   (ps
-    (defvar *app-settings* (create hide-done-items false))))
+    (defvar *app-settings* (create hide-done-items false filter-text ""))))
 
 (define-for-ps get-app-settings-from-server ()
   "define callback and make call to get app settings from server, then re-render html elements"
@@ -16,7 +16,9 @@
 
 (define-for-ps update-app-settings ()
   "update app settings on client and server and re-render html elements"
-  (let ((input-hide-done-items (@ (chain document (get-element-by-id "hide-done")) checked)))
+  (let ((input-hide-done-items (@ (chain document (get-element-by-id "hide-done")) checked))
+        (input-filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value)))
     (setf (@ *app-settings* hide-done-items) input-hide-done-items)
+    (setf (@ *app-settings* filter-text) input-filter-text)
     (send-to-server *app-settings-api-endpoint* "PUT" *app-settings*)
     (render-todo-list todo-list)))
