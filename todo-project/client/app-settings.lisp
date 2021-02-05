@@ -11,6 +11,7 @@
            (let ((server-app-settings (chain -j-s-o-n (parse (@ this response-text)))))
              (setf *app-settings* server-app-settings)
              (render-app-settings)
+             (render-todo-filter)
              t)))
     (get-from-server *app-settings-api-endpoint* call-back)))
 

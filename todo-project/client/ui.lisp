@@ -24,7 +24,6 @@
     
 (define-for-ps init ()
   "initialize html elements and JS objects on page load"
-  (render-todo-filter)
   (get-app-settings-from-server)
   (get-todo-list-from-server)
   (setf add-button (chain document
@@ -43,7 +42,8 @@
 (define-for-ps filter-todos ()
   (let* ((filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
          (filtered-todos (chain todo-list (filter (lambda (todo) (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
-    (render-todo-list filtered-todos))
+    (render-todo-list filtered-todos)
+    (update-app-settings))
   t)
 
 (define-for-ps render-todo-filter ()
@@ -54,8 +54,8 @@
          (div
           (span (br (ref . "br")))
           (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here") (value . "(@ *app-settings* filter-text)")))
-          (span "  ")
-          (button (onclick . "(filter-todos)") "Filter")))))
+         (span "  ")
+         (button (onclick . "(filter-todos)") "Filter"))))
   t)
 
 (define-for-ps render-todo-list (todo-list)
