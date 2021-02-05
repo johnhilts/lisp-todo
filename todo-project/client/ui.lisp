@@ -107,25 +107,25 @@
                         (tr
                          (td
                           (input
-                           (id . "(echo todo-checkbox-id)")
+                           (id . "(progn todo-checkbox-id)")
                            (type . "checkbox")
-                           (onclick . "(update-todo (echo index) (@ todo id)))")
+                           (onclick . "(update-todo (progn index) (@ todo id)))")
                            (checked . "(@ todo done)")
-                           (class . "(echo hide-todo-edit-class-name)"))
+                           (class . "(progn hide-todo-edit-class-name)"))
                           (span "  ")
                           (label
-                           (id . "(echo todo-label-id)")
-                           (for . "(echo todo-checkbox-id)")
-                           (class . "(echo hide-todo-edit-class-name)")
+                           (id . "(progn todo-label-id)")
+                           (for . "(progn todo-checkbox-id)")
+                           (class . "(progn hide-todo-edit-class-name)")
                            (pre
-                            (style . "(echo pre-style)")
-                            (class . "(echo hide-todo-edit-class-name)") "(@ todo text)"))
-                          (a (onclick . "(show-input-for todo t)") (class . "(echo hide-todo-edit-class-name)") "  ...")
-                          (textarea (id . "(echo todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(echo show-todo-edit-class-name)"))
-                          (span (br (ref . "(echo index)")))
-                          (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(echo show-todo-edit-class-name)") "Save")
+                            (style . "(progn pre-style)")
+                            (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
+                          (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
+                          (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
+                          (span (br (ref . "(progn index)")))
+                          (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
                           (span "  ")
-                          (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(echo show-todo-edit-class-name)") "Delete")))))
+                          (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete")))))
                   t))))))
 
 

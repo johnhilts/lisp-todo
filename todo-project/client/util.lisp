@@ -22,7 +22,3 @@
     (if (length id-list)
         (+ 1 (chain max-fn (apply null id-list)))
         1)))
-
-(define-for-ps echo (string)
-  "just echo back string ... convenience wrapper method"
-  (chain string (to-string)))
