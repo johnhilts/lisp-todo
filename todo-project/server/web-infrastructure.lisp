@@ -24,7 +24,7 @@
 
 (defun fetch-or-create-web-settings ()
   "read web-settings from persistence store; create default if doesn't exist yet"
-  (let* ((default-web-settings  (list :web-port 80))
+  (let* ((default-web-settings  (list :web-port 8080))
          (call-back #'(lambda (web-settings) (if web-settings web-settings default-web-settings))))
     (fetch-or-create-data *web-settings-file-path* call-back)))
 
