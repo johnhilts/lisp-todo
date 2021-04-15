@@ -103,7 +103,8 @@
                                (show-input-for todo false))
                              t)
                            (delete-todo (todo)
-                             (delete-todo-by-id (@ todo id))
+                             (when (confirm "Are you sure you want to remove this?")
+                               (delete-todo-by-id (@ todo id)))
                              (show-input-for todo false)
                              t))
                     (jfh-web::with-html-elements
