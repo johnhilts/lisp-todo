@@ -22,6 +22,7 @@
   (chain evt (prevent-default))
   (let* ((todo (chain document (get-element-by-id "todo-content")))
          (todo-text (chain todo value)))
+    ;; todo - it would be cool to make an "as-callback" macro that could be used here ... it would look like the "with-delay" macro I wrote for my nyxt tests!
     (flet ((call-back ()
              (let* ((next-id (get-next-index todo-list))
                     (todo-item  (create text todo-text done false id next-id)))
@@ -60,14 +61,14 @@
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
+  (get-todo-list-from-server)
   (render-todo-list todo-list)
   t)
 
 (define-for-ps delete-todo-by-id (delete-id)
   "delete todo on client and server and re-render html elements"
   (delete-todo-item-on-server (create id delete-id))
-  (let ((delete-item-index (chain todo-list (find-index #'(lambda (todo) (= (@ todo id) delete-id))))))
-    (chain todo-list (splice delete-item-index 1)))
+  (get-todo-list-from-server)
   (render-todo-list todo-list)
   t)
 
