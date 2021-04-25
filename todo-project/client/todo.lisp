@@ -5,6 +5,10 @@
   (ps
     (defvar todo-list ([]))))
 
+(ps
+  (defmacro with-callback (fn &body body)
+    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+
 (define-for-ps send-new-todo-item-to-server (todo-item)
   "save new todo on server"
   (send-to-server *todo-api-endpoint* "POST" todo-item))
@@ -13,16 +17,15 @@
   "save updated todo on server"
   (send-to-server *todo-api-endpoint* "PUT" todo-item))
 
-(define-for-ps delete-todo-item-on-server (delete-id-object)
+(define-for-ps delete-todo-item-on-server (delete-id-object call-back)
   "save updated todo on server"
-  (send-to-server *todo-api-endpoint* "DELETE" delete-id-object))
+  (send-to-server *todo-api-endpoint* "DELETE" delete-id-object call-back))
     
 (define-for-ps add-todo (evt)
   "add todo on client and server and re-render html elements"
   (chain evt (prevent-default))
   (let* ((todo (chain document (get-element-by-id "todo-content")))
          (todo-text (chain todo value)))
-    ;; todo - it would be cool to make an "as-callback" macro that could be used here ... it would look like the "with-delay" macro I wrote for my nyxt tests!
     (flet ((call-back ()
              (let* ((next-id (get-next-index todo-list))
                     (todo-item  (create text todo-text done false id next-id)))
@@ -31,8 +34,10 @@
                (render-todo-list todo-list)
                (send-new-todo-item-to-server todo-item))
              t))
-      (get-todo-list-from-server #'(lambda () (call-back todo todo-text)))
-      t)))
+      (with-callback
+          (get-todo-list-from-server)
+        (call-back todo todo-text))))
+  t)
 
 (define-for-ps get-todo-list-from-server (&optional optional-call-back)
   "define callback and get todo list from server and re-render html elements"
@@ -60,16 +65,17 @@
 
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
-  (send-updated-todo-item-to-server todo)
-  (get-todo-list-from-server)
-  (render-todo-list todo-list)
+  (get-todo-list-from-server #'(lambda () (send-updated-todo-item-to-server todo)))
   t)
 
+;; todo: revert all changes on this - we never "send everything back" when we do a delete, so all this business of getting the latest from the server first is unecessary
 (define-for-ps delete-todo-by-id (delete-id)
   "delete todo on client and server and re-render html elements"
-  (delete-todo-item-on-server (create id delete-id))
-  (get-todo-list-from-server)
-  (render-todo-list todo-list)
+  (with-callback
+      (delete-todo-item-on-server (create id delete-id))
+    (with-callback
+        (get-todo-list-from-server)
+      (render-todo-list todo-list)))
   t)
 
     
