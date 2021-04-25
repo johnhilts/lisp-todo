@@ -26,29 +26,26 @@
   (chain evt (prevent-default))
   (let* ((todo (chain document (get-element-by-id "todo-content")))
          (todo-text (chain todo value)))
-    (flet ((call-back ()
-             (let* ((next-id (get-next-index todo-list))
-                    (todo-item  (create text todo-text done false id next-id)))
-               (chain todo-list (push todo-item))
-               (clear-field todo)
-               (render-todo-list todo-list)
-               (send-new-todo-item-to-server todo-item))
-             t))
-      (with-callback
-          (get-todo-list-from-server)
-        (call-back todo todo-text))))
+    (with-callback
+        (get-todo-list-from-server)
+      (let* ((next-id (get-next-index todo-list))
+             (todo-item  (create text todo-text done false id next-id)))
+        (chain todo-list (push todo-item))
+        (clear-field todo)
+        (render-todo-list todo-list)
+        (send-new-todo-item-to-server todo-item))))
   t)
 
 (define-for-ps get-todo-list-from-server (&optional optional-call-back)
   "define callback and get todo list from server and re-render html elements"
-  (flet ((call-back ()
-           (let ((server-todo-list (chain -j-s-o-n (parse (@ this response-text)))))
-             (render-todo-list server-todo-list)
-             (setf todo-list server-todo-list)
-             (when optional-call-back
-               (optional-call-back))
-             t)))
-    (get-from-server *todo-api-endpoint* call-back)))
+  (with-callback
+      (get-from-server *todo-api-endpoint*)
+    (let ((server-todo-list (chain -j-s-o-n (parse (@ this response-text)))))
+      (render-todo-list server-todo-list)
+      (setf todo-list server-todo-list)
+      (when optional-call-back
+        (optional-call-back))))
+  t)
 
 (define-for-ps update-todo (index todo-id)
       "update todo on client and server and re-render html elements"
@@ -65,17 +62,15 @@
 
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
-  (get-todo-list-from-server #'(lambda () (send-updated-todo-item-to-server todo)))
+  (send-updated-todo-item-to-server todo)
+  (render-todo-list todo-list)
   t)
 
-;; todo: revert all changes on this - we never "send everything back" when we do a delete, so all this business of getting the latest from the server first is unecessary
 (define-for-ps delete-todo-by-id (delete-id)
   "delete todo on client and server and re-render html elements"
-  (with-callback
-      (delete-todo-item-on-server (create id delete-id))
-    (with-callback
-        (get-todo-list-from-server)
-      (render-todo-list todo-list)))
+  (delete-todo-item-on-server (create id delete-id))
+  (let ((delete-item-index (chain todo-list (find-index #'(lambda (todo) (= (@ todo id) delete-id))))))
+    (chain todo-list (splice delete-item-index 1)))
+  (render-todo-list todo-list)
   t)
-
     
