@@ -132,4 +132,78 @@
                           (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete")))))
                   t))))))
 
+(defun client-ui-recipe ()
+  "define client side UI functions"
+  (ps
 
+    (defparameter *recipe-list* "recipe-list")
+    (defparameter *recipe-entry* "recipe-entry")
+    (defparameter *recipe-details* "recipe-details")
+    ;; (defparameter *todo-label* "todo-label")
+    ;; (defparameter *show-todo-edit* "show-todo-edit")
+    ;; (defparameter *hide-todo-edit* "hide-todo-edit")
+    ;; (defparameter *todo-text* "todo-text")
+    
+    (setf (chain window onload) init-recipe)))
+
+(define-for-ps init-recipe ()
+  "initialize html elements and JS objects on page load"
+  ;; (get-app-settings-from-server)
+  ;; (get-todo-list-from-server)
+  ;; (setf add-button (chain document
+  ;;                         (get-element-by-id "todo-add-btn")))
+  ;; (chain add-button
+  ;;        (add-event-listener "click" add-todo false))
+  (render-recipe-menu))
+
+(define-for-ps get-recipe-sections ()
+  (let ((list-section (chain document (get-element-by-id *recipe-list*)))
+        (add-section (chain document (get-element-by-id *recipe-entry*)))
+        (detail-section (chain document (get-element-by-id *recipe-details*))))
+    (values list-section add-section detail-section)))
+
+(define-for-ps render-recipe-list ()
+  (multiple-value-bind
+        (list-section add-section detail-section)
+        (get-recipe-sections)
+        (setf (@ list-section hidden) nil
+              (@ add-section hidden) t
+              (@ detail-section hidden) t)))
+
+(define-for-ps render-recipe-add ()
+  (multiple-value-bind
+        (list-section add-section detail-section)
+      (get-recipe-sections)
+    (setf (@ list-section hidden) t
+          (@ add-section hidden) nil
+          (@ detail-section hidden) t)
+    (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
+           (parent-element recipe-entry-fields))
+      (jfh-web::with-html-elements
+          (p
+           (p
+            (input (type . "text") (id . "recipe-name") (placeholder . "Recipe Name")))
+           (p
+            (textarea (id . "recipe-ingredients") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
+           (p
+            (textarea (id . "recipe-steps") (placeholder . "Steps") (rows . "10") (cols . "100")))
+           (p
+            (button (onclick . "(add-recipe)") "Add Recipe"))))))
+  t)
+
+(define-for-ps render-section (section-name)
+  (case section-name
+    ("list"
+     (render-recipe-list))
+    ("add"
+     (render-recipe-add))
+    ("detail"
+     (render-recipe-detail))))
+
+(define-for-ps render-recipe-menu ()
+  (let* ((recipe-menu (chain document (get-element-by-id "recipe-menu")))
+         (parent-element recipe-menu))
+    (jfh-web::with-html-elements
+        (tr
+         (td (span (a (onclick . "(render-section 'list)") "List")))
+         (td (span (a (onclick . "(render-section 'add)") "Add")))))))

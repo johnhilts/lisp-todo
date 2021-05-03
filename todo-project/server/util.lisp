@@ -7,6 +7,24 @@
    (subseq list 0 first-part-length)
    (subseq list first-part-length)))
 
+(defun split-string-by (delimiter string)
+  (flet ((trim (string &optional return-type)
+           (let ((trimmed (string-trim '(#\Space) string)))
+             (if (zerop (length trimmed))
+                 (if (equal 'list return-type) () "")
+                 (if (equal 'list return-type) (list trimmed) trimmed)))))
+    (let ((delimiter-position (position delimiter string)))
+      (if delimiter-position
+          (let ((trimmed (trim (subseq string 0 delimiter-position)))
+                (split-next #'(lambda ()
+                                (split-string-by
+                                 delimiter
+                                 (subseq string (+ 1 delimiter-position))))))
+            (if (zerop (length trimmed))
+                (funcall split-next)
+                (cons trimmed (funcall split-next))))
+          (trim string 'list)))))
+
 (defun splice-and-replace-item-in-list (list item-to-replace replace-item-position)
   "splice list and replace item at position where splitting"
   (let ((split-list (split-list list replace-item-position)))
