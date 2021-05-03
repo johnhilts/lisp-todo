@@ -148,8 +148,7 @@
 
 (define-for-ps init-recipe ()
   "initialize html elements and JS objects on page load"
-  ;; (get-app-settings-from-server)
-  ;; (get-todo-list-from-server)
+  (get-recipe-list-from-server)
   ;; (setf add-button (chain document
   ;;                         (get-element-by-id "todo-add-btn")))
   ;; (chain add-button
