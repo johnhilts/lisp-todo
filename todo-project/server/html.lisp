@@ -108,9 +108,7 @@
         
         (:div :id "recipe-list"
               (:h1 "Recipe List")
-              (:div
-               (:p (:label "Recipe 1"))
-               (:p (:label "Recipe 2"))))
+              (:div :id "recipe-list-entries"))
         (:div :id "recipe-details" :hidden t
               (:h1 "Recipe 1")
               (:h2 "Ingredients")

@@ -148,12 +148,14 @@
 
 (define-for-ps init-recipe ()
   "initialize html elements and JS objects on page load"
-  (get-recipe-list-from-server)
-  ;; (setf add-button (chain document
-  ;;                         (get-element-by-id "todo-add-btn")))
-  ;; (chain add-button
-  ;;        (add-event-listener "click" add-todo false))
-  (render-recipe-menu))
+  (with-callback
+      (get-recipe-list-from-server)
+    ;; (setf add-button (chain document
+    ;;                         (get-element-by-id "todo-add-btn")))
+    ;; (chain add-button
+    ;;        (add-event-listener "click" add-todo false))
+    (render-recipe-menu)
+    (render-recipe-list)))
 
 (define-for-ps get-recipe-sections ()
   (let ((list-section (chain document (get-element-by-id *recipe-list*)))
@@ -164,10 +166,19 @@
 (define-for-ps render-recipe-list ()
   (multiple-value-bind
         (list-section add-section detail-section)
-        (get-recipe-sections)
-        (setf (@ list-section hidden) nil
-              (@ add-section hidden) t
-              (@ detail-section hidden) t)))
+      (get-recipe-sections)
+    (setf (@ list-section hidden) nil
+          (@ add-section hidden) t
+          (@ detail-section hidden) t)
+    (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
+           (parent-element recipe-list-entries))
+      (chain recipe-list
+             (map
+              #'(lambda (recipe)
+                  (jfh-web::with-html-elements
+                      (p
+                       (p (a (href . "#") "(@ recipe name)")))))))))
+  t)
 
 (define-for-ps render-recipe-add ()
   (multiple-value-bind
