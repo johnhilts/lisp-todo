@@ -114,11 +114,7 @@
               (:h2 "Ingredients")
               (:div :id "recipe-ingredients")
               (:h2 "Steps")
-              (:div
-               (:p
-                (:input :type "checkbox" "Step 1"))
-               (:p
-                (:input :type "checkbox" "Step 2"))))
+              (:div :id "recipe-steps"))
         (:div :id "recipe-entry" :hidden t
               (:h1 "Recipe Entry")
               (:div :id "recipe-entry-fields")))))))

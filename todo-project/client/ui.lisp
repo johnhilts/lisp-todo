@@ -206,17 +206,32 @@
 
 (define-for-ps render-recipe-detail ()
   (display-recipe-section *recipe-details*)
-  (let* ((recipe-ingredients (chain document (get-element-by-id "recipe-ingredients")))
-         (parent-element recipe-ingredients))
-    (clear-children parent-element)
-    (chain (@ (aref recipe-list 0) :ingredients)
-           (map
-            #'(lambda (ingredient index)
-                (let ((checkbox-id (concatenate 'string "ingredient-" index)))
-                  (jfh-web::with-html-elements
-                    (p
-                     (input (id . "(progn checkbox-id)") (type . "checkbox"))
-                     (label (for . "(progn checkbox-id)") ingredient))))))))
+  (flet ((display-ingredients ()
+           (let* ((recipe-ingredients (chain document (get-element-by-id "recipe-ingredients")))
+                  (parent-element recipe-ingredients))
+             (clear-children parent-element)
+             (chain (@ (aref recipe-list 0) :ingredients)
+                    (map
+                     #'(lambda (ingredient index)
+                         (let ((checkbox-id (concatenate 'string "ingredient-" index)))
+                           (jfh-web::with-html-elements
+                               (p
+                                (input (id . "(progn checkbox-id)") (type . "checkbox"))
+                                (label (for . "(progn checkbox-id)") ingredient)))))))))
+         (display-steps ()
+           (let* ((recipe-steps (chain document (get-element-by-id "recipe-steps")))
+                  (parent-element recipe-steps))
+             (clear-children parent-element)
+             (chain (@ (aref recipe-list 0) :steps)
+                    (map
+                     #'(lambda (step index)
+                         (let ((checkbox-id (concatenate 'string "step-" index)))
+                           (jfh-web::with-html-elements
+                               (p
+                                (input (id . "(progn checkbox-id)") (type . "checkbox"))
+                                (label (for . "(progn checkbox-id)") step))))))))))
+    (display-ingredients)
+    (display-steps))
   t)
 
 (define-for-ps render-section (section-name)
