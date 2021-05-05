@@ -172,6 +172,7 @@
           (@ detail-section hidden) t)
     (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
            (parent-element recipe-list-entries))
+      (clear-children parent-element)
       (chain recipe-list
              (map
               #'(lambda (recipe)
