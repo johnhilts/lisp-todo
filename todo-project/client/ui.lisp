@@ -163,43 +163,45 @@
         (detail-section (chain document (get-element-by-id *recipe-details*))))
     (values list-section add-section detail-section)))
 
-(define-for-ps render-recipe-list ()
+(define-for-ps can-hide-recipe-section (el1 el2-id)
+  (not (string= (@ el1 id) el2-id)))
+
+(define-for-ps display-recipe-section (section)
   (multiple-value-bind
         (list-section add-section detail-section)
       (get-recipe-sections)
-    (setf (@ list-section hidden) nil
-          (@ add-section hidden) t
-          (@ detail-section hidden) t)
-    (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
-           (parent-element recipe-list-entries))
-      (clear-children parent-element)
-      (chain recipe-list
-             (map
-              #'(lambda (recipe)
-                  (jfh-web::with-html-elements
-                      (p
-                       (p (a (href . "#") "(@ recipe name)")))))))))
+    (setf (@ list-section hidden) (can-hide-recipe-section list-section section)
+          (@ add-section hidden) (can-hide-recipe-section add-section section)
+          (@ detail-section hidden) (can-hide-recipe-section detail-section section)))
+  t)
+
+(define-for-ps render-recipe-list ()
+  (display-recipe-section *recipe-list*)
+  (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
+         (parent-element recipe-list-entries))
+    (clear-children parent-element)
+    (chain recipe-list
+           (map
+            #'(lambda (recipe)
+                (jfh-web::with-html-elements
+                    (p
+                     (p (a (href . "#") "(@ recipe name)"))))))))
   t)
 
 (define-for-ps render-recipe-add ()
-  (multiple-value-bind
-        (list-section add-section detail-section)
-      (get-recipe-sections)
-    (setf (@ list-section hidden) t
-          (@ add-section hidden) nil
-          (@ detail-section hidden) t)
-    (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
-           (parent-element recipe-entry-fields))
-      (jfh-web::with-html-elements
-          (p
-           (p
-            (input (type . "text") (id . "recipe-name") (placeholder . "Recipe Name")))
-           (p
-            (textarea (id . "recipe-ingredients") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
-           (p
-            (textarea (id . "recipe-steps") (placeholder . "Steps") (rows . "10") (cols . "100")))
-           (p
-            (button (onclick . "(add-recipe)") "Add Recipe"))))))
+  (display-recipe-section *recipe-entry*)
+  (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
+         (parent-element recipe-entry-fields))
+    (jfh-web::with-html-elements
+        (p
+         (p
+          (input (type . "text") (id . "recipe-name") (placeholder . "Recipe Name")))
+         (p
+          (textarea (id . "recipe-ingredients") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
+         (p
+          (textarea (id . "recipe-steps") (placeholder . "Steps") (rows . "10") (cols . "100")))
+         (p
+          (button (onclick . "(add-recipe)") "Add Recipe")))))
   t)
 
 (define-for-ps render-section (section-name)
