@@ -204,6 +204,21 @@
           (button (onclick . "(add-recipe)") "Add Recipe")))))
   t)
 
+(define-for-ps render-recipe-detail ()
+  (display-recipe-section *recipe-details*)
+  (let* ((recipe-ingredients (chain document (get-element-by-id "recipe-ingredients")))
+         (parent-element recipe-ingredients))
+    (clear-children parent-element)
+    (chain (@ (aref recipe-list 0) :ingredients)
+           (map
+            #'(lambda (ingredient index)
+                (let ((checkbox-id (concatenate 'string "ingredient-" index)))
+                  (jfh-web::with-html-elements
+                    (p
+                     (input (id . "(progn checkbox-id)") (type . "checkbox"))
+                     (label (for . "(progn checkbox-id)") ingredient))))))))
+  t)
+
 (define-for-ps render-section (section-name)
   (case section-name
     ("list"
