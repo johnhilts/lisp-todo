@@ -110,7 +110,7 @@
               (:h1 "Recipe List")
               (:div :id "recipe-list-entries"))
         (:div :id "recipe-details" :hidden t
-              (:h1 "Recipe 1")
+              (:div :id "recipe-detail-name")
               (:h2 "Ingredients")
               (:div :id "recipe-ingredients")
               (:h2 "Steps")

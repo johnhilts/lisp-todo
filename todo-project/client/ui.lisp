@@ -185,7 +185,7 @@
             #'(lambda (recipe)
                 (jfh-web::with-html-elements
                     (p
-                     (p (a (href . "#") "(@ recipe name)"))))))))
+                     (p (a (onclick . "(alert \"detail!\")") "(@ recipe name)"))))))))
   t)
 
 (define-for-ps render-recipe-add ()
@@ -204,13 +204,21 @@
           (button (onclick . "(add-recipe)") "Add Recipe")))))
   t)
 
-(define-for-ps render-recipe-detail ()
+(define-for-ps render-recipe-detail (recipe-id)
   (display-recipe-section *recipe-details*)
-  (flet ((display-ingredients ()
+  (flet ((display-name ()
+           (let* ((recipe-name (chain document (get-element-by-id "recipe-detail-name")))
+                  (parent-element recipe-name)
+                  (name (@ (aref recipe-list recipe-id) :name)))
+             (clear-children parent-element)
+             (jfh-web::with-html-elements
+                 (div
+                  (h2 name)))))
+         (display-ingredients ()
            (let* ((recipe-ingredients (chain document (get-element-by-id "recipe-ingredients")))
                   (parent-element recipe-ingredients))
              (clear-children parent-element)
-             (chain (@ (aref recipe-list 0) :ingredients)
+             (chain (@ (aref recipe-list recipe-id) :ingredients)
                     (map
                      #'(lambda (ingredient index)
                          (let ((checkbox-id (concatenate 'string "ingredient-" index)))
@@ -222,7 +230,7 @@
            (let* ((recipe-steps (chain document (get-element-by-id "recipe-steps")))
                   (parent-element recipe-steps))
              (clear-children parent-element)
-             (chain (@ (aref recipe-list 0) :steps)
+             (chain (@ (aref recipe-list recipe-id) :steps)
                     (map
                      #'(lambda (step index)
                          (let ((checkbox-id (concatenate 'string "step-" index)))
@@ -230,6 +238,7 @@
                                (p
                                 (input (id . "(progn checkbox-id)") (type . "checkbox"))
                                 (label (for . "(progn checkbox-id)") step))))))))))
+    (display-name)
     (display-ingredients)
     (display-steps))
   t)
@@ -249,4 +258,5 @@
     (jfh-web::with-html-elements
         (tr
          (td (span (a (onclick . "(render-section 'list)") "List")))
+         (td #\Space #\Space #\Space)
          (td (span (a (onclick . "(render-section 'add)") "Add")))))))
