@@ -183,9 +183,10 @@
     (chain recipe-list
            (map
             #'(lambda (recipe)
-                (jfh-web::with-html-elements
-                    (p
-                     (p (a (onclick . "(alert \"detail!\")") "(@ recipe name)"))))))))
+                (let ((recipe-id (@ recipe id)))
+                  (jfh-web::with-html-elements
+                      (p
+                       (p (a (onclick . "(render-recipe-detail recipe-id)") "(@ recipe name)")))))))))
   t)
 
 (define-for-ps render-recipe-add ()
