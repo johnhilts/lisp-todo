@@ -66,6 +66,9 @@
           (t
            (require-authorization)))))
 
+(defun get-version ()
+  "0.5")
+
 (define-easy-handler (version-page :uri "/version") ()
   (with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
@@ -76,7 +79,7 @@
                    :href "/styles.css"))
      (:body
       (:div "Version")
-      (:div "0.3")))))
+      (:div (str (get-version)))))))
 
 (define-easy-handler (recipe-page :uri "/recipe") ()
   (flet  ((invoke-registered-ps-functions ()
