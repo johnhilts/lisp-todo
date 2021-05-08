@@ -37,5 +37,5 @@
             (send-new-recipe-item-to-server recipe-item)
           (with-callback
               (get-recipe-list-from-server)
-            (render-section 'list))))))
+            (render-recipe-list))))))
   t)
