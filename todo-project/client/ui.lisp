@@ -215,49 +215,28 @@
              (jfh-web::with-html-elements
                  (div
                   (h2 name)))))
-         (display-ingredients ()
-           (let* ((recipe-ingredients (chain document (get-element-by-id "recipe-ingredients")))
-                  (parent-element recipe-ingredients))
+         (display-recipe-items (list-type)
+           (let* ((recipe-items (chain document (get-element-by-id (+ "recipe-" list-type))))
+                  (parent-element recipe-items))
              (clear-children parent-element)
-             (chain (@ (aref recipe-list recipe-id) :ingredients)
+             (chain (getprop (aref recipe-list recipe-id) list-type)
                     (map
-                     #'(lambda (ingredient index)
-                         (let ((checkbox-id (concatenate 'string "ingredient-" index)))
+                     #'(lambda (item index)
+                         (let ((checkbox-id (+ list-type "-" index)))
                            (jfh-web::with-html-elements
                                (p
                                 (input (id . "(progn checkbox-id)") (type . "checkbox"))
-                                (label (for . "(progn checkbox-id)") ingredient)))))))))
-         (display-steps ()
-           (let* ((recipe-steps (chain document (get-element-by-id "recipe-steps")))
-                  (parent-element recipe-steps))
-             (clear-children parent-element)
-             (chain (@ (aref recipe-list recipe-id) :steps)
-                    (map
-                     #'(lambda (step index)
-                         (let ((checkbox-id (concatenate 'string "step-" index)))
-                           (jfh-web::with-html-elements
-                               (p
-                                (input (id . "(progn checkbox-id)") (type . "checkbox"))
-                                (label (for . "(progn checkbox-id)") step))))))))))
+                                (label (for . "(progn checkbox-id)") item))))))))))
     (display-name)
-    (display-ingredients)
-    (display-steps))
+    (display-recipe-items :ingredients)
+    (display-recipe-items :steps))
   t)
-
-(define-for-ps render-section (section-name)
-  (case section-name
-    ("list"
-     (render-recipe-list))
-    ("add"
-     (render-recipe-add))
-    ("detail"
-     (render-recipe-detail))))
 
 (define-for-ps render-recipe-menu ()
   (let* ((recipe-menu (chain document (get-element-by-id "recipe-menu")))
          (parent-element recipe-menu))
     (jfh-web::with-html-elements
         (tr
-         (td (span (a (onclick . "(render-section 'list)") "List")))
+         (td (span (a (onclick . "(render-recipe-list)") "List")))
          (td #\Space #\Space #\Space)
-         (td (span (a (onclick . "(render-section 'add)") "Add")))))))
+         (td (span (a (onclick . "(render-recipe-add)") "Add")))))))
