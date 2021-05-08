@@ -26,8 +26,8 @@
   "add recipe on client and server and re-render html elements"
   (chain evt (prevent-default))
   (let* ((recipe-name (chain (chain document (get-element-by-id "recipe-name")) value))
-         (recipe-ingredients (chain (chain document (get-element-by-id "recipe-ingredients")) value))
-         (recipe-steps (chain (chain document (get-element-by-id "recipe-steps")) value)))
+         (recipe-ingredients (chain (chain document (get-element-by-id "recipe-ingredients-entry")) value))
+         (recipe-steps (chain (chain document (get-element-by-id "recipe-steps-entry")) value)))
     (with-callback
         (get-recipe-list-from-server)
       (let* ((next-id (get-next-index recipe-list))

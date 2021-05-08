@@ -1,9 +1,5 @@
 (in-package #:todo-project)
 
-(ps
-  (defmacro with-callback (fn &body body)
-    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
-
 (defun share-server-side-constants ()
   "feed server side constants to parenscript"
   (ps

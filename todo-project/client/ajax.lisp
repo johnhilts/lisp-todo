@@ -1,5 +1,9 @@
 (in-package #:todo-project)
 
+(ps
+  (defmacro with-callback (fn &body body)
+    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+
 (define-for-ps send-to-server (the-url http-method data &optional call-back)
   "Do AJAX request using POST or PUT"
   (let ((xml-http (new (-x-m-l-http-request))))

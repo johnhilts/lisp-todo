@@ -76,7 +76,7 @@
                    :href "/styles.css"))
      (:body
       (:div "Version")
-      (:div "0.2")))))
+      (:div "0.3")))))
 
 (define-easy-handler (recipe-page :uri "/recipe") ()
   (flet  ((invoke-registered-ps-functions ()

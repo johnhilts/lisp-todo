@@ -193,24 +193,29 @@
   (display-recipe-section *recipe-entry*)
   (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
          (parent-element recipe-entry-fields))
+    (clear-children parent-element)
     (jfh-web::with-html-elements
         (p
          (p
           (input (type . "text") (id . "recipe-name") (placeholder . "Recipe Name")))
          (p
-          (textarea (id . "recipe-ingredients") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
+          (textarea (id . "recipe-ingredients-entry") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
          (p
-          (textarea (id . "recipe-steps") (placeholder . "Steps") (rows . "10") (cols . "100")))
+          (textarea (id . "recipe-steps-entry") (placeholder . "Steps") (rows . "10") (cols . "100")))
          (p
           (button (onclick . "(add-recipe)") "Add Recipe")))))
   t)
+
+(define-for-ps get-recipe-by-id (recipe-id)
+  (let ((recipe-index (chain recipe-list (find-index #'(lambda (recipe) (= recipe-id (@ recipe id)))))))
+    (aref recipe-list recipe-index)))
 
 (define-for-ps render-recipe-detail (recipe-id)
   (display-recipe-section *recipe-details*)
   (flet ((display-name ()
            (let* ((recipe-name (chain document (get-element-by-id "recipe-detail-name")))
                   (parent-element recipe-name)
-                  (name (@ (aref recipe-list recipe-id) :name)))
+                  (name (@ (get-recipe-by-id recipe-id) :name)))
              (clear-children parent-element)
              (jfh-web::with-html-elements
                  (div
@@ -219,7 +224,7 @@
            (let* ((recipe-items (chain document (get-element-by-id (+ "recipe-" list-type))))
                   (parent-element recipe-items))
              (clear-children parent-element)
-             (chain (getprop (aref recipe-list recipe-id) list-type)
+             (chain (getprop (get-recipe-by-id recipe-id) list-type)
                     (map
                      #'(lambda (item index)
                          (let ((checkbox-id (+ list-type "-" index)))
