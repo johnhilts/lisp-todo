@@ -50,6 +50,62 @@
   "HTTP endpoint for todo list"
   (make-todo-page))
 
+(defconstant +auth-token+ "abc123")
+
+(defun is-authenticated ()
+  (flet
+      ((logged-in ()
+         (multiple-value-bind (user password)
+             (authorization)
+           (and
+            (equal user "nanook")
+            (equal password "igloo")))))
+    (or
+     (session-value 'the-session)
+     (logged-in))))
+
+(define-easy-handler (signin-page :uri "/sign-in") (user password)
+  (if
+   (and
+    (equal user "nanook")
+    (equal password "igloo"))
+   (progn
+     (setf (session-value 'the-session) +auth-token+)
+     (redirect "/admin"))
+   (with-html-output-to-string
+       (*standard-output* nil :prologue t :indent t)
+     (:html
+      (:head (:title "Auth Failure"))
+      (:body
+       (:h2 "Authorization failed!")
+       (:div "User or password didn't match"
+             (:a :href "/auth" "Click here to try again!")))))))
+
+(define-easy-handler (authenticate-page :uri "/auth") ()
+  (with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:html
+     (:head (:title "Auth"))
+     (:body
+      (:h2 "Use this page to sign-in!")
+      (:form :method "post" :action "sign-in"
+             (:div
+              (:div (:input :name "user" :type "text" :placeholder "Login"))
+              (:div (:input :name "password" :type "password" :placeholder "Password"))
+              (:div (:button "Login"))))))))
+
+(define-easy-handler (admin-page :uri "/admin") ()
+  "dummy admin page"
+  (if (is-authenticated)
+      (with-html-output-to-string
+          (*standard-output* nil :prologue t :indent t)
+        (:html
+         (:head (:title "Admin"))
+         (:body
+          (:h2 "Welcome to the Admin Page!")
+          (:div "You're supposed to be logged in to see this!"))))
+      (require-authorization)))
+
 (define-easy-handler (login-page :uri "/login") ()
   "HTTP endpoint for logging in"
   (multiple-value-bind (user password)
