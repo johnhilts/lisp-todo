@@ -94,6 +94,11 @@
               (:div (:input :name "password" :type "password" :placeholder "Password"))
               (:div (:button "Login"))))))))
 
+(define-easy-handler (logout-page :uri "/logout") ()
+  "logout endpoint"
+  (delete-session-value 'the-session)
+  (redirect "/auth"))
+
 (define-easy-handler (admin-page :uri "/admin") ()
   "dummy admin page"
   (if (is-authenticated)
@@ -103,7 +108,9 @@
          (:head (:title "Admin"))
          (:body
           (:h2 "Welcome to the Admin Page!")
-          (:div "You're supposed to be logged in to see this!"))))
+          (:div "You're supposed to be logged in to see this!")
+          (:div
+           (:a :href "/logout" "Click here to logout!")))))
       (require-authorization)))
 
 (define-easy-handler (login-page :uri "/login") ()
