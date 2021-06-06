@@ -79,7 +79,7 @@
       (:body
        (:h2 "Authorization failed!")
        (:div "User or password didn't match"
-             (:a :href "/auth" "Click here to try again!")))))))
+             (:a :href "/login" "Click here to try again!")))))))
 
 (define-easy-handler (login-page :uri "/login") ()
   (with-html-output-to-string
@@ -99,19 +99,23 @@
   (delete-session-value 'the-session)
   (redirect "/login"))
 
-(define-easy-handler (admin-page :uri "/admin") ()
-  "dummy admin page"
-  (if (is-authenticated)
-      (with-html-output-to-string
-          (*standard-output* nil :prologue t :indent t)
-        (:html
-         (:head (:title "Admin"))
-         (:body
-          (:h2 "Welcome to the Admin Page!")
-          (:div "You're supposed to be logged in to see this!")
-          (:div
-           (:a :href "/logout" "Click here to logout!")))))
-      (redirect "/login")))
+(defmacro define-protected-page (name end-point params &body body)
+  `(define-easy-handler (,name :uri ,end-point) (,@params)
+     "macro to DRY pages requiring authentication"
+     (if (is-authenticated)
+         ,@body
+         (redirect "/login"))))
+
+(define-protected-page admin-page "/admin" ()
+  (with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:html
+     (:head (:title "Admin"))
+     (:body
+      (:h2 "Welcome to the Admin Page!")
+      (:div "You're supposed to be logged in to see this!")
+      (:div
+       (:a :href "/logout" "Click here to logout!"))))))
 
 (defun get-version ()
   "0.5")
