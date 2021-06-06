@@ -64,14 +64,14 @@
      (session-value 'the-session)
      (logged-in))))
 
-(define-easy-handler (authenticate :uri "/auth") (user password)
+(define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
   (if
    (and
     (equal user "nanook")
     (equal password "igloo"))
    (progn
      (setf (session-value 'the-session) +auth-token+)
-     (redirect "/admin"))
+     (redirect redirect-back-to))
    (with-html-output-to-string
        (*standard-output* nil :prologue t :indent t)
      (:html
@@ -81,7 +81,7 @@
        (:div "User or password didn't match"
              (:a :href "/login" "Click here to try again!")))))))
 
-(define-easy-handler (login-page :uri "/login") ()
+(define-easy-handler (login-page :uri "/login") (redirect-back-to)
   (with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
@@ -89,6 +89,7 @@
      (:body
       (:h2 "Use this page to sign-in!")
       (:form :method "post" :action "auth"
+             (:input :type "hidden" :name "redirect-back-to" :value redirect-back-to)
              (:div
               (:div (:input :name "user" :type "text" :placeholder "Login"))
               (:div (:input :name "password" :type "password" :placeholder "Password"))
@@ -104,7 +105,7 @@
      "macro to DRY pages requiring authentication"
      (if (is-authenticated)
          ,@body
-         (redirect "/login"))))
+         (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))
 
 (define-protected-page admin-page "/admin" ()
   (with-html-output-to-string
