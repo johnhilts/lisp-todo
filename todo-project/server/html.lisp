@@ -64,7 +64,7 @@
      (session-value 'the-session)
      (logged-in))))
 
-(define-easy-handler (signin-page :uri "/sign-in") (user password)
+(define-easy-handler (authenticate :uri "/auth") (user password)
   (if
    (and
     (equal user "nanook")
@@ -81,14 +81,14 @@
        (:div "User or password didn't match"
              (:a :href "/auth" "Click here to try again!")))))))
 
-(define-easy-handler (authenticate-page :uri "/auth") ()
+(define-easy-handler (login-page :uri "/login") ()
   (with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
-     (:head (:title "Auth"))
+     (:head (:title "Login"))
      (:body
       (:h2 "Use this page to sign-in!")
-      (:form :method "post" :action "sign-in"
+      (:form :method "post" :action "auth"
              (:div
               (:div (:input :name "user" :type "text" :placeholder "Login"))
               (:div (:input :name "password" :type "password" :placeholder "Password"))
@@ -97,7 +97,7 @@
 (define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
   (delete-session-value 'the-session)
-  (redirect "/auth"))
+  (redirect "/login"))
 
 (define-easy-handler (admin-page :uri "/admin") ()
   "dummy admin page"
@@ -111,23 +111,7 @@
           (:div "You're supposed to be logged in to see this!")
           (:div
            (:a :href "/logout" "Click here to logout!")))))
-      (require-authorization)))
-
-(define-easy-handler (login-page :uri "/login") ()
-  "HTTP endpoint for logging in"
-  (multiple-value-bind (user password)
-      (authorization)
-    (cond ((and (equal user "nanook")
-                (equal password "igloo"))
-           (with-html-output-to-string
-               (*standard-output* nil :prologue t :indent t)
-             (:html
-              (:head (:title "Hunchentoot page with Basic Authentication"))
-              (:body
-               (:h2 "Hunchentoot page with Basic Authentication")
-               (:div "You're logged in!")))))
-          (t
-           (require-authorization)))))
+      (redirect "/login")))
 
 (defun get-version ()
   "0.5")
