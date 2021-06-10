@@ -108,3 +108,18 @@ key points:
 (defun convert-dotted-pair-to-plist (input)
   "convert list of cons dotted pairs (input) to plist (app-specific format)"
   (reduce #'join-pairs  input :initial-value ()))
+
+(defun generate-unique-token ()
+  "- first 7 digits (get-universal-time)
+   - dash
+   - random 5 digit number
+   - dash
+   - first 7 digits (reverse (get-universal-time))
+   - dash
+   - another random 5 digit number"
+  (concatenate
+   'string
+   (subseq (write-to-string (get-universal-time)) 0 7) "-"
+   (format nil "~5,'0d" (random (- (expt 10 5) 1))) "-"
+   (subseq (reverse (write-to-string (get-universal-time))) 0 7) "-"
+   (format nil "~5,'0d" (random (- (expt 10 5) 1)))))
