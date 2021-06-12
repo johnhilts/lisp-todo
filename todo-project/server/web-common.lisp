@@ -29,18 +29,18 @@
         `(defclass ,class-name ()
            ,class-slots)))))
 
+(defmacro populate-info-object (name &rest slots)
+  (flet ((get-setter (slot)
+           (let ((expression (read-from-string (concatenate 'string "((" (string name) "-" (string slot) " " (string name) ") " (string slot) ")"))))
+             (car `((setf ,(car expression) ,(cadr expression)))))))
+    (let ((object-name  (read-from-string (string name)))
+          (setters (mapcar #'get-setter slots)))
+      `(progn
+         ,@setters
+         ,object-name))))
+
 (defmethod get-parsed-date ((date date-info))
   (multiple-value-bind
         (second minute hour day month year day-of-the-week daylight-p zone)
       (decode-universal-time (get-universal-time))
-    (setf (date-second date) second)
-    (setf (date-minute date) minute)
-    (setf (date-hour date) hour)
-    (setf (date-day date) day)
-    (setf (date-month date) month)
-    (setf (date-year date) year)
-    (setf (date-day-of-the-week date) day-of-the-week)
-    (setf (date-daylight-p date) daylight-p)
-    (setf (date-zone date) zone)
-    date))
-
+    (populate-info-object date second minute hour day month year day-of-the-week daylight-p zone)))
