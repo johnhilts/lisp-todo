@@ -14,3 +14,33 @@
     `(defun ,name (raw-data)
        (let ((,model-name (convert-dotted-pair-to-plist (json:decode-json-from-string raw-data))))
          ,@body))))
+
+(defmacro define-info-class (name &rest slots)
+  (labels ((make-slot (name slot)
+             (read-from-string
+              (concatenate 'string (string name) "-" (string slot)))))
+    (flet ((make-slot-list-item (slot)
+             (list slot :accessor (make-slot name slot)))
+           (make-name (name)
+             (read-from-string
+              (concatenate 'string (string name) "-info"))))      
+      (let* ((class-name (make-name name))
+             (class-slots (mapcar #'make-slot-list-item slots)))
+        `(defclass ,class-name ()
+           ,class-slots)))))
+
+(defmethod get-parsed-date ((date date-info))
+  (multiple-value-bind
+        (second minute hour day month year day-of-the-week daylight-p zone)
+      (decode-universal-time (get-universal-time))
+    (setf (date-second date) second)
+    (setf (date-minute date) minute)
+    (setf (date-hour date) hour)
+    (setf (date-day date) day)
+    (setf (date-month date) month)
+    (setf (date-year date) year)
+    (setf (date-day-of-the-week date) day-of-the-week)
+    (setf (date-daylight-p date) daylight-p)
+    (setf (date-zone date) zone)
+    date))
+
