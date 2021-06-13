@@ -110,16 +110,25 @@ key points:
   (reduce #'join-pairs  input :initial-value ()))
 
 (defun generate-unique-token ()
-  "- first 7 digits (get-universal-time)
-   - dash
-   - random 5 digit number
-   - dash
-   - first 7 digits (reverse (get-universal-time))
-   - dash
-   - another random 5 digit number"
-  (concatenate
-   'string
-   (subseq (write-to-string (get-universal-time)) 0 7) "-"
-   (format nil "~5,'0d" (random (- (expt 10 5) 1))) "-"
-   (subseq (reverse (write-to-string (get-universal-time))) 0 7) "-"
-   (format nil "~5,'0d" (random (- (expt 10 5) 1)))))
+  "create a token based on the date and RANDOM"
+  (flet ((coalesce (original coalesced)
+           (if (zerop original) coalesced original)))
+    (let* ((date (get-parsed-date (make-instance 'date-info)))
+           (hour (coalesce (date-hour date) (1+ (random 24))))
+           (minute (coalesce (date-minute date) (1+ (random 60))))
+           (second (coalesce (date-second date) (1+ (random 60))))
+           (salt (random (* hour minute second)))
+           (date-based-random-number (concatenate 'string
+                                                  (write-to-string (* salt (date-month date)))
+                                                  (write-to-string (* salt (date-day date)))
+                                                  (write-to-string (* salt (date-day-of-the-week date)))
+                                                  (write-to-string (* salt (date-zone date)))
+                                                  (write-to-string (date-hour date))
+                                                  (write-to-string (date-minute date))
+                                                  (write-to-string (date-second date)))))
+      (concatenate
+       'string
+       (subseq date-based-random-number 0 7) "-"
+       (format nil "~5,'0d" (random (- (expt 10 5) 1))) "-"
+       (subseq (reverse date-based-random-number) 0 7) "-"
+       (format nil "~5,'0d" (random (- (expt 10 5) 1)))))))

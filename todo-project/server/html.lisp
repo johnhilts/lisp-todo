@@ -60,6 +60,7 @@
            (and
             (equal user "nanook")
             (equal password "igloo")))))
+    (format t "~&logged in: ~a, session value: ~a~%" (logged-in) (session-value 'the-session))
     (or
      (session-value 'the-session)
      (logged-in))))
@@ -71,6 +72,7 @@
     (equal password "igloo"))
    (progn
      (setf (session-value 'the-session) +auth-token+)
+     (set-cookie (string 'the-session) :value +auth-token+ :secure t :http-only t)
      (redirect redirect-back-to))
    (with-html-output-to-string
        (*standard-output* nil :prologue t :indent t)
@@ -97,7 +99,9 @@
 
 (define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
+  (format t "~&www-authorization: ~a, authorization: *** ~a ***~%" (header-out :www-authenticate)(header-out "authorization"))
   (delete-session-value 'the-session)
+  (setf (header-out :www-authenticate) nil)
   (redirect "/login"))
 
 (defmacro define-protected-page (name end-point params &body body)
