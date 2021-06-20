@@ -118,17 +118,16 @@ key points:
            (minute (coalesce (date-minute date) (1+ (random 60))))
            (second (coalesce (date-second date) (1+ (random 60))))
            (salt (random (* hour minute second)))
-           (date-based-random-number (concatenate 'string
-                                                  (write-to-string (* salt (date-month date)))
-                                                  (write-to-string (* salt (date-day date)))
-                                                  (write-to-string (* salt (date-day-of-the-week date)))
-                                                  (write-to-string (* salt (date-zone date)))
-                                                  (write-to-string (date-hour date))
-                                                  (write-to-string (date-minute date))
-                                                  (write-to-string (date-second date)))))
-      (concatenate
-       'string
-       (subseq date-based-random-number 0 7) "-"
-       (format nil "~5,'0d" (random (- (expt 10 5) 1))) "-"
-       (subseq (reverse date-based-random-number) 0 7) "-"
-       (format nil "~5,'0d" (random (- (expt 10 5) 1)))))))
+           (date-based-random-number (format nil "~s~s~d~s~s~s~s"
+                                             (* salt (date-month date))
+                                             (* salt (date-day date))
+                                             (* salt (date-day-of-the-week date))
+                                             (* salt (date-zone date))
+                                             (date-hour date)
+                                             (date-minute date)
+                                             (date-second date))))
+      (format nil "~a-~a-~a-~a"
+              (subseq date-based-random-number 0 7)
+              (format nil "~5,'0d" (random (- (expt 10 5) 1)))
+              (subseq (reverse date-based-random-number) 0 7)
+              (format nil "~5,'0d" (random (- (expt 10 5) 1)))))))
