@@ -39,6 +39,15 @@
          ,@setters
          ,object-name))))
 
+(defmacro object-to-list (name &rest slots)
+  (flet ((access-slots (slot)
+           (read-from-string (format nil "(~a-~a ~a-info)" name slot name))))
+    (let* ((hydrate-name (read-from-string (format nil "hydrate-~a-info" name)))
+           (object-name (read-from-string (format nil "~a-info" name)))
+           (access-slots (mapcar #'access-slots slots)))
+      `(let ((,object-name (,hydrate-name ,@slots)))
+         (list ,@access-slots)))))
+
 (defmethod get-parsed-date ((date date-info))
   (multiple-value-bind
         (second minute hour day month year day-of-the-week daylight-p zone)

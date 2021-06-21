@@ -1,0 +1,35 @@
+
+(in-package #:todo-project)
+
+(defun hydrate-user-info (name login password)
+  (let ((user (make-instance (define-info-class user name login password))))
+    (populate-info-object user name login password)))
+
+(defun read-user-index ()
+  (let ((user-index (with-open-file (in (format nil "~a/user-index.sexp" *users-root-folder-path*))
+                      (read-line in))))
+    (do ((file-index 0)
+         (list)
+         (eof))
+        (eof list)
+      (multiple-value-bind (item item-length)
+          (read-from-string (subseq user-index file-index))
+        (push item list)
+        (setf file-index (+ file-index item-length))
+        (setf eof (>= file-index (length user-index)))))))
+
+(defun add-user (name login password)
+  (flet ((add-user-to-index (login user-guid)
+           (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
+             (append-to-file (ensure-directories-exist user-index-path) (list login user-guid)))))
+  (let* ((user-guid (generate-unique-token))
+         (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid)))
+    (write-complete-file (ensure-directories-exist user-path) (object-to-list user name login password))
+    (add-user-to-index login user-guid)
+    (setf *user-index* (read-user-index)))))
+
+(defun find-user-index-entry (field &key by)
+  (let ((user-index (or *user-index* (read-user-index))))
+    (case by
+      (:login (find field user-index :test #'(lambda (field e) (string= field (car e)))))
+      (:guid (find field user-index :test #'(lambda (field e) (string= field (cadr e))))))))

@@ -1,6 +1,9 @@
 
 (in-package #:todo-project)
 
+(defparameter *users-root-folder-path* "./users")
+(defparameter *user-index* nil)
+
 (defvar *todo-api-endpoint*  "/todo-data")
 (defvar *app-settings-api-endpoint*  "/app-settings-data")
 (defvar *app-settings-file-path* "./app-settings-list.sexp")
