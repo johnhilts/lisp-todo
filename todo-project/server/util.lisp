@@ -113,7 +113,7 @@ key points:
   "create a token based on the date and RANDOM"
   (flet ((coalesce (original coalesced)
            (if (zerop original) coalesced original)))
-    (let* ((date (get-parsed-date (make-instance 'date-info)))
+    (let* ((date (get-parsed-date (make-instance (define-info-class date second minute hour day month year day-of-the-week daylight-p zone))))
            (hour (coalesce (date-hour date) (1+ (random 24))))
            (minute (coalesce (date-minute date) (1+ (random 60))))
            (second (coalesce (date-second date) (1+ (random 60))))
