@@ -28,8 +28,8 @@
     (add-user-to-index login user-guid)
     (setf *user-index* (read-user-index)))))
 
-(defun find-user-index-entry (field &key by)
+(defun find-user-index-entry (search-value &key by)
   (let ((user-index (or *user-index* (read-user-index))))
     (case by
-      (:login (find field user-index :test #'(lambda (field e) (string= field (car e)))))
-      (:guid (find field user-index :test #'(lambda (field e) (string= field (cadr e))))))))
+      (:login (find search-value user-index :test #'(lambda (search-value e) (string= search-value (car e)))))
+      (:guid (find search-value user-index :test #'(lambda (search-value e) (string= search-value (cadr e))))))))
