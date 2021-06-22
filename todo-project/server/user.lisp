@@ -18,6 +18,14 @@
         (setf file-index (+ file-index item-length))
         (setf eof (>= file-index (length user-index)))))))
 
+(defun read-user-info (guid)
+  "read user-info from guid/user.sexp The guid is needed to find thefolder."
+  (let ((user-entry (read-complete-file (format nil "~a/~a/user.sexp" *users-root-folder-path* guid))))
+    (let ((name (car user-entry))
+          (login (cadr user-entry))
+          (password (caddr user-entry)))
+      (hydrate-user-info name login password))))
+
 (defun add-user (name login password)
   (flet ((add-user-to-index (login user-guid)
            (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
@@ -33,3 +41,11 @@
     (case by
       (:login (find search-value user-index :test #'(lambda (search-value e) (string= search-value (car e)))))
       (:guid (find search-value user-index :test #'(lambda (search-value e) (string= search-value (cadr e))))))))
+
+(defun find-user-entry (search-value &key by)
+  (ecase by
+    (:login
+     (let* ((user-index-entry (find-user-index-entry search-value :by by))
+            (user-guid (cadr user-index-entry)))
+       (read-user-info user-guid)))
+    (:guid (read-user-info search-value))))
