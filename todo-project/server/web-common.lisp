@@ -49,6 +49,20 @@
       `(let ((,object-name (,hydrate-name ,@slots)))
          (list ,@access-slots)))))
 
+(defmacro list-to-info-object (list name &rest slots)
+  "Given a list, an info object's name, and the name of its slots, convert the list into an info object."
+  (let ((list-var (gensym))
+        (slots-var (gensym)))
+    `(let ((,list-var ,list)
+           (,slots-var '(,@slots)))
+       (labels ((access-slots (slots index)
+                  (cond
+                    ((null slots) nil)
+                    (t (cons `(,(car slots) ,(nth index ,list-var)) (access-slots (cdr slots) (1+ index)))))))
+         `(let (,@(access-slots ,slots-var 0))
+                                        ; (hydrate-user-info name login password)
+            )))))
+
 (defmethod get-parsed-date ((date date-info))
   (multiple-value-bind
         (second minute hour day month year day-of-the-week daylight-p zone)
