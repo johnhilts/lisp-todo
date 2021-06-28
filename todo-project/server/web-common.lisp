@@ -61,7 +61,7 @@
                     (t (cons `(,(car slots) ,(nth index ,list-var)) (access-slots (cdr slots) (1+ index)))))))
          `(let (,@(access-slots ,slots-var 0))
                                         ; (hydrate-user-info name login password)
-            )))))
+            ,'(hydrate-user-info ,@slots))))))
 
 (defmethod get-parsed-date ((date date-info))
   (multiple-value-bind
