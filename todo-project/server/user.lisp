@@ -32,7 +32,7 @@
              (append-to-file (ensure-directories-exist user-index-path) (list login user-guid)))))
   (let* ((user-guid (generate-unique-token))
          (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid)))
-    (write-complete-file (ensure-directories-exist user-path) (object-to-list user name login password))
+    (write-complete-file (ensure-directories-exist user-path) (info-object-to-list user name login password))
     (add-user-to-index login user-guid)
     (setf *user-index* (read-user-index)))))
 

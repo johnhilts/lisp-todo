@@ -39,7 +39,8 @@
          ,@setters
          ,object-name))))
 
-(defmacro object-to-list (name &rest slots)
+(defmacro info-object-to-list (name &rest slots)
+  "given an info object's name and the name of its slots, convert the info object into a list."
   (flet ((access-slots (slot)
            (read-from-string (format nil "(~a-~a ~a-info)" name slot name))))
     (let* ((hydrate-name (read-from-string (format nil "hydrate-~a-info" name)))
