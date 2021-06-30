@@ -49,6 +49,19 @@
       `(let ((,object-name (,hydrate-name ,@slots)))
          (list ,@access-slots)))))
 
+(defmacro list-to-info-object-no-let (list name &rest slots)
+  "Given a list, an info object's name, and the name of its slots, convert the list into an info object."
+  (labels  ((access-slots (slots index)
+              (cond
+                ((null slots) nil)
+                (t (cons `(,(car slots) `,(nth index ,list)) (access-slots (cdr slots) (1+ index)))))))
+    (let ((let-var-form (access-slots slots 0))
+          (hydrate-form (list (read-from-string (format nil "(hydrate-~a-info ~{~a ~})" name slots)))))
+      (format t "let block: ~a~%hydrate call: ~a~%" let-var-form hydrate-form)
+      ;`(,(read-from-string (format nil "hydrate-~a-info" name)) ,@slots)
+      `(let ,let-var-form
+         ,hydrate-form))))
+
 (defmacro list-to-info-object (list name &rest slots)
   "Given a list, an info object's name, and the name of its slots, convert the list into an info object."
   (let ((list-var (gensym))
