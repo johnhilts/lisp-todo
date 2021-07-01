@@ -54,11 +54,9 @@
   (labels  ((access-slots (slots index)
               (cond
                 ((null slots) nil)
-                (t (cons `(,(car slots) `,(nth index ,list)) (access-slots (cdr slots) (1+ index)))))))
+                (t (cons `(,(car slots) `(identity ,(nth ,index ,list))) (access-slots (cdr slots) (1+ index)))))))
     (let ((let-var-form (access-slots slots 0))
-          (hydrate-form (list (read-from-string (format nil "(hydrate-~a-info ~{~a ~})" name slots)))))
-      (format t "let block: ~a~%hydrate call: ~a~%" let-var-form hydrate-form)
-      ;`(,(read-from-string (format nil "hydrate-~a-info" name)) ,@slots)
+          (hydrate-form (read-from-string (format nil "(hydrate-~a-info ~{~a ~})" name slots))))
       `(let ,let-var-form
          ,hydrate-form))))
 
