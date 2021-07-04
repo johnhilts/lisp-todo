@@ -33,6 +33,7 @@
                (:file "server/io")
                (:file "server/web-infrastructure")
                (:file "server/app-settings")
+               (:file "server/user")
                (:file "server/todo")
                (:file "server/recipe")
                (:file "server/api")
