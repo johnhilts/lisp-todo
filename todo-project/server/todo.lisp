@@ -28,6 +28,22 @@
       (get-todo (parse-integer id))
       (get-todo-list)))
 
+(defun get-next-todo-index (todo-list)
+  "calculate next index for todo list"
+  (let ((id-list (mapcar #'(lambda (todo) (getf todo :id)) todo-list)))
+    (if (null id-list)
+        1
+        (+ 1 (apply #'max id-list)))))
+
+(defun transform-lines-to-todos (lines)
+  "transform lines (string ending in #\Newline) into a list of todo items"
+  (let ((split-lines (split-string-by #\Newline lines))
+        (new-id (get-next-todo-index (fetch-or-create-todos)))) ;; get the todos from outside and feed to this function
+    (reduce #'(lambda (acc cur)
+                (let ((todo (list (list :text cur :done 0 :id (+ new-id (length acc))))))
+                  (append acc todo)))
+            split-lines :initial-value nil)))
+
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
   (let ((new-id (getf model :id))

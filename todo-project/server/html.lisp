@@ -177,4 +177,25 @@
         (:div :id "recipe-entry" :hidden t
               (:h1 "Recipe Entry")
               (:div :id "recipe-entry-fields")))))))
-             
+
+(defun make-import-todo-page ()
+  (with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:html
+     (:head (:title "EZ Utils - Import")
+            (:link :type "text/css"
+                   :rel "stylesheet"
+                   :href "/styles.css"))
+     (:body
+      (when (post-parameter "import-list")
+        (htm (:div (format t "You wrote: ~a" (post-parameter "import-list")))))
+      (:div (:h2 "Import to todo list"))
+      (:div
+       (:form :method "post" :action "/import"
+              (:textarea :name "import-list" :cols "100" :rows "40")
+              (:div
+               (:button "Import"))))))))
+
+(define-easy-handler (import-todo :uri "/import") ()
+  (make-import-todo-page))
+
