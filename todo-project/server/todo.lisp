@@ -28,6 +28,33 @@
       (get-todo (parse-integer id))
       (get-todo-list)))
 
+(defun get-next-todo-index (todo-list)
+  "calculate next index for todo list"
+  (let ((id-list (mapcar #'(lambda (todo) (getf todo :id)) todo-list)))
+    (if (null id-list)
+        1
+        (+ 1 (apply #'max id-list)))))
+
+(defun transform-lines-to-todos (lines start-new-id)
+  "transform lines (string ending in #\Newline) into a list of todo items"
+  (let ((split-lines (split-string-by #\Newline lines)))
+    (reduce #'(lambda (acc cur)
+                (let* ((prefix (format nil "List ~d - " start-new-id))
+                       (text (format nil "~a~a" prefix cur))
+                       (todo (list (list :text text :done 0 :id (+ start-new-id (length acc))))))
+                  (append acc todo)))
+            split-lines :initial-value nil)))
+
+(defun import-lines-into-todo-list (lines)
+  "orchestrator called by web handler to take input and output it in desired form"
+  (let* ((existing-todos (fetch-or-create-todos))
+         (new-id (get-next-todo-index existing-todos)))
+    (write-complete-file *todo-file-path* (append existing-todos (transform-lines-to-todos lines new-id)))
+    (let ((app-settings (fetch-or-create-app-settings)))
+      (setf (getf app-settings :filter-text) (format nil "List ~d - " new-id))
+      (write-complete-file *app-settings-file-path* app-settings)))
+  t)
+
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
   (let ((new-id (getf model :id))
@@ -54,3 +81,4 @@
              (updated-todos (splice-and-remove-item-in-list existing-todos deleted-item-position)))
         (write-complete-file *todo-file-path* updated-todos)
         (json:encode-json-to-string (list delete-id))))))
+

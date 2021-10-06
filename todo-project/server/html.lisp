@@ -40,7 +40,8 @@
                (:h1 "Todo List"
                     (:div
                      (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-                     (:button :id "todo-add-btn" "Add"))
+                     (:button :id "todo-add-btn" "Add")
+                     (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (str (ps-inline (setf (@ location href) "/import"))) "Import"))
                     (:div
                      (:table :id "todo-list"
                              (:thead (:th :id "todo-list-column-header" "To-do Items"))
@@ -121,4 +122,32 @@
         (:div :id "recipe-entry" :hidden t
               (:h1 "Recipe Entry")
               (:div :id "recipe-entry-fields")))))))
-             
+
+(defun make-import-todo-page ()
+  (with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:html
+     (:head (:title "EZ Utils - Import")
+            (:link :type "text/css"
+                   :rel "stylesheet"
+                   :href "/styles.css"))
+     (:body
+      (awhen (post-parameter "import-list")
+        (import-lines-into-todo-list it)
+        (htm (:script :type "text/javascript"
+                 (str
+                  (ps
+                    (alert "Import Successful!")
+                    (setf (@ location href) "/todos"))))))
+      (:div
+       (:h2 "Import to todo list")
+       (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
+      (:div
+       (:form :method "post" :action "/import"
+              (:textarea :name "import-list" :cols "100" :rows "40")
+              (:div
+               (:button "Import"))))))))
+
+(define-easy-handler (import-todo :uri "/import") ()
+  (make-import-todo-page))
+
