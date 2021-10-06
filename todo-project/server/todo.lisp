@@ -35,24 +35,28 @@
         1
         (+ 1 (apply #'max id-list)))))
 
-(defun transform-lines-to-todos (lines start-new-id)
+(defun transform-lines-to-todos (lines start-new-id formatted-list-name)
   "transform lines (string ending in #\Newline) into a list of todo items"
   (let ((split-lines (split-string-by #\Newline lines)))
     (reduce #'(lambda (acc cur)
-                (let* ((prefix (format nil "List ~d - " start-new-id))
+                (let* ((prefix formatted-list-name)
                        (text (format nil "~a~a" prefix cur))
                        (todo (list (list :text text :done 0 :id (+ start-new-id (length acc))))))
                   (append acc todo)))
             split-lines :initial-value nil)))
 
-(defun import-lines-into-todo-list (lines)
+(defun import-lines-into-todo-list (lines list-name)
   "orchestrator called by web handler to take input and output it in desired form"
-  (let* ((existing-todos (fetch-or-create-todos))
-         (new-id (get-next-todo-index existing-todos)))
-    (write-complete-file *todo-file-path* (append existing-todos (transform-lines-to-todos lines new-id)))
-    (let ((app-settings (fetch-or-create-app-settings)))
-      (setf (getf app-settings :filter-text) (format nil "List ~d - " new-id))
-      (write-complete-file *app-settings-file-path* app-settings)))
+  (flet ((get-list-name (input-list-name new-id)
+           (let ((list-name (or input-list-name "")))
+             (if (plusp (length list-name)) (format nil "~a - " list-name) (format nil "List ~d - " new-id)))))
+    (let* ((existing-todos (fetch-or-create-todos))
+           (new-id (get-next-todo-index existing-todos))
+           (formatted-list-name (get-list-name list-name new-id)))
+      (write-complete-file *todo-file-path* (append existing-todos (transform-lines-to-todos lines new-id formatted-list-name)))
+      (let ((app-settings (fetch-or-create-app-settings)))
+        (setf (getf app-settings :filter-text) formatted-list-name)
+        (write-complete-file *app-settings-file-path* app-settings))))
   t)
 
 (define-data-update-handler todo-data-add (model)
