@@ -71,10 +71,11 @@
                                                     (not (@ todo done)))
                                                 (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
          (count (length filtered-todos))
-         (use-plural-form (or (> count 1) (= 0 count))))
+         (use-plural-form (or (> count 1) (= 0 count)))
+         (checked-count (length (chain filtered-todos (filter #'(lambda (todo) (@ todo done)))))))
     (clear-children parent-element)
     (setf (chain column-header inner-text)
-          (if use-plural-form "To-do Items" "To-do Item"))
+          (+ (if use-plural-form "To-do Items" "To-do Item") " " (chain checked-count (to-string)) "/" (chain count (to-string))))
     (chain filtered-todos
            (map
             #'(lambda (todo index)
