@@ -89,15 +89,20 @@
   (with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
-     (:head (:title "Login"))
+     (:head
+      (:meta :charset "utf-8")
+      (:title "Todo List - Login")
+      (:link :type "text/css"
+             :rel "stylesheet"
+             :href (str (format nil "/styles.css?v=~a" (get-version)))))
      (:body
       (:h2 "Use this page to sign-in!")
       (:form :method "post" :action "auth"
              (:input :type "hidden" :name "redirect-back-to" :value redirect-back-to)
              (:div
-              (:div (:input :name "user" :type "text" :placeholder "Login"))
-              (:div (:input :name "password" :type "password" :placeholder "Password"))
-              (:div (:button "Login"))))))))
+              (:div (:input :name "user" :type "text" :placeholder "Login" :class "login-input"))
+              (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
+              (:div (:button "Login") (:span "&nbsp;") (:button "Sign-Up"))))))))
 
 (define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
