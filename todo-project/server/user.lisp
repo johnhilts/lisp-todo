@@ -51,5 +51,8 @@
     (:login
      (let* ((user-index-entry (find-user-index-entry search-value :by by))
             (user-guid (cadr user-index-entry)))
-       (read-user-info user-guid)))
-    (:guid (read-user-info search-value))))
+       (awhen user-guid
+         (read-user-info it))))
+    (:guid
+     (awhen search-value
+       (read-user-info it)))))

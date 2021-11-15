@@ -67,22 +67,23 @@
      (logged-in))))
 
 (define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
-  (if
-   (and
-    (equal user "nanook")
-    (equal password "igloo"))
-   (progn
-     (setf (session-value 'the-session) +auth-token+)
-     (set-cookie (string 'the-session) :value +auth-token+ :secure t :http-only t)
-     (redirect redirect-back-to))
-   (with-html-output-to-string
-       (*standard-output* nil :prologue t :indent t)
-     (:html
-      (:head (:title "Auth Failure"))
-      (:body
-       (:h2 "Authorization failed!")
-       (:div "User or password didn't match"
-             (:a :href "/login" "Click here to try again!")))))))
+  (let ((user-info (find-user-entry user :by :login)))
+    (if
+     (and
+      user-info
+      (equal (user-password user-info) password))
+     (progn
+       (setf (session-value 'the-session) +auth-token+)
+       (set-cookie (string 'the-session) :value +auth-token+ :secure t :http-only t)
+       (redirect redirect-back-to))
+     (with-html-output-to-string
+         (*standard-output* nil :prologue t :indent t)
+       (:html
+        (:head (:title "Auth Failure"))
+        (:body
+         (:h2 "Authorization failed!")
+         (:div "User or password didn't match"
+               (:a :href "/login" "Click here to try again!"))))))))
 
 (define-easy-handler (login-page :uri "/login") (redirect-back-to)
   (with-html-output-to-string
