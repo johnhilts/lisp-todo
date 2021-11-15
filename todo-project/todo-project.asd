@@ -27,6 +27,7 @@
   :depends-on (#:cl-who #:hunchentoot #:parenscript #:cl-json #:jfh-web #:swank)
   :components ((:file "package")
                (:file "common/constants")
+               (:file "macros")
                (:file "server/swank")
                (:file "server/web-common")
                (:file "server/util")

@@ -50,12 +50,12 @@
 (define-for-ps update-todo (index todo-id)
       "update todo on client and server and re-render html elements"
       (let* ((checked (@ (chain document (get-element-by-id (+ "todo-check" index))) checked))
-             (label (chain document (get-element-by-id (+ "todo-label" index))))
+             (label-pre (chain document (query-selector (+ "#todo-label" index " pre"))))
              (todo-list-index (@ (chain todo-list (find-index #'(lambda (todo) (= todo-id (@ todo id)))))))
              (todo-item (aref todo-list todo-list-index)))
         (if checked
-            (setf (@ label style "text-decoration") "line-through")
-            (setf (@ label style "text-decoration") ""))
+            (setf (@ label-pre style "text-decoration") "line-through")
+            (setf (@ label-pre style "text-decoration") ""))
         (setf (@ todo-item done) checked)
         (send-updated-todo-item-to-server todo-item))
       t)

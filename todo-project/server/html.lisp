@@ -41,7 +41,7 @@
                     (:div
                      (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
                      (:button :id "todo-add-btn" "Add")
-                     (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (str (ps-inline (setf (@ location href) "/import"))) "Import"))
+                     (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (str (ps-inline (setf (@ location href) "/import"))) "Import ..."))
                     (:div
                      (:table :id "todo-list"
                              (:thead (:th :id "todo-list-column-header" "To-do Items"))
@@ -189,18 +189,15 @@
                    :href "/styles.css"))
      (:body
       (awhen (post-parameter "import-list")
-        (import-lines-into-todo-list it)
-        (htm (:script :type "text/javascript"
-                 (str
-                  (ps
-                    (alert "Import Successful!")
-                    (setf (@ location href) "/todos"))))))
       (:div
        (:h2 "Import to todo list")
        (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
       (:div
        (:form :method "post" :action "/import"
-              (:textarea :name "import-list" :cols "100" :rows "40")
+              (:input :name "list-name" :type "text" :placeholder "Enter List Name (optional)" :style "width: 200px;")
+              (:br )
+              (:br )
+              (:textarea :name "import-list" :cols "100" :rows "35")
               (:div
                (:button "Import"))))))))
 
