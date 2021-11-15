@@ -189,6 +189,12 @@
                    :href "/styles.css"))
      (:body
       (awhen (post-parameter "import-list")
+        (import-lines-into-todo-list it (post-parameter "list-name"))
+        (htm (:script :type "text/javascript"
+                      (str
+                       (ps
+                         (alert "Import Successful!")
+                         (setf (@ location href) "/todos"))))))
       (:div
        (:h2 "Import to todo list")
        (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
