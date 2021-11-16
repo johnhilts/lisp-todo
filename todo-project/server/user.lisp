@@ -32,11 +32,11 @@
   (flet ((add-user-to-index (login user-guid)
            (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
              (append-to-file (ensure-directories-exist user-index-path) (list login user-guid)))))
-  (let* ((user-guid (generate-unique-token))
-         (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid)))
-    (write-complete-file (ensure-directories-exist user-path) (info-object-to-list user name login password))
-    (add-user-to-index login user-guid)
-    (setf *user-index* (read-user-index)))))
+    (let* ((user-guid (generate-unique-token))
+           (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid)))
+      (write-complete-file (ensure-directories-exist user-path) (info-object-to-list user name login password))
+      (add-user-to-index login user-guid)
+      (setf *user-index* (read-user-index)))))
 
 (defun find-user-index-entry (search-value &key by)
   "Search for user info by specifified field in user index file."
