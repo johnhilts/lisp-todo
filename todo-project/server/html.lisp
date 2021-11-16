@@ -90,13 +90,73 @@
              :rel "stylesheet"
              :href (str (format nil "/styles.css?v=~a" (get-version)))))
      (:body
-      (:h2 "Use this page to sign-in!")
+      (:h2 "Use this page to Login!")
       (:form :method "post" :action "auth"
-             (:input :type "hidden" :name "redirect-back-to" :value redirect-back-to)
-             (:div
+             (:input :type "hidden" :name "redirect-back-to" :value (or redirect-back-to "/todos"))
+             (:div :id "login-input-div"
               (:div (:input :name "user" :type "text" :placeholder "Login" :class "login-input"))
               (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
-              (:div (:button "Login") (:span "&nbsp;") (:button "Sign-Up"))))))))
+              (:div (:button "Login") (:span "&nbsp;") (:button :id "sign-up-button" :type "button" :onclick "javascript:location.href=\"/signup\";" "Sign-Up"))))))))
+
+(defun validate-signup-parameters (name user password confirm-password)
+  (flet ((exists (user)
+           (find-user-entry user :by :login)))
+    (let ((signup-validation-failure-reasons ()))
+      (if (or (zerop (length name)) (zerop (length user)) (zerop (length password)) (zerop (length confirm-password)))
+          (push "Please enter all fields." signup-validation-failure-reasons))
+      (progn
+        (when (exists user)
+          (push "User already exists; please login." signup-validation-failure-reasons))
+        (when (not (string= password confirm-password))
+          (push "Passwords don't match." signup-validation-failure-reasons)))
+      (values
+       (zerop (length signup-validation-failure-reasons))
+       signup-validation-failure-reasons))))
+
+(define-easy-handler (signup-page :uri "/signup") ()
+  (with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:html
+     (:head
+      (:meta :charset "utf-8")
+      (:title "Todo List - Signup")
+      (:link :type "text/css"
+             :rel "stylesheet"
+             :href (str (format nil "/styles.css?v=~a" (get-version)))))
+     (:body
+      (if (or
+           (post-parameter "name")
+           (post-parameter "user")
+           (post-parameter "password")
+           (post-parameter "confirm-password"))
+          (multiple-value-bind (signup-validation-successful signup-validation-failure-reasons)
+              (validate-signup-parameters (post-parameter "name") (post-parameter "user") (post-parameter "password") (post-parameter "confirm-password"))
+            (if signup-validation-successful
+                (progn
+                  (add-user (post-parameter "name") (post-parameter "user") (post-parameter "password"))
+                  (htm (:script :type "text/javascript"
+                              (str
+                               (ps
+                                 (alert "Signup Successful!")
+                                 (setf (@ location href) "/todos"))))))
+                (htm
+                 (:div
+                  (:span (fmt "Signup Failed, because <ul>~{<li>~a</li>~% ~}</ul>" signup-validation-failure-reasons)))
+                 (:div
+                  (:span "Please try again: ")
+                  (:p (:a :href "/signup" "Back to Signup"))
+                  (:p (:a :href "/login" "Back to Login"))))))
+          (htm
+           (:h2 "Use this page to sign-up!")
+           (:div
+            (:a :href "/login" "Back to Login"))
+           (:form :method "post" :action "/signup"
+                  (:div
+                   (:div (:input :name "name" :type "text" :placeholder "Your Name" :class "login-input"))
+                   (:div (:input :name "user" :type "text" :placeholder "Login" :class "login-input"))
+                   (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
+                   (:div (:input :name "confirm-password" :type "password" :placeholder "Confirm Password" :class "login-input"))
+                   (:div (:button "Submit"))))))))))
 
 (define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
