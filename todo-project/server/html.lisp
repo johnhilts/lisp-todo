@@ -45,20 +45,11 @@
   "HTTP endpoint for todo list"
   (make-todo-page))
 
-(defconstant +auth-token+ "abc123")
+(defvar *session-user-map* (make-hash-table))
 
-(defun is-authenticated ()
-  (flet
-      ((logged-in ()
-         (multiple-value-bind (user password)
-             (authorization)
-           (and
-            (equal user "nanook")
-            (equal password "igloo")))))
-    (format t "~&logged in: ~a, session value: ~a~%" (logged-in) (session-value 'the-session))
-    (or
-     (session-value 'the-session)
-     (logged-in))))
+(defun get-authenticated-user ()
+  (format t "~&session value: ~a~%" (session-value 'the-session))
+  (gethash (session-value 'the-session) *session-user-map*))
 
 (define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
   (let ((user-info (find-user-entry user :by :login)))
@@ -66,9 +57,10 @@
      (and
       user-info
       (equal (user-password user-info) password))
-     (progn
-       (setf (session-value 'the-session) +auth-token+)
-       (set-cookie (string 'the-session) :value +auth-token+ :secure t :http-only t)
+     (let ((session-token (generate-unique-token)))
+       (setf (session-value 'the-session) session-token)
+       (set-cookie (string 'the-session) :value session-token :secure t :http-only t)
+       (setf (gethash session-token *session-user-map*) (user-login user-info))
        (redirect redirect-back-to))
      (with-html-output-to-string
          (*standard-output* nil :prologue t :indent t)
@@ -161,6 +153,7 @@
 (define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
   (format t "~&www-authorization: ~a, authorization: *** ~a ***~%" (header-out :www-authenticate)(header-out "authorization"))
+  (remhash (session-value 'the-session) *session-user-map*)
   (delete-session-value 'the-session)
   (setf (header-out :www-authenticate) nil)
   (redirect "/login"))
@@ -168,9 +161,11 @@
 (defmacro define-protected-page (name end-point params &body body)
   `(define-easy-handler (,name :uri ,end-point) (,@params)
      "macro to DRY pages requiring authentication"
-     (if (is-authenticated)
-         ,@body
-         (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))
+     (multiple-value-bind (authenticated-user present-p)
+         (get-authenticated-user)
+       (if present-p
+           ,@body
+           (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point)))))))
 
 (define-protected-page admin-page "/admin" ()
   (with-html-output-to-string
@@ -178,7 +173,7 @@
     (:html
      (:head (:title "Admin"))
      (:body
-      (:h2 "Welcome to the Admin Page!")
+      (:h2 (fmt "Welcome to the Admin Page, ~a!" authenticated-user))
       (:div "You're supposed to be logged in to see this!")
       (:div
        (:a :href "/logout" "Click here to logout!"))))))
