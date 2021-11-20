@@ -14,9 +14,10 @@
   (let ((todo (get-todo-by-id id)))
     (encode-plist-to-json-as-string todo)))
 
-(defun fetch-or-create-todos ()
+(defun fetch-or-create-todos (&optional (get-user-data-path #'get-user-data-path) )
   "get todo from persisted data"
-  (fetch-or-create-data *todo-file-path*))
+  (let ((user-data-path (if get-user-data-path (funcall get-user-data-path nil :by :login) "")))
+    (fetch-or-create-data (concatenate 'string user-data-path "/" *todo-file-name*))))
 
 (defun get-todo-list ()
   "get todo list and encode as json"

@@ -19,9 +19,21 @@
         (setf file-index (+ file-index item-length))
         (setf eof (>= file-index (length user-index)))))))
 
+(defun get-user-data-path (search-value &key by)
+  "Get user path based on user-guid"
+  (flet ((get-guid ()
+           (ecase by
+             (:login
+              (let ((login (or search-value (gethash (session-value 'the-session) *session-user-map*))))
+                (cadr (find-user-index-entry login :by :login))))
+             (:guid
+              search-value))))
+    (let ((guid (get-guid)))
+      (format nil "~a/~a" *users-root-folder-path* guid))))
+
 (defun read-user-info (guid)
   "read user-info from guid/user.sexp The guid is needed to find the folder."
-  (let ((user-entry (read-complete-file (format nil "~a/~a/user.sexp" *users-root-folder-path* guid))))
+  (let ((user-entry (read-complete-file (format nil "~a/user.sexp" (get-user-data-path guid :by :guid)))))
     (let ((name (car user-entry))
           (login (cadr user-entry))
           (password (caddr user-entry)))
