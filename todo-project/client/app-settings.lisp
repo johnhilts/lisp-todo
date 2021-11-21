@@ -5,15 +5,16 @@
   (ps
     (defvar *app-settings* (create hide-done-items false filter-text ""))))
 
-(define-for-ps get-app-settings-from-server ()
+(define-for-ps get-app-settings-from-server (&optional call-back)
   "define callback and make call to get app settings from server, then re-render html elements"
-  (flet ((call-back ()
+  (flet ((local-call-back ()
            (let ((server-app-settings (chain -j-s-o-n (parse (@ this response-text)))))
              (setf *app-settings* server-app-settings)
              (render-app-settings)
              (render-todo-filter)
+             (call-back)
              t)))
-    (get-from-server *app-settings-api-endpoint* call-back)))
+    (get-from-server *app-settings-api-endpoint* local-call-back)))
 
 (define-for-ps update-app-settings ()
   "update app settings on client and server and re-render html elements"
