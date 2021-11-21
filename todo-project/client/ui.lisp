@@ -12,6 +12,10 @@
 
     (setf (chain window onload) init)))
 
+(ps
+  (defmacro with-callback (fn &body body)
+    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+
 (define-for-ps clear-field (field)
   "clear input field's value"
   (setf (chain field value) "")
@@ -24,8 +28,9 @@
     
 (define-for-ps init ()
   "initialize html elements and JS objects on page load"
-  (get-app-settings-from-server)
-  (get-todo-list-from-server)
+  (with-callback
+      (get-app-settings-from-server)
+    (get-todo-list-from-server))
   (setf add-button (chain document
                           (get-element-by-id "todo-add-btn")))
   (chain add-button
