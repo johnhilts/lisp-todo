@@ -63,8 +63,9 @@
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
   (let ((new-id (getf model :id))
-        (existing-todos (fetch-or-create-todos)))
-    (write-complete-file *todo-file-path* (append existing-todos (list model)))
+        (existing-todos (fetch-or-create-todos))
+        (user-data-path (get-user-data-path nil :by :login)))
+    (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) (append existing-todos (list model)))
     (json:encode-json-to-string (list new-id))))
 
 (define-data-update-handler todo-data-update (model)
@@ -72,9 +73,10 @@
   (let* ((update-id (getf model :id))
          (existing-todos (fetch-or-create-todos))
          (updated-item-position (position-if #'(lambda (e) (= (getf e :id) update-id)) existing-todos))
-         (updated-todos (splice-and-replace-item-in-list existing-todos model updated-item-position)))
+         (updated-todos (splice-and-replace-item-in-list existing-todos model updated-item-position))
+         (user-data-path (get-user-data-path nil :by :login)))
     
-    (write-complete-file *todo-file-path* updated-todos)
+    (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) updated-todos)
     (json:encode-json-to-string (list update-id))))
 
 (define-data-update-handler todo-data-delete (model)
@@ -83,7 +85,8 @@
     (when delete-id
       (let* ((existing-todos (fetch-or-create-todos))
              (deleted-item-position (position-if #'(lambda (e) (= (getf e :id) delete-id)) existing-todos))
-             (updated-todos (splice-and-remove-item-in-list existing-todos deleted-item-position)))
-        (write-complete-file *todo-file-path* updated-todos)
+             (updated-todos (splice-and-remove-item-in-list existing-todos deleted-item-position))
+             (user-data-path (get-user-data-path nil :by :login)))
+        (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) updated-todos)
         (json:encode-json-to-string (list delete-id))))))
 
