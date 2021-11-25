@@ -48,6 +48,7 @@
 (defvar *session-user-map* (make-hash-table))
 
 (defun get-authenticated-user ()
+  "get the authenticated user from server session."
   (format t "~&session value: ~a~%" (session-value 'the-session))
   (gethash (session-value 'the-session) *session-user-map*))
 
