@@ -158,16 +158,23 @@
   (setf (header-out :www-authenticate) nil)
   (redirect "/login"))
 
-(defmacro define-protected-page (name end-point params &body body)
-  `(define-easy-handler (,name :uri ,end-point) (,@params)
-     "macro to DRY pages requiring authentication"
-     (multiple-value-bind (authenticated-user present-p)
-         (get-authenticated-user)
-       (if present-p
-           ,@body
-           (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point)))))))
+(defmacro define-protected-page (name-and-end-point params &body body)
+  "macro to DRY pages requiring authentication"
+  (let* ((name (car name-and-end-point))
+        (end-point (cadr name-and-end-point))
+        (possible-description (car body))
+        (has-description (and (atom possible-description) (stringp possible-description)))
+        (description (if has-description possible-description nil))
+        (body-after-description (if has-description (cdr body) body)))
+    `(define-easy-handler (,name :uri ,end-point) (,@params)
+       ,(when description description)
+        (multiple-value-bind (authenticated-user present-p)
+           (get-authenticated-user)
+         (if present-p
+             ,@body-after-description
+             (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
 
-(define-protected-page admin-page "/admin" ()
+(define-protected-page (admin-page "/admin") ()
   (with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
