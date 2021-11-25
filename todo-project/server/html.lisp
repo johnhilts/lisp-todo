@@ -6,7 +6,7 @@
 ;; allow parenscript and cl-who to work together
 (setf *js-string-delimiter* #\")
 
-(defun make-todo-page ()
+(defun make-todo-page (authenticated-user)
   "generate todo HTML page"
   ;; I split this calling of ps functions into 2 operations because str is a macrolet that's only available under with-html-output-to-string
   ;; I have options to consider such as I can mimic str and then put it whereever I want and then only have to work with 1 list
@@ -31,7 +31,7 @@
             (:div :id "app-settings")
             (:div :id "todo-filter")
             (:div
-             (:h1 "Todo List"
+             (:h1 (fmt "Todo List for ~a" authenticated-user)
                   (:div
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
                    (:button :id "todo-add-btn" "Add")
@@ -41,9 +41,9 @@
                            (:thead (:th :id "todo-list-column-header" "To-do Items"))
                            (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)")))))))))))
 
-(define-easy-handler (todo-page :uri "/todos") ()
+(define-protected-page (todo-page "/todos") ()
   "HTTP endpoint for todo list"
-  (make-todo-page))
+  (make-todo-page authenticated-user))
 
 (defvar *session-user-map* (make-hash-table))
 
