@@ -10,6 +10,8 @@
   (flet ((local-call-back ()
            (let ((server-app-settings (chain -j-s-o-n (parse (@ this response-text)))))
              (setf *app-settings* server-app-settings)
+             (unless (@ *app-settings* filter-text)
+               (setf (@ *app-settings* filter-text) ""))
              (render-app-settings)
              (render-todo-filter)
              (call-back)
