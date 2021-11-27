@@ -24,7 +24,7 @@
               (:title "Todo List")
               (:link :type "text/css"
                      :rel "stylesheet"
-                     :href "/styles.css")
+                     :href "/static/styles.css")
               (:script :type "text/javascript"
                        (str (jfh-web:define-ps-with-html-macro))
                        (str (share-server-side-constants))
