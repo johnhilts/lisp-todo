@@ -31,5 +31,6 @@
 (defun start-web-app ()
   "start the web app"
   (start-server (getf (fetch-or-create-web-settings) :web-port))
+  (setf *session-max-time* (* 24 3 60))
   (publish-static-content))
 
