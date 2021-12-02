@@ -66,7 +66,12 @@
      (with-html-output-to-string
          (*standard-output* nil :prologue t :indent t)
        (:html
-        (:head (:title "Auth Failure"))
+        (:head
+         (:meta :charset "utf-8")
+         (:title "Auth Failure")
+         (:link :type "text/css"
+                :rel "stylesheet"
+                :href (str (format nil "/styles.css?v=~a" (get-version)))))
         (:body
          (:h2 "Authorization failed!")
          (:div "User or password didn't match"
