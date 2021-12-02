@@ -7,17 +7,12 @@
 
 (defun read-user-index ()
   "read user index. The user index is a list of User Logins + (internal) User ID pairs."
-  (let ((user-index (with-open-file (in (format nil "~a/user-index.sexp" *users-root-folder-path*))
-                      (read-line in))))
-    (do ((file-index 0)
-         (list)
-         (eof))
-        (eof list)
-      (multiple-value-bind (item item-length)
-          (read-from-string (subseq user-index file-index))
-        (push item list)
-        (setf file-index (+ file-index item-length))
-        (setf eof (>= file-index (length user-index)))))))
+  (with-open-file (in (format nil "~a/user-index.sexp" *users-root-folder-path*))
+    (let ((line (read-line in nil :eof)))
+      (do ((list))
+          ((eq line :eof) list)
+        (push (read-from-string line) list)
+        (setf line (read-line in nil :eof))))))
 
 (defun get-user-data-path (search-value &key by)
   "Get user path based on user-guid"
