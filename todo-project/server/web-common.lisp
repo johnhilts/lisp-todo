@@ -29,6 +29,14 @@
         `(defclass ,class-name ()
            ,class-slots)))))
 
+(defun define-info-classes ()
+  "wrapper so that I can easily find where I'm defining my info classes"
+  (define-info-class date second minute hour day month year day-of-the-week daylight-p zone)
+  (define-info-class user name login password))
+
+((lambda ()
+   (define-info-classes)))
+
 (defmacro populate-info-object (name &rest slots)
   (flet ((get-setter (slot)
            (let ((expression (read-from-string (concatenate 'string "((" (string name) "-" (string slot) " " (string name) ") " (string slot) ")"))))
@@ -79,3 +87,20 @@
         (second minute hour day month year day-of-the-week daylight-p zone)
       (decode-universal-time (get-universal-time))
     (populate-info-object date second minute hour day month year day-of-the-week daylight-p zone)))
+
+(defmacro define-protected-page (name-and-end-point params &body body)
+  "macro to DRY pages requiring authentication"
+  (let* ((name (car name-and-end-point))
+        (end-point (cadr name-and-end-point))
+        (possible-description (car body))
+        (has-description (and (atom possible-description) (stringp possible-description)))
+        (description (if has-description possible-description nil))
+        (body-after-description (if has-description (cdr body) body)))
+    `(define-easy-handler (,name :uri ,end-point) (,@params)
+       ,(when description description)
+        (multiple-value-bind (authenticated-user present-p)
+           (get-authenticated-user)
+         (if present-p
+             ,@body-after-description
+             (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
+
