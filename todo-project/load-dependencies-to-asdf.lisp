@@ -9,4 +9,4 @@
 (asdf:load-system "jfh-testing")
 (asdf:load-system "jfh-web-test")
 (asdf:load-system "todo-project")
-(in-package #:todo-project)
+;; (in-package #:todo-project)
