@@ -7,6 +7,24 @@
    (subseq list 0 first-part-length)
    (subseq list first-part-length)))
 
+(defun split-string-by (delimiter string)
+  (flet ((trim (string &optional return-type)
+           (let ((trimmed (string-trim '(#\Space) string)))
+             (if (zerop (length trimmed))
+                 (if (equal 'list return-type) () "")
+                 (if (equal 'list return-type) (list trimmed) trimmed)))))
+    (let ((delimiter-position (position delimiter string)))
+      (if delimiter-position
+          (let ((trimmed (trim (subseq string 0 delimiter-position)))
+                (split-next #'(lambda ()
+                                (split-string-by
+                                 delimiter
+                                 (subseq string (+ 1 delimiter-position))))))
+            (if (zerop (length trimmed))
+                (funcall split-next)
+                (cons trimmed (funcall split-next))))
+          (trim string 'list)))))
+
 (defun splice-and-replace-item-in-list (list item-to-replace replace-item-position)
   "splice list and replace item at position where splitting"
   (let ((split-list (split-list list replace-item-position)))
@@ -90,3 +108,26 @@ key points:
 (defun convert-dotted-pair-to-plist (input)
   "convert list of cons dotted pairs (input) to plist (app-specific format)"
   (reduce #'join-pairs  input :initial-value ()))
+
+(defun generate-unique-token ()
+  "create a token based on the date and RANDOM"
+  (flet ((coalesce (original coalesced)
+           (if (zerop original) coalesced original)))
+    (let* ((date (get-parsed-date (make-instance (define-info-class date second minute hour day month year day-of-the-week daylight-p zone))))
+           (hour (coalesce (date-hour date) (1+ (random 24))))
+           (minute (coalesce (date-minute date) (1+ (random 60))))
+           (second (coalesce (date-second date) (1+ (random 60))))
+           (salt (random (* hour minute second)))
+           (date-based-random-number (format nil "~s~s~d~s~s~s~s"
+                                             (* salt (date-month date))
+                                             (* salt (date-day date))
+                                             (* salt (date-day-of-the-week date))
+                                             (* salt (date-zone date))
+                                             (date-hour date)
+                                             (date-minute date)
+                                             (date-second date))))
+      (format nil "~a-~a-~a-~a"
+              (subseq date-based-random-number 0 7)
+              (format nil "~5,'0d" (random (- (expt 10 5) 1)))
+              (subseq (reverse date-based-random-number) 0 7)
+              (format nil "~5,'0d" (random (- (expt 10 5) 1)))))))

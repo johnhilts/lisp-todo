@@ -20,3 +20,11 @@
      (app-settings-data-update raw-data))
     (:get
      (app-settings-data-get))))
+
+(define-api-endpoint recipe-data *recipe-api-endpoint* (id)
+  "REST endpoint for recipes"
+  (case verb
+    (:post
+     (recipe-data-add raw-data))
+    (:get
+     (recipe-data-get id))))

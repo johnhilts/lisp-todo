@@ -12,6 +12,10 @@
 
     (setf (chain window onload) init)))
 
+(ps
+  (defmacro with-callback (fn &body body)
+    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+
 (define-for-ps clear-field (field)
   "clear input field's value"
   (setf (chain field value) "")
@@ -24,8 +28,9 @@
     
 (define-for-ps init ()
   "initialize html elements and JS objects on page load"
-  (get-app-settings-from-server)
-  (get-todo-list-from-server)
+  (with-callback
+      (get-app-settings-from-server)
+    (get-todo-list-from-server))
   (setf add-button (chain document
                           (get-element-by-id "todo-add-btn")))
   (chain add-button
@@ -71,10 +76,11 @@
                                                     (not (@ todo done)))
                                                 (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
          (count (length filtered-todos))
-         (use-plural-form (or (> count 1) (= 0 count))))
+         (use-plural-form (or (> count 1) (= 0 count)))
+         (checked-count (length (chain filtered-todos (filter #'(lambda (todo) (@ todo done)))))))
     (clear-children parent-element)
     (setf (chain column-header inner-text)
-          (if use-plural-form "To-do Items" "To-do Item"))
+          (+ (if use-plural-form "To-do Items" "To-do Item") " " (chain checked-count (to-string)) "/" (chain count (to-string))))
     (chain filtered-todos
            (map
             #'(lambda (todo index)
@@ -103,32 +109,150 @@
                                (show-input-for todo false))
                              t)
                            (delete-todo (todo)
-                             (delete-todo-by-id (@ todo id))
+                             (when (confirm "Are you sure you want to remove this?")
+                               (delete-todo-by-id (@ todo id)))
                              (show-input-for todo false)
                              t))
-                    (jfh-web::with-html-elements
-                        (tr
-                         (td
-                          (input
-                           (id . "(progn todo-checkbox-id)")
-                           (type . "checkbox")
-                           (onclick . "(update-todo (progn index) (@ todo id)))")
-                           (checked . "(@ todo done)")
-                           (class . "(progn hide-todo-edit-class-name)"))
-                          (span "  ")
-                          (label
-                           (id . "(progn todo-label-id)")
-                           (for . "(progn todo-checkbox-id)")
-                           (class . "(progn hide-todo-edit-class-name)")
-                           (pre
-                            (style . "(progn pre-style)")
-                            (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
-                          (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
-                          (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
-                          (span (br (ref . "(progn index)")))
-                          (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
-                          (span "  ")
-                          (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete")))))
+                    (flet ((update-checked-count ()
+                             (let ((checked-count (length (chain document (query-selector-all "label pre[style*=line-through]")))))
+                               (setf (chain column-header inner-text)
+                                   (+ (if use-plural-form "To-do Items" "To-do Item") " " (chain (+ checked-count) (to-string)) "/" (chain count (to-string)))))))
+                      (jfh-web::with-html-elements
+                          (tr
+                           (td
+                            (input
+                             (id . "(progn todo-checkbox-id)")
+                             (type . "checkbox")
+                             (onclick . "(update-todo (progn index) (@ todo id)))")
+                             (onclick . "(update-checked-count)")
+                             (checked . "(@ todo done)")
+                             (class . "(progn hide-todo-edit-class-name)"))
+                            (span "  ")
+                            (label
+                             (id . "(progn todo-label-id)")
+                             (for . "(progn todo-checkbox-id)")
+                             (class . "(progn hide-todo-edit-class-name)")
+                             (pre
+                              (style . "(progn pre-style)")
+                              (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
+                            (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
+                            (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
+                            (span (br (ref . "(progn index)")))
+                            (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
+                            (span "  ")
+                            (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete"))))))
                   t))))))
 
+(defun client-ui-recipe ()
+  "define client side UI functions"
+  (ps
 
+    (defparameter *recipe-list* "recipe-list")
+    (defparameter *recipe-entry* "recipe-entry")
+    (defparameter *recipe-details* "recipe-details")
+    ;; (defparameter *todo-label* "todo-label")
+    ;; (defparameter *show-todo-edit* "show-todo-edit")
+    ;; (defparameter *hide-todo-edit* "hide-todo-edit")
+    ;; (defparameter *todo-text* "todo-text")
+    
+    (setf (chain window onload) init-recipe)))
+
+(define-for-ps init-recipe ()
+  "initialize html elements and JS objects on page load"
+  (with-callback
+      (get-recipe-list-from-server)
+    ;; (setf add-button (chain document
+    ;;                         (get-element-by-id "todo-add-btn")))
+    ;; (chain add-button
+    ;;        (add-event-listener "click" add-todo false))
+    (render-recipe-menu)
+    (render-recipe-list)))
+
+(define-for-ps get-recipe-sections ()
+  (let ((list-section (chain document (get-element-by-id *recipe-list*)))
+        (add-section (chain document (get-element-by-id *recipe-entry*)))
+        (detail-section (chain document (get-element-by-id *recipe-details*))))
+    (values list-section add-section detail-section)))
+
+(define-for-ps can-hide-recipe-section (el1 el2-id)
+  (not (string= (@ el1 id) el2-id)))
+
+(define-for-ps display-recipe-section (section)
+  (multiple-value-bind
+        (list-section add-section detail-section)
+      (get-recipe-sections)
+    (setf (@ list-section hidden) (can-hide-recipe-section list-section section)
+          (@ add-section hidden) (can-hide-recipe-section add-section section)
+          (@ detail-section hidden) (can-hide-recipe-section detail-section section)))
+  t)
+
+(define-for-ps render-recipe-list ()
+  (display-recipe-section *recipe-list*)
+  (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
+         (parent-element recipe-list-entries))
+    (clear-children parent-element)
+    (chain recipe-list
+           (map
+            #'(lambda (recipe)
+                (let ((recipe-id (@ recipe id)))
+                  (jfh-web::with-html-elements
+                      (p
+                       (p (a (onclick . "(render-recipe-detail recipe-id)") "(@ recipe name)")))))))))
+  t)
+
+(define-for-ps render-recipe-add ()
+  (display-recipe-section *recipe-entry*)
+  (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
+         (parent-element recipe-entry-fields))
+    (clear-children parent-element)
+    (jfh-web::with-html-elements
+        (p
+         (p
+          (input (type . "text") (id . "recipe-name") (placeholder . "Recipe Name")))
+         (p
+          (textarea (id . "recipe-ingredients-entry") (placeholder . "Ingredients") (rows . "10") (cols . "100")))
+         (p
+          (textarea (id . "recipe-steps-entry") (placeholder . "Steps") (rows . "10") (cols . "100")))
+         (p
+          (button (onclick . "(add-recipe)") "Add Recipe")))))
+  t)
+
+(define-for-ps get-recipe-by-id (recipe-id)
+  (let ((recipe-index (chain recipe-list (find-index #'(lambda (recipe) (= recipe-id (@ recipe id)))))))
+    (aref recipe-list recipe-index)))
+
+(define-for-ps render-recipe-detail (recipe-id)
+  (display-recipe-section *recipe-details*)
+  (flet ((display-name ()
+           (let* ((recipe-name (chain document (get-element-by-id "recipe-detail-name")))
+                  (parent-element recipe-name)
+                  (name (@ (get-recipe-by-id recipe-id) :name)))
+             (clear-children parent-element)
+             (jfh-web::with-html-elements
+                 (div
+                  (h2 name)))))
+         (display-recipe-items (list-type)
+           (let* ((recipe-items (chain document (get-element-by-id (+ "recipe-" list-type))))
+                  (parent-element recipe-items))
+             (clear-children parent-element)
+             (chain (getprop (get-recipe-by-id recipe-id) list-type)
+                    (map
+                     #'(lambda (item index)
+                         (let ((checkbox-id (+ list-type "-" index)))
+                           (jfh-web::with-html-elements
+                               (p
+                                (input (id . "(progn checkbox-id)") (type . "checkbox"))
+                                (label (for . "(progn checkbox-id)") item))))))))))
+    (display-name)
+    (display-recipe-items :ingredients)
+    (display-recipe-items :steps))
+  t)
+
+(define-for-ps render-recipe-menu ()
+  (let* ((recipe-menu (chain document (get-element-by-id "recipe-menu")))
+         (parent-element recipe-menu))
+    (jfh-web::with-html-elements
+        (tr
+         (td (span (a (onclick . "(render-recipe-list)") "List")))
+         (td #\Space #\Space #\Space)
+         (td (span (a (onclick . "(render-recipe-add)") "Add")))))))

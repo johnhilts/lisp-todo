@@ -24,3 +24,8 @@
   "write complete file all at once"
   (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
     (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
+
+(defun append-to-file (path list)
+  "append row to file"
+  (with-open-file (out path :direction :output :if-exists :append :if-does-not-exist :create)
+    (prin1 list out)))
