@@ -35,3 +35,7 @@
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content))
 
+(defun stop-web-app ()
+  "stop the web app"
+  (stop-server *the-http-server*))
+
