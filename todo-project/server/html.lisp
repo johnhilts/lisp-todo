@@ -52,30 +52,37 @@
   (format t "~&session value: ~a~%" (session-value 'the-session))
   (gethash (session-value 'the-session) *session-user-map*))
 
+(defun establish-user-session (user-info)
+  (let ((session-token (generate-unique-token)))
+    (setf (session-value 'the-session) session-token)
+    (set-cookie (string 'the-session) :value session-token :secure t :http-only t)
+    (setf (gethash session-token *session-user-map*) (user-login user-info))))
+
 (define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
-  (let ((user-info (find-user-entry user :by :login)))
-    (if
-     (and
-      user-info
-      (equal (user-password user-info) password))
-     (let ((session-token (generate-unique-token)))
-       (setf (session-value 'the-session) session-token)
-       (set-cookie (string 'the-session) :value session-token :secure t :http-only t)
-       (setf (gethash session-token *session-user-map*) (user-login user-info))
-       (redirect redirect-back-to))
-     (with-html-output-to-string
-         (*standard-output* nil :prologue t :indent t)
-       (:html
-        (:head
-         (:meta :charset "utf-8")
-         (:title "Auth Failure")
-         (:link :type "text/css"
-                :rel "stylesheet"
-                :href (str (format nil "/styles.css?v=~a" (get-version)))))
-        (:body
-         (:h2 "Authorization failed!")
-         (:div "User or password didn't match"
-               (:a :href "/login" "Click here to try again!"))))))))
+  (flet ((show-auth-failure ()
+           (with-html-output-to-string
+               (*standard-output* nil :prologue t :indent t)
+             (:html
+              (:head
+               (:meta :charset "utf-8")
+               (:title "Auth Failure")
+               (:link :type "text/css"
+                      :rel "stylesheet"
+                      :href (str (format nil "/styles.css?v=~a" (get-version)))))
+              (:body
+               (:h2 "Authorization failed!")
+               (:div "User or password didn't match"
+                     (:a :href "/login" "Click here to try again!")))))))
+    (let ((user-info (find-user-entry user :by :login)))
+      (if
+       (and user-info
+            (equal
+             (user-password user-info)
+             password))
+       (progn
+         (establish-user-session user-info)
+         (redirect redirect-back-to))
+       (show-auth-failure)))))
 
 (define-easy-handler (login-page :uri "/login") (redirect-back-to)
   (with-html-output-to-string
@@ -132,11 +139,13 @@
             (if signup-validation-successful
                 (progn
                   (add-user (post-parameter "name") (post-parameter "user") (post-parameter "password"))
+                  (let ((user-info (find-user-entry (post-parameter "user") :by :login)))
+                    (establish-user-session user-info))
                   (htm (:script :type "text/javascript"
-                              (str
-                               (ps
-                                 (alert "Signup Successful!")
-                                 (setf (@ location href) "/todos"))))))
+                                (str
+                                 (ps
+                                   (alert "Signup Successful!")
+                                   (setf (@ location href) "/todos"))))))
                 (htm
                  (:div
                   (:span (fmt "Signup Failed, because <ul>~{<li>~a</li>~% ~}</ul>" signup-validation-failure-reasons)))
