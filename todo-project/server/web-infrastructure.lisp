@@ -37,7 +37,7 @@
 (defun start-web-app ()
   "start the web app"
   (start-server (getf (fetch-or-create-web-settings) :web-port))
-  (setf *session-max-time* (* 24 3 60))
+  (setf *session-max-time* (* 24 3 60 60))
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content)
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
