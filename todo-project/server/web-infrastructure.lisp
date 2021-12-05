@@ -15,12 +15,18 @@
 
 (defun start-server (port)
   "start or re-start the web server; this gets called automatically when the server variable is declared"
-  (setf *the-http-server*
-        (restart-case (start (make-instance 'easy-ssl-acceptor :port port :ssl-privatekey-file #P"../certs/server.key" :ssl-certificate-file #P"../certs/server.crt"))
-          (re-start-server ()
-            :report "Restart Web Server"
-            (stop-server *the-http-server*)
-            (start-server port)))))
+  (flet ((make-acceptor-instance ()
+           (let* ((system-settings (fetch-or-create-system-settings))
+                  (use-ssl (getf system-settings :use-ssl)))
+             (if use-ssl
+                 (make-instance 'easy-ssl-acceptor :port port :ssl-privatekey-file #P"../certs/server.key" :ssl-certificate-file #P"../certs/server.crt")
+                 (make-instance 'easy-acceptor :port port)))))
+    (setf *the-http-server*
+          (restart-case (start (make-acceptor-instance))
+            (re-start-server ()
+              :report "Restart Web Server"
+              (stop-server *the-http-server*)
+              (start-server port))))))
 
 (defun fetch-or-create-web-settings ()
   "read web-settings from persistence store; create default if doesn't exist yet"

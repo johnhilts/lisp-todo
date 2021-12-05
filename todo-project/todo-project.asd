@@ -32,6 +32,7 @@
                (:file "server/web-common")
                (:file "server/util")
                (:file "server/io")
+               (:file "server/system-settings")
                (:file "server/web-infrastructure")
                (:file "server/app-settings")
                (:file "server/user")
