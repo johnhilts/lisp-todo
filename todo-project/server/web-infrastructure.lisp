@@ -41,9 +41,14 @@
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content)
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
-     (ensure-directories-exist user-index-path)))
+    (ensure-directories-exist user-index-path))
+  (awhen (getf *system-settings* :start-swank)
+    (start-swank it)))
 
 (defun stop-web-app ()
   "stop the web app"
-  (stop-server *the-http-server*))
+  (stop-server *the-http-server*)
+  (stop-server *the-http-server*)
+  (awhen (getf *system-settings* :start-swank)
+    (stop-swank it)))
 
