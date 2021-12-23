@@ -1,5 +1,7 @@
 (in-package #:todo-project)
 
+(defparameter *system-settings* ())
+
 (defun publish-static-content ()
   "static content"
   (push (create-static-file-dispatcher-and-handler
@@ -16,8 +18,7 @@
 (defun start-server (port)
   "start or re-start the web server; this gets called automatically when the server variable is declared"
   (flet ((make-acceptor-instance ()
-           (let* ((system-settings (fetch-or-create-system-settings))
-                  (use-ssl (getf system-settings :use-ssl)))
+           (let ((use-ssl (getf *system-settings* :use-ssl)))
              (if use-ssl
                  (make-instance 'easy-ssl-acceptor :port port :ssl-privatekey-file #P"../certs/server.key" :ssl-certificate-file #P"../certs/server.crt")
                  (make-instance 'easy-acceptor :port port)))))
@@ -36,14 +37,20 @@
 
 (defun start-web-app ()
   "start the web app"
+  (setf *system-settings* (fetch-or-create-system-settings))
   (start-server (getf (fetch-or-create-web-settings) :web-port))
   (setf *session-max-time* (* 24 3 60 60))
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content)
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
-     (ensure-directories-exist user-index-path)))
+    (ensure-directories-exist user-index-path))
+  (awhen (getf *system-settings* :start-swank)
+    (start-swank it)))
 
 (defun stop-web-app ()
   "stop the web app"
-  (stop-server *the-http-server*))
+  (stop-server *the-http-server*)
+  (stop-server *the-http-server*)
+  (awhen (getf *system-settings* :start-swank)
+    (stop-swank it)))
 
