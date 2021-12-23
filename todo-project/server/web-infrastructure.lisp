@@ -31,25 +31,33 @@
 
 (defun fetch-or-create-web-settings ()
   "read web-settings from persistence store; create default if doesn't exist yet"
-  (let* ((default-web-settings  (list :web-port 80))
+  (let* ((default-web-settings  (list :web-port 8080))
          (call-back #'(lambda (web-settings) (if web-settings web-settings default-web-settings))))
     (fetch-or-create-data *web-settings-file-path* call-back)))
 
 (defun start-web-app ()
-  "start the web app"
+  "Start the web app: 
+- Start the swank server if there's a configured port.  
+- Change some Hunchentoot Session settings.  
+- Start Hunchentoot."
   (setf *system-settings* (fetch-or-create-system-settings))
-  (start-server (getf (fetch-or-create-web-settings) :web-port))
+  (format t "~&swank-port:~a~%" (getf *system-settings* :start-swank) )
+  (aif (getf *system-settings* :start-swank)
+       (progn
+	 (start-swank it)
+	 (format t "~&started swank server~%" ))
+       (format t "~&didn't start swank server~%" ))
   (setf *session-max-time* (* 24 3 60 60))
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content)
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
     (ensure-directories-exist user-index-path))
-  (awhen (getf *system-settings* :start-swank)
-    (start-swank it)))
+  (format t "~&loaded user info~%" )
+    (start-server (getf (fetch-or-create-web-settings) :web-port))
+  (format t "~&server started~%" ))
 
 (defun stop-web-app ()
   "stop the web app"
-  (stop-server *the-http-server*)
   (stop-server *the-http-server*)
   (awhen (getf *system-settings* :start-swank)
     (stop-swank it)))
