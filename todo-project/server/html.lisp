@@ -100,7 +100,7 @@
       (:form :method "post" :action "auth"
              (:input :type "hidden" :name "redirect-back-to" :value (or redirect-back-to "/todos"))
              (:div :id "login-input-div"
-              (:div (:input :name "user" :type "text" :placeholder "Login" :class "login-input"))
+              (:div (:input :name "user" :type "email" :placeholder "Login" :class "login-input"))
               (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
               (:div (:button "Login") (:span "&nbsp;") (:button :id "sign-up-button" :type "button" :onclick "javascript:location.href=\"/signup\";" "Sign-Up"))))))))
 
@@ -161,7 +161,7 @@
            (:form :method "post" :action "/signup"
                   (:div
                    (:div (:input :name "name" :type "text" :placeholder "Your Name" :class "login-input"))
-                   (:div (:input :name "user" :type "text" :placeholder "Login" :class "login-input"))
+                   (:div (:input :name "user" :type "email" :placeholder "Login" :class "login-input"))
                    (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
                    (:div (:input :name "confirm-password" :type "password" :placeholder "Confirm Password" :class "login-input"))
                    (:div (:button "Submit"))))))))))
