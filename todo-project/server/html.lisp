@@ -19,7 +19,7 @@
             (:title "Todo List")
             (:link :type "text/css"
                    :rel "stylesheet"
-                   :href  (str (format-string  *static-root* "/styles.css?v=" (get-version))))
+                   :href (format-string  *static-root* "/styles.css?v=" (get-version)))
             (:script :type "text/javascript"
                      (str (jfh-web:define-ps-with-html-macro))
                      (str (share-server-side-constants))
@@ -69,7 +69,7 @@
                (:title "Auth Failure")
                (:link :type "text/css"
                       :rel "stylesheet"
-                      :href (str (format-string  *static-root* "/styles.css?v=" (get-version)))))
+                      :href (format-string  *static-root* "/styles.css?v=" (get-version))))
               (:body
                (:h2 "Authorization failed!")
                (:div "User or password didn't match"
@@ -94,7 +94,7 @@
       (:title "Todo List - Login")
       (:link :type "text/css"
              :rel "stylesheet"
-             :href (str (format-string  *static-root* "/styles.css?v=" (get-version)))))
+             :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (:h2 "Use this page to Login!")
       (:form :method "post" :action "auth"
@@ -128,7 +128,7 @@
       (:title "Todo List - Signup")
       (:link :type "text/css"
              :rel "stylesheet"
-             :href (str (format-string  *static-root* "/styles.css?v=" (get-version)))))
+             :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (if (or
            (post-parameter "name")
@@ -195,7 +195,7 @@
      (:head (:title "EZ Utils - Version")
             (:link :type "text/css"
                    :rel "stylesheet"
-                   :href (str (format-string  *static-root* "/styles.css?v=" (get-version)))))
+                   :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (:div "Version")
       (:div (str (get-version)))))))
@@ -216,7 +216,7 @@
       (:title "Recipes")
       (:link :type "text/css"
              :rel "stylesheet"
-             :href (str (format-string  *static-root* "/styles.css?v=" (get-version))))
+             :href (format-string  *static-root* "/styles.css?v=" (get-version)))
       (:script :type "text/javascript"
                (str (jfh-web:define-ps-with-html-macro))
                (str (share-server-side-constants))
@@ -249,7 +249,7 @@
      (:head (:title "EZ Utils - Import")
             (:link :type "text/css"
                    :rel "stylesheet"
-                   :href (str (format-string  *static-root* "/styles.css?v=" (get-version)))))
+                   :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (awhen (post-parameter "import-list")
         (import-lines-into-todo-list it (post-parameter "list-name"))
