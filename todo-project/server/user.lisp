@@ -35,13 +35,14 @@
           (password (caddr user-entry)))
       (hydrate-user-info name login password))))
 
-(defun add-user (name login password)
+(defun add-user (name login plain-text-password)
   "Save user info to file system."
   (flet ((add-user-to-index (login user-guid)
            (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
              (append-to-file (ensure-directories-exist user-index-path) (list login user-guid)))))
     (let* ((user-guid (generate-unique-token))
-           (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid)))
+           (user-path (format nil "~a/~a/user.sexp" *users-root-folder-path* user-guid))
+           (password (hash-password plain-text-password)))
       (write-complete-file (ensure-directories-exist user-path) (info-object-to-list user name login password))
       (add-user-to-index login user-guid)
       (setf *user-index* (read-user-index)))))

@@ -24,7 +24,7 @@
   :license  "MIT"
   :version "0.0.1"
   :serial t
-  :depends-on (#:cl-who #:hunchentoot #:parenscript #:cl-json #:jfh-web #:swank)
+  :depends-on (#:cl-who #:hunchentoot #:parenscript #:cl-json #:jfh-web #:swank #:ironclad)
   :components ((:file "package")
                (:file "common/constants")
                (:file "macros")
