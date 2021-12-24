@@ -77,9 +77,9 @@
     (let ((user-info (find-user-entry user :by :login)))
       (if
        (and user-info
-            (equal
+            (string=
              (user-password user-info)
-             password))
+             (hash-password password)))
        (progn
          (establish-user-session user-info)
          (redirect redirect-back-to))

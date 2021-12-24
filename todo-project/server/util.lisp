@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defun split-list (list first-part-length)
@@ -132,8 +131,12 @@ key points:
               (subseq (reverse date-based-random-number) 0 7)
               (format nil "~5,'0d" (random (- (expt 10 5) 1)))))))
 
-
 (defun format-string (&rest strings)
   "More concise version of concatenate 'string"
   (apply #'concatenate (cons 'string strings)))
 
+(defun hash-password (password)
+  (ironclad:byte-array-to-hex-string
+   (ironclad:digest-sequence
+    :sha256
+    (ironclad:ascii-string-to-byte-array password))))

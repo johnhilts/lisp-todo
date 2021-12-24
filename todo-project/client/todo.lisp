@@ -32,6 +32,7 @@
              (todo-item  (create text todo-text done false id next-id)))
         (chain todo-list (push todo-item))
         (clear-field todo)
+        (chain todo (focus))
         (render-todo-list todo-list)
         (send-new-todo-item-to-server todo-item))))
   t)
