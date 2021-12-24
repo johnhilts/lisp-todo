@@ -54,7 +54,7 @@
     (ensure-directories-exist user-index-path))
   (format t "~&loaded user info~%" )
     (start-server (getf (fetch-or-create-web-settings) :web-port))
-  (format t "~&server starteda~%" ))
+  (format t "~&server started~%" ))
 
 (defun stop-web-app ()
   "stop the web app"

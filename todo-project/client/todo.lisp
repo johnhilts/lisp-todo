@@ -54,8 +54,12 @@
              (todo-list-index (@ (chain todo-list (find-index #'(lambda (todo) (= todo-id (@ todo id)))))))
              (todo-item (aref todo-list todo-list-index)))
         (if checked
-            (setf (@ label-pre style "text-decoration") "line-through")
-            (setf (@ label-pre style "text-decoration") ""))
+            (progn
+              (setf (@ label-pre style "text-decoration") "line-through")
+              (setf (@ label-pre style "color") "#888"))
+            (progn
+              (setf (@ label-pre style "text-decoration") "")
+              (setf (@ label-pre style "color") "")))
         (setf (@ todo-item done) checked)
         (send-updated-todo-item-to-server todo-item))
       t)

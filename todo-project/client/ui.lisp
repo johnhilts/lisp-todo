@@ -89,7 +89,7 @@
                       (show-todo-edit-class-name (+ *show-todo-edit* index))
                       (hide-todo-edit-class-name (+ *hide-todo-edit* index))
                       (todo-text-id (+ *todo-text* index))
-                      (pre-style (if (@ todo done) "text-decoration: line-through;display:inline;" "display:inline;")))
+                      (pre-style (if (@ todo done) "text-decoration: line-through;color: #888;display:inline;" "display:inline;")))
                   (labels (
                            (show-input-for (todo show-edit)
                              "render text input for todo to edit it"
