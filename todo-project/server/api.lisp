@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (define-api-endpoint todo-data *todo-api-endpoint* (id)

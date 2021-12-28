@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defparameter *registered-ps-functions* ())

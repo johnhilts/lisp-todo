@@ -2,7 +2,7 @@
 
 (defun share-server-side-constants ()
   "feed server side constants to parenscript"
-  (ps
+  (ps:ps
     (defmacro share-server-side-constants ()
       (flet (
              (a-defvar (e) (equal 'defvar (car e)))
@@ -20,5 +20,5 @@
   (let ((id-list (chain todo-list (map #'(lambda (todo) (@ todo id)))))
         (max-fn (@ -Math max)))
     (if (length id-list)
-        (+ 1 (chain max-fn (apply null id-list)))
+        (+ 1 (ps:chain max-fn (apply null id-list)))
         1)))

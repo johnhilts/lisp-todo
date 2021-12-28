@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defun fetch-or-create-app-settings (&optional (get-user-data-path #'get-user-data-path))

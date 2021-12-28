@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defun get-todo-by-id (id)

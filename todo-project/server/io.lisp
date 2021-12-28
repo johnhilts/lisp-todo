@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defun read-complete-file-by-line (path)

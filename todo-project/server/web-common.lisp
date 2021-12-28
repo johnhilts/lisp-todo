@@ -1,12 +1,11 @@
-
 (in-package #:todo-project)
 
 (defmacro define-api-endpoint (name end-point params &body body)
-  `(define-easy-handler (,name :uri ,end-point) (,@params)
+  `(tbnl:define-easy-handler (,name :uri ,end-point) (,@params)
      "macro to DRY REST endpoint declarations"
      (setf (content-type*) "application/json")
-     (let* ((raw-data  (raw-post-data :force-text t))
-            (verb (request-method *request*)))
+     (let* ((raw-data  (tbnl:raw-post-data :force-text t))
+            (verb (tbnl:request-method tbnl:*request*)))
        ,@body)))
 
 (defmacro define-data-update-handler (name model &body body)
@@ -96,11 +95,11 @@
         (has-description (and (atom possible-description) (stringp possible-description)))
         (description (if has-description possible-description nil))
         (body-after-description (if has-description (cdr body) body)))
-    `(define-easy-handler (,name :uri ,end-point) (,@params)
+    `(tbnl:define-easy-handler (,name :uri ,end-point) (,@params)
        ,(when description description)
         (multiple-value-bind (authenticated-user present-p)
            (get-authenticated-user)
          (if present-p
              ,@body-after-description
-             (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
+             (tbnl:redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
 
