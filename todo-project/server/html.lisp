@@ -35,8 +35,9 @@
              (:h1 (who:fmt "Todo List for ~a" authenticated-user)
                   (:div
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
+                   (:br)
                    (:button :id "todo-add-btn" "Add")
-                   (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
+                   (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
                   (:div
                    (:table :id "todo-list"
                            (:thead (:th :id "todo-list-column-header" "To-do Items"))
@@ -100,7 +101,7 @@
       (:form :method "post" :action "auth"
              (:input :type "hidden" :name "redirect-back-to" :value (or redirect-back-to "/todos"))
              (:div :id "login-input-div"
-              (:div (:input :name "user" :type "email" :placeholder "Login" :class "login-input"))
+              (:div (:input :name "user" :type "email" :placeholder "Login" :class "login-input" :autofocus "autofocus"))
               (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
               (:div (:button "Login") (:span "&nbsp;") (:button :id "sign-up-button" :type "button" :onclick "javascript:location.href=\"/signup\";" "Sign-Up"))))))))
 
@@ -143,10 +144,10 @@
                   (let ((user-info (find-user-entry (tbnl:post-parameter "user") :by :login)))
                     (establish-user-session user-info))
                   (who:htm (:script :type "text/javascript"
-                                (who:str
-                                 (ps:ps
-                                   (alert "Signup Successful!")
-                                   (setf (@ location href) "/todos"))))))
+                                    (who:str
+                                     (ps:ps
+                                      (alert "Signup Successful!")
+                                      (setf (@ location href) "/todos"))))))
                 (who:htm
                  (:div
                   (:span (who:fmt "Signup Failed, because <ul>~{<li>~a</li>~% ~}</ul>" signup-validation-failure-reasons)))
@@ -160,7 +161,7 @@
             (:a :href "/login" "Back to Login"))
            (:form :method "post" :action "/signup"
                   (:div
-                   (:div (:input :name "name" :type "text" :placeholder "Your Name" :class "login-input"))
+                   (:div (:input :name "name" :type "text" :placeholder "Your Name" :class "login-input" :autofocus "autofocus"))
                    (:div (:input :name "user" :type "email" :placeholder "Login" :class "login-input"))
                    (:div (:input :name "password" :type "password" :placeholder "Password" :class "login-input"))
                    (:div (:input :name "confirm-password" :type "password" :placeholder "Confirm Password" :class "login-input"))
@@ -254,10 +255,9 @@
       (awhen (tbnl:post-parameter "import-list")
         (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))
         (who:htm (:script :type "text/javascript"
-                      (who:str
-                       (ps:ps
-                         (alert "Import Successful!")
-                         (setf (@ location href) "/todos"))))))
+                          (who:str
+                           (ps:ps
+                            (setf (@ location href) "/todos"))))))
       (:div
        (:h2 "Import to todo list")
        (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))

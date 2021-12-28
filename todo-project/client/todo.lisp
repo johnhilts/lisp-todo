@@ -32,9 +32,10 @@
              (todo-item  (ps:create text todo-text done false id next-id)))
         (ps:chain todo-list (push todo-item))
         (clear-field todo)
-        (ps:chain todo (focus))
         (render-todo-list todo-list)
-        (send-new-todo-item-to-server todo-item))))
+        (send-new-todo-item-to-server todo-item)))
+    ;; calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
+    (ps:chain todo (focus)))
   t)
 
 (define-for-ps get-todo-list-from-server (&optional optional-call-back)
