@@ -1,9 +1,9 @@
 (in-package #:todo-project)
 
-(setf (html-mode) :html5)
+(setf (who:html-mode) :html5)
 
 ;; allow parenscript and cl-who to work together
-(setf *js-string-delimiter* #\")
+(setf ps:*js-string-delimiter* #\")
 
 (defparameter *static-root* (getf *system-settings* :static-root))
 
@@ -11,7 +11,7 @@
   "generate todo HTML page"
   ;; I split this calling of ps functions into 2 operations because str is a macrolet that's only available under with-html-output-to-string
   ;; I have options to consider such as I can mimic str and then put it whereever I want and then only have to work with 1 list
-  (with-html-output-to-string
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html :lang "en"
            (:head
@@ -21,22 +21,22 @@
                    :rel "stylesheet"
                    :href (format-string  *static-root* "/styles.css?v=" (get-version)))
             (:script :type "text/javascript"
-                     (str (jfh-web:define-ps-with-html-macro))
-                     (str (share-server-side-constants))
-                     (str (client-todo))
-                     (str (client-app-settings))
-                     (str (client-ui))
+                     (who:str (jfh-web:define-ps-with-html-macro))
+                     (who:str (share-server-side-constants))
+                     (who:str(client-todo))
+                     (who:str(client-app-settings))
+                     (who:str(client-ui))
                      (dolist (e (invoke-registered-ps-functions))
-                       (str (funcall e)))))
+                       (who:str(funcall e)))))
            (:body
             (:div :id "app-settings")
             (:div :id "todo-filter")
             (:div
-             (:h1 (fmt "Todo List for ~a" authenticated-user)
+             (:h1 (who:fmt "Todo List for ~a" authenticated-user)
                   (:div
                    (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
                    (:button :id "todo-add-btn" "Add")
-                   (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (str (ps-inline (setf (@ location href) "/import"))) "Import ..."))
+                   (:button :id "todo-add-btn" :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
                   (:div
                    (:table :id "todo-list"
                            (:thead (:th :id "todo-list-column-header" "To-do Items"))
@@ -50,18 +50,18 @@
 
 (defun get-authenticated-user ()
   "get the authenticated user from server session."
-  (format t "~&session value: ~a~%" (session-value 'the-session))
-  (gethash (session-value 'the-session) *session-user-map*))
+  (format t "~&session value: ~a~%" (tbnl:session-value 'the-session))
+  (gethash (tbnl:session-value 'the-session) *session-user-map*))
 
 (defun establish-user-session (user-info)
   (let ((session-token (generate-unique-token)))
-    (setf (session-value 'the-session) session-token)
-    (set-cookie (string 'the-session) :value session-token :secure t :http-only t)
+    (setf (tbnl:session-value 'the-session) session-token)
+    (tbnl:set-cookie (string 'the-session) :value session-token :secure t :http-only t)
     (setf (gethash session-token *session-user-map*) (user-login user-info))))
 
-(define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
+(tbnl:define-easy-handler (authenticate :uri "/auth") (user password redirect-back-to)
   (flet ((show-auth-failure ()
-           (with-html-output-to-string
+           (who:with-html-output-to-string
                (*standard-output* nil :prologue t :indent t)
              (:html
               (:head
@@ -82,11 +82,11 @@
              (hash-password password)))
        (progn
          (establish-user-session user-info)
-         (redirect redirect-back-to))
+         (tbnl:redirect redirect-back-to))
        (show-auth-failure)))))
 
-(define-easy-handler (login-page :uri "/login") (redirect-back-to)
-  (with-html-output-to-string
+(tbnl:define-easy-handler (login-page :uri "/login") (redirect-back-to)
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head
@@ -119,8 +119,8 @@
        (zerop (length signup-validation-failure-reasons))
        signup-validation-failure-reasons))))
 
-(define-easy-handler (signup-page :uri "/signup") ()
-  (with-html-output-to-string
+(tbnl:define-easy-handler (signup-page :uri "/signup") ()
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head
@@ -131,30 +131,30 @@
              :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (if (or
-           (post-parameter "name")
-           (post-parameter "user")
-           (post-parameter "password")
-           (post-parameter "confirm-password"))
+           (tbnl:post-parameter "name")
+           (tbnl:post-parameter "user")
+           (tbnl:post-parameter "password")
+           (tbnl:post-parameter "confirm-password"))
           (multiple-value-bind (signup-validation-successful signup-validation-failure-reasons)
-              (validate-signup-parameters (post-parameter "name") (post-parameter "user") (post-parameter "password") (post-parameter "confirm-password"))
+              (validate-signup-parameters (tbnl:post-parameter "name") (tbnl:post-parameter "user") (tbnl:post-parameter "password") (tbnl:post-parameter "confirm-password"))
             (if signup-validation-successful
                 (progn
-                  (add-user (post-parameter "name") (post-parameter "user") (post-parameter "password"))
-                  (let ((user-info (find-user-entry (post-parameter "user") :by :login)))
+                  (add-user (tbnl:post-parameter "name") (tbnl:post-parameter "user") (tbnl:post-parameter "password"))
+                  (let ((user-info (find-user-entry (tbnl:post-parameter "user") :by :login)))
                     (establish-user-session user-info))
-                  (htm (:script :type "text/javascript"
-                                (str
-                                 (ps
+                  (who:htm (:script :type "text/javascript"
+                                (who:str
+                                 (ps:ps
                                    (alert "Signup Successful!")
                                    (setf (@ location href) "/todos"))))))
-                (htm
+                (who:htm
                  (:div
-                  (:span (fmt "Signup Failed, because <ul>~{<li>~a</li>~% ~}</ul>" signup-validation-failure-reasons)))
+                  (:span (who:fmt "Signup Failed, because <ul>~{<li>~a</li>~% ~}</ul>" signup-validation-failure-reasons)))
                  (:div
                   (:span "Please try again: ")
                   (:p (:a :href "/signup" "Back to Signup"))
                   (:p (:a :href "/login" "Back to Login"))))))
-          (htm
+          (who:htm
            (:h2 "Use this page to sign-up!")
            (:div
             (:a :href "/login" "Back to Login"))
@@ -166,21 +166,21 @@
                    (:div (:input :name "confirm-password" :type "password" :placeholder "Confirm Password" :class "login-input"))
                    (:div (:button "Submit"))))))))))
 
-(define-easy-handler (logout-page :uri "/logout") ()
+(tbnl:define-easy-handler (logout-page :uri "/logout") ()
   "logout endpoint"
-  (format t "~&www-authorization: ~a, authorization: *** ~a ***~%" (header-out :www-authenticate)(header-out "authorization"))
-  (remhash (session-value 'the-session) *session-user-map*)
-  (delete-session-value 'the-session)
-  (setf (header-out :www-authenticate) nil)
-  (redirect "/login"))
+  (format t "~&www-authorization: ~a, authorization: *** ~a ***~%" (tbnl:header-out :www-authenticate)(tbnl:header-out "authorization"))
+  (remhash (tbnl:session-value 'the-session) *session-user-map*)
+  (tbnl:delete-session-value 'the-session)
+  (setf (tbnl:header-out :www-authenticate) nil)
+  (tbnl:redirect "/login"))
 
 (define-protected-page (admin-page "/admin") ()
-  (with-html-output-to-string
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head (:title "Admin"))
      (:body
-      (:h2 (fmt "Welcome to the Admin Page, ~a!" authenticated-user))
+      (:h2 (who:fmt "Welcome to the Admin Page, ~a!" authenticated-user))
       (:div "You're supposed to be logged in to see this!")
       (:div
        (:a :href "/logout" "Click here to logout!"))))))
@@ -188,8 +188,8 @@
 (defun get-version ()
   "0.5")
 
-(define-easy-handler (version-page :uri "/version") ()
-  (with-html-output-to-string
+(tbnl:define-easy-handler (version-page :uri "/version") ()
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head (:title "EZ Utils - Version")
@@ -198,7 +198,7 @@
                    :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
       (:div "Version")
-      (:div (str (get-version)))))))
+      (:div (who:str(get-version)))))))
 
 (defun invoke-registered-ps-functions ()
   "pull all the registered ps functions from a global plist, then put them into a list"
@@ -207,8 +207,8 @@
       ((null e) result)
     (push (getf *registered-ps-functions* (car e)) result)))
 
-(define-easy-handler (recipe-page :uri "/recipe") ()
-  (with-html-output-to-string
+(tbnl:define-easy-handler (recipe-page :uri "/recipe") ()
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head
@@ -218,13 +218,13 @@
              :rel "stylesheet"
              :href (format-string  *static-root* "/styles.css?v=" (get-version)))
       (:script :type "text/javascript"
-               (str (jfh-web:define-ps-with-html-macro))
-               (str (share-server-side-constants))
-               (str (client-recipe))
-               (str (client-app-settings))
-               (str (client-ui-recipe))
+               (who:str(jfh-web:define-ps-with-html-macro))
+               (who:str(share-server-side-constants))
+               (who:str(client-recipe))
+               (who:str(client-app-settings))
+               (who:str(client-ui-recipe))
                (dolist (e (invoke-registered-ps-functions))
-                 (str (funcall e)))))
+                 (who:str(funcall e)))))
      (:body
       (:div
        (:table :id "recipe-menu"))
@@ -243,7 +243,7 @@
             (:div :id "recipe-entry-fields"))))))
 
 (defun make-import-todo-page ()
-  (with-html-output-to-string
+  (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
      (:head (:title "EZ Utils - Import")
@@ -251,11 +251,11 @@
                    :rel "stylesheet"
                    :href (format-string  *static-root* "/styles.css?v=" (get-version))))
      (:body
-      (awhen (post-parameter "import-list")
-        (import-lines-into-todo-list it (post-parameter "list-name"))
-        (htm (:script :type "text/javascript"
-                      (str
-                       (ps
+      (awhen (tbnl:post-parameter "import-list")
+        (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))
+        (who:htm (:script :type "text/javascript"
+                      (who:str
+                       (ps:ps
                          (alert "Import Successful!")
                          (setf (@ location href) "/todos"))))))
       (:div

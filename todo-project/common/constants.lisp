@@ -1,4 +1,3 @@
-
 (in-package #:todo-project)
 
 (defparameter *system-settings-file-path* "./system-settings-list.sexp")

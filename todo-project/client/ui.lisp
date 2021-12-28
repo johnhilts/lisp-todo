@@ -2,7 +2,7 @@
 
 (defun client-ui ()
   "define client side UI functions"
-  (ps
+  (ps:ps
 
     (defparameter *todo-checkbox* "todo-check")
     (defparameter *todo-label* "todo-label")
@@ -10,50 +10,50 @@
     (defparameter *hide-todo-edit* "hide-todo-edit")
     (defparameter *todo-text* "todo-text")
 
-    (setf (chain window onload) init)))
+    (setf (ps:chain window onload) init)))
 
-(ps
+(ps:ps
   (defmacro with-callback (fn &body body)
     `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
 
 (define-for-ps clear-field (field)
   "clear input field's value"
-  (setf (chain field value) "")
+  (setf (ps:chain field value) "")
   t)
     
 (define-for-ps clear-children (parent-element)
   "remove all child nodes of a parent element"
-  (while (chain parent-element (has-child-nodes))
-    (chain parent-element (remove-child (@ parent-element first-child)))))
+  (while (ps:chain parent-element (has-child-nodes))
+    (ps:chain parent-element (remove-child (@ parent-element first-child)))))
     
 (define-for-ps init ()
   "initialize html elements and JS objects on page load"
   (with-callback
       (get-app-settings-from-server)
     (get-todo-list-from-server))
-  (setf add-button (chain document
+  (setf add-button (ps:chain document
                           (get-element-by-id "todo-add-btn")))
-  (chain add-button
+  (ps:chain add-button
          (add-event-listener "click" add-todo false)))
 
 (define-for-ps render-app-settings ()
   "render html elements for app settings"
-  (let ((parent-element (chain document (get-element-by-id "app-settings"))))
+  (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
     (jfh-web::with-html-elements
         (div
          (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
          (label (for . "hide-done") "Hide Done Items.")))))
 
 (define-for-ps filter-todos ()
-  (let* ((filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
-         (filtered-todos (chain todo-list (filter (lambda (todo) (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
+  (let* ((filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
+         (filtered-todos (ps:chain todo-list (filter (lambda (todo) (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
     (render-todo-list filtered-todos)
     (update-app-settings))
   t)
 
 (define-for-ps render-todo-filter ()
   "render html elements for todo filter"
-  (let ((parent-element (chain document (get-element-by-id "todo-filter"))))
+  (let ((parent-element (ps:chain document (get-element-by-id "todo-filter"))))
     (jfh-web::with-html-elements
         (div
          (div
@@ -65,23 +65,23 @@
 
 (define-for-ps render-todo-list (todo-list)
   "render html elements for todo list"
-  (let* ((todo-list-table-body (chain document (get-element-by-id "todo-list-body")))
+  (let* ((todo-list-table-body (ps:chain document (get-element-by-id "todo-list-body")))
          (parent-element todo-list-table-body)
-         (column-header (chain document (get-element-by-id "todo-list-column-header")))
-         (filter-text (@ (chain document (get-element-by-id "todo-filter-text")) value))
-         (filtered-todos (chain todo-list (filter
+         (column-header (ps:chain document (get-element-by-id "todo-list-column-header")))
+         (filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
+         (filtered-todos (ps:chain todo-list (filter
                                            #'(lambda (todo)
                                                (and
                                                 (or (not (@ *app-settings* hide-done-items))
                                                     (not (@ todo done)))
-                                                (chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
+                                                (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i")))))))))
          (count (length filtered-todos))
          (use-plural-form (or (> count 1) (= 0 count)))
-         (checked-count (length (chain filtered-todos (filter #'(lambda (todo) (@ todo done)))))))
+         (checked-count (length (ps:chain filtered-todos (filter #'(lambda (todo) (@ todo done)))))))
     (clear-children parent-element)
-    (setf (chain column-header inner-text)
-          (+ (if use-plural-form "To-do Items" "To-do Item") " " (chain checked-count (to-string)) "/" (chain count (to-string))))
-    (chain filtered-todos
+    (setf (ps:chain column-header inner-text)
+          (+ (if use-plural-form "To-do Items" "To-do Item") " " (ps:chain checked-count (to-string)) "/" (ps:chain count (to-string))))
+    (ps:chain filtered-todos
            (map
             #'(lambda (todo index)
                 (let ((todo-checkbox-id (+ *todo-checkbox* index))
@@ -93,16 +93,16 @@
                   (labels (
                            (show-input-for (todo show-edit)
                              "render text input for todo to edit it"
-                             (let ((hide-todo-edit-elements (chain document (get-elements-by-class-name hide-todo-edit-class-name)))
-                                   (show-todo-edit-elements (chain document (get-elements-by-class-name show-todo-edit-class-name)))
-                                   (todo-text-element (chain document (get-element-by-id todo-text-id))))
+                             (let ((hide-todo-edit-elements (ps:chain document (get-elements-by-class-name hide-todo-edit-class-name)))
+                                   (show-todo-edit-elements (ps:chain document (get-elements-by-class-name show-todo-edit-class-name)))
+                                   (todo-text-element (ps:chain document (get-element-by-id todo-text-id))))
                                (dolist (e hide-todo-edit-elements) (setf (@ e hidden) show-edit))
                                (dolist (e show-todo-edit-elements) (setf (@ e hidden) (not show-edit)))
                                (setf (@ todo-text-element value) (@ todo text))
-                               (chain todo-text-element (focus)))
+                               (ps:chain todo-text-element (focus)))
                              t)
                            (save-input-for (todo)
-                             (let* ((todo-text-element (chain document (get-element-by-id todo-text-id)))
+                             (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
                                     (updated-text (@ todo-text-element value)))
                                (setf (@ todo text) updated-text)
                                (update-todo-from-edit todo)
@@ -114,9 +114,9 @@
                              (show-input-for todo false)
                              t))
                     (flet ((update-checked-count ()
-                             (let ((checked-count (length (chain document (query-selector-all "label pre[style*=line-through]")))))
-                               (setf (chain column-header inner-text)
-                                   (+ (if use-plural-form "To-do Items" "To-do Item") " " (chain (+ checked-count) (to-string)) "/" (chain count (to-string)))))))
+                             (let ((checked-count (length (ps:chain document (query-selector-all "label pre[style*=line-through]")))))
+                               (setf (ps:chain column-header inner-text)
+                                   (+ (if use-plural-form "To-do Items" "To-do Item") " " (ps:chain (+ checked-count) (to-string)) "/" (ps:chain count (to-string)))))))
                       (jfh-web::with-html-elements
                           (tr
                            (td
@@ -145,7 +145,7 @@
 
 (defun client-ui-recipe ()
   "define client side UI functions"
-  (ps
+  (ps:ps
 
     (defparameter *recipe-list* "recipe-list")
     (defparameter *recipe-entry* "recipe-entry")
@@ -155,23 +155,23 @@
     ;; (defparameter *hide-todo-edit* "hide-todo-edit")
     ;; (defparameter *todo-text* "todo-text")
     
-    (setf (chain window onload) init-recipe)))
+    (setf (ps:chain window onload) init-recipe)))
 
 (define-for-ps init-recipe ()
   "initialize html elements and JS objects on page load"
   (with-callback
       (get-recipe-list-from-server)
-    ;; (setf add-button (chain document
+    ;; (setf add-button (ps:chain document
     ;;                         (get-element-by-id "todo-add-btn")))
-    ;; (chain add-button
+    ;; (ps:chain add-button
     ;;        (add-event-listener "click" add-todo false))
     (render-recipe-menu)
     (render-recipe-list)))
 
 (define-for-ps get-recipe-sections ()
-  (let ((list-section (chain document (get-element-by-id *recipe-list*)))
-        (add-section (chain document (get-element-by-id *recipe-entry*)))
-        (detail-section (chain document (get-element-by-id *recipe-details*))))
+  (let ((list-section (ps:chain document (get-element-by-id *recipe-list*)))
+        (add-section (ps:chain document (get-element-by-id *recipe-entry*)))
+        (detail-section (ps:chain document (get-element-by-id *recipe-details*))))
     (values list-section add-section detail-section)))
 
 (define-for-ps can-hide-recipe-section (el1 el2-id)
@@ -188,10 +188,10 @@
 
 (define-for-ps render-recipe-list ()
   (display-recipe-section *recipe-list*)
-  (let* ((recipe-list-entries (chain document (get-element-by-id "recipe-list-entries")))
+  (let* ((recipe-list-entries (ps:chain document (get-element-by-id "recipe-list-entries")))
          (parent-element recipe-list-entries))
     (clear-children parent-element)
-    (chain recipe-list
+    (ps:chain recipe-list
            (map
             #'(lambda (recipe)
                 (let ((recipe-id (@ recipe id)))
@@ -202,7 +202,7 @@
 
 (define-for-ps render-recipe-add ()
   (display-recipe-section *recipe-entry*)
-  (let* ((recipe-entry-fields (chain document (get-element-by-id "recipe-entry-fields")))
+  (let* ((recipe-entry-fields (ps:chain document (get-element-by-id "recipe-entry-fields")))
          (parent-element recipe-entry-fields))
     (clear-children parent-element)
     (jfh-web::with-html-elements
@@ -218,13 +218,13 @@
   t)
 
 (define-for-ps get-recipe-by-id (recipe-id)
-  (let ((recipe-index (chain recipe-list (find-index #'(lambda (recipe) (= recipe-id (@ recipe id)))))))
+  (let ((recipe-index (ps:chain recipe-list (find-index #'(lambda (recipe) (= recipe-id (@ recipe id)))))))
     (aref recipe-list recipe-index)))
 
 (define-for-ps render-recipe-detail (recipe-id)
   (display-recipe-section *recipe-details*)
   (flet ((display-name ()
-           (let* ((recipe-name (chain document (get-element-by-id "recipe-detail-name")))
+           (let* ((recipe-name (ps:chain document (get-element-by-id "recipe-detail-name")))
                   (parent-element recipe-name)
                   (name (@ (get-recipe-by-id recipe-id) :name)))
              (clear-children parent-element)
@@ -232,10 +232,10 @@
                  (div
                   (h2 name)))))
          (display-recipe-items (list-type)
-           (let* ((recipe-items (chain document (get-element-by-id (+ "recipe-" list-type))))
+           (let* ((recipe-items (ps:chain document (get-element-by-id (+ "recipe-" list-type))))
                   (parent-element recipe-items))
              (clear-children parent-element)
-             (chain (getprop (get-recipe-by-id recipe-id) list-type)
+             (ps:chain (getprop (get-recipe-by-id recipe-id) list-type)
                     (map
                      #'(lambda (item index)
                          (let ((checkbox-id (+ list-type "-" index)))
@@ -249,7 +249,7 @@
   t)
 
 (define-for-ps render-recipe-menu ()
-  (let* ((recipe-menu (chain document (get-element-by-id "recipe-menu")))
+  (let* ((recipe-menu (ps:chain document (get-element-by-id "recipe-menu")))
          (parent-element recipe-menu))
     (jfh-web::with-html-elements
         (tr

@@ -51,6 +51,6 @@
 
 (defun buildapp ()
   (asdf:load-system :todo-project)
-  (save-lisp-and-die "todo-app"
+  (sb-ext:save-lisp-and-die "todo-app"
                      :toplevel 'cl-user::main
                      :executable t))
