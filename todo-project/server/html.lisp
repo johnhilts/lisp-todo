@@ -208,7 +208,7 @@
       ((null e) result)
     (push (getf *registered-ps-functions* (car e)) result)))
 
-(tbnl:define-easy-handler (recipe-page :uri "/recipe") ()
+(define-protected-page (recipe-page "/recipe") ()
   (who:with-html-output-to-string
       (*standard-output* nil :prologue t :indent t)
     (:html
@@ -231,7 +231,7 @@
        (:table :id "recipe-menu"))
       
       (:div :id "recipe-list"
-            (:h1 "Recipe List")
+            (:h1 (who:fmt "Recipe List for ~a" authenticated-user))
             (:div :id "recipe-list-entries"))
       (:div :id "recipe-details" :hidden t
             (:div :id "recipe-detail-name")
