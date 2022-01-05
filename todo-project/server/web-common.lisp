@@ -103,3 +103,25 @@
              ,@body-after-description
              (tbnl:redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
 
+(defmacro with-app-layout (title unique-client-scripts &body body)
+  "macro to DRY app pages with the same basic layout."
+  `(who:with-html-output-to-string
+       (*standard-output* nil :prologue t :indent t)
+     (:html :lang "en"
+            (:head
+             (:meta :charset "utf-8")
+             (:title ,title)
+             (:link :type "text/css"
+                    :rel "stylesheet"
+                    :href (format-string  *static-root* "/styles.css?v=" (get-version)))
+             (:script :type "text/javascript"
+                      (who:str (jfh-web:define-ps-with-html-macro))
+                      (who:str (share-server-side-constants))
+                      ,@(mapcar
+                         #'(lambda (e)
+                             `(who:str (,e)))
+                         unique-client-scripts)
+                        (dolist (e (invoke-registered-ps-functions))
+                        (who:str(funcall e)))))
+            ,@body)))
+
