@@ -7,6 +7,12 @@
 
 (defparameter *static-root* (getf *system-settings* :static-root))
 
+(defun get-app-menu ()
+  (who:with-html-output-to-string
+      (*standard-output* nil :prologue t :indent t)
+    (:div :style "float: right;"
+          (:span (:a :href "/todos" "Todo List") "&nbsp" (:a :href "/recipe" "Recipes")))))
+
 (defun make-todo-page (authenticated-user)
   "generate todo HTML page"
   ;; I split this calling of ps functions into 2 operations because str is a macrolet that's only available under with-html-output-to-string
@@ -14,8 +20,7 @@
   (with-app-layout "Todo List" (client-todo client-app-settings client-ui) 
     (:body
      (:div :id "app-settings"
-           (:div :style "float: right;"
-                 (:span (:a :href "/todos" "Todo List") "&nbsp" (:a :href "/recipe" "Recipes"))))
+           (who:str (get-app-menu)))
      (:div :id "todo-filter")
      (:div
       (:h1 (who:fmt "Todo List for ~a" authenticated-user)
@@ -198,8 +203,7 @@
   (with-app-layout "Recipes" (client-recipe client-app-settings client-ui-recipe) 
     (:body
      (:div
-      (:div :style "float: right;"
-            (:span (:a :href "/todos" "Todo List") "&nbsp" (:a :href "/recipe" "Recipes")))
+      (who:str (get-app-menu))
       (:table :id "recipe-menu"))
      (:div :id "recipe-list"
            (:h1 (who:fmt "Recipe List for ~a" authenticated-user))
