@@ -3,7 +3,8 @@
 (defun client-todo ()
   "define client side functions to handle todos"
   (ps:ps
-    (defvar todo-list ([]))))
+   (defvar todo-list ([]))
+   (defparameter *tag-list* (list (create :id 1 :text "Shopping") (create :id 2 :text "Lunch") (create :id 3 :text "Electronics") (create :id 4 :text "Food")))))
 
 (ps:ps
   (defmacro with-callback (fn &body body)
