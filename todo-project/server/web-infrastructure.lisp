@@ -47,7 +47,7 @@
 	 (start-swank it)
 	 (format t "~&started swank server~%" ))
        (format t "~&didn't start swank server~%" ))
-  (setf *session-max-time* (* 24 3 60 60))
+  (setf *session-max-time* (* 24 7 60 60))
   (setf *rewrite-for-session-urls* nil)
   (publish-static-content)
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
