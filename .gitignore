@@ -25,3 +25,6 @@
 *.swp
 deploy/**
 production/**
+**/users/**
+**/users-old/**
+*.back
