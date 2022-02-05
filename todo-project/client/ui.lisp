@@ -87,11 +87,11 @@
                      (jfh-web::with-html-elements
                          (span
                           (style . "margin: 5px;")
-                          (a (id . "(progn tag-id)") (onclick . "(remove-tag-from-todo tag)") "(ps:@ tag text)"))))
+                          (a (id . "(progn tag-id)") (onclick . "(remove-tag-from-new-todo tag)") "(ps:@ tag text)"))))
                    t))))
   t)
 
-(define-for-ps add-tag-to-todo (tag)
+(define-for-ps add-tag-to-new-todo (tag)
   (let* ((tag-id (ps:@ tag id))
          (tag-list-element-id (+ *candidate-tag-text* tag-id)))
     (ps:chain *selected-tag-ids* (push tag-id))
@@ -99,11 +99,23 @@
     (render-selected-tags *selected-tag-ids*))
   t)
 
-(define-for-ps remove-tag-from-todo (tag)
+(define-for-ps remove-tag-from-new-todo (tag)
   (let* ((tag-id (ps:@ tag id))
-         (tag-list-element-id (+ *candidate-tag-text* tag-id)))
-    (ps:chain *selected-tags* (push tag-id))
-    (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove)))
+         (tag-list-element-id (+ *selected-tag-text* tag-id)))
+    (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
+    (display-candidate-tag tag (ps:chain document (get-element-by-id "tag-candidates")))
+    (let ((remove-tag-index (ps:chain *selected-tag-ids* (find-index #'(lambda (selected-tag-id) (= tag-id selected-tag-id))))))
+      (when (>= remove-tag-index 0)
+        (ps:chain *selected-tag-ids* (splice remove-tag-index 1)))))
+  t)
+
+(define-for-ps display-candidate-tag (candidate-tag parent-element)
+  "displays 1 candidate tag"
+  (let ((candidate-tag-id (+ *candidate-tag-text* (ps:@ candidate-tag id))))
+    (jfh-web::with-html-elements
+        (span
+         (style . "margin: 5px;")
+         (a (id . "(progn candidate-tag-id)") (onclick . "(add-tag-to-new-todo candidate-tag)") "(ps:@ candidate-tag text)"))))
   t)
 
 (define-for-ps render-tag-content (input event)
@@ -113,14 +125,7 @@
     (labels ((render-tag-candidates (candidate-tags)
                (let ((parent-element tag-candidate-area))
                  (ps:chain candidate-tags
-                           (map
-                            #'(lambda (candidate-tag)
-                                (let ((candidate-tag-id (+ *candidate-tag-text* (ps:@ candidate-tag id))))
-                                  (jfh-web::with-html-elements
-                                      (span
-                                       (style . "margin: 5px;")
-                                       (a (id . "(progn candidate-tag-id)") (onclick . "(add-tag-to-todo candidate-tag)") "(ps:@ candidate-tag text)"))))
-                                t))))
+                           (map #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element) t))))
                t))
       (flet ((tag-content-visible ()
                (not (ps:@ tag-content-area hidden)))

@@ -51,14 +51,14 @@ appSettings = {
 **** TODO Tag rendering
 - [X] Line 1: tag entry smallish textbox.
   - [X] Between todo entry and add button.
-- [-] Line 2: Selected List.
+- [X] Line 2: Selected List.
   - [X] Associate selected tag with todo item.
   - [X] +Is there an ASCII checkmark that can go next to these?+
     - [X] Actually, we just need it for HTML, so use &#10003;
   - [X] +Need an x so we can delete them ... maybe a red x is enough?+
-  - [ ] Clicking on a selected tag will:
-    - [ ] remove it from the selected list
-    - [ ] remove it from association with the todo item
+  - [X] Clicking on a selected tag will:
+    - [X] remove it from the selected list
+    - [X] remove it from association with the todo item
 - [-] Line 3: Candidate List - 3 tags.
   - [X] Initially: the last 3 used tags.
   - [-] List changes to:
