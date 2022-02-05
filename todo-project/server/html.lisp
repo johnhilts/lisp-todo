@@ -27,8 +27,7 @@
            (:div
             (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
             (:div :id "tag-content" :hidden "true"
-                  (:div :id "tag-candidates"))
-            (:br)
+                  (:div :id "tag-candidates" :class "tag-display"))
             (:button :id "todo-add-btn" "Add")
             (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
            (:div
@@ -180,7 +179,7 @@
        (:a :href "/logout" "Click here to logout!"))))))
 
 (defun get-version ()
-  "0.5")
+  "0.9")
 
 (tbnl:define-easy-handler (version-page :uri "/version") ()
   (who:with-html-output-to-string

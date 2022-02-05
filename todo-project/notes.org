@@ -7,7 +7,6 @@
 - [ ] save all items on server
 
 ** Technical details
-
 *** To-do object
 #+BEGIN_SRC "javascript"
 todoOject = {
@@ -39,3 +38,59 @@ appSettings = {
 - todo object "DTO"
 - generic methods for I/O
   - call from http handler
+
+
+** TODO Tagging
+*** TODO UI
+- [X] Want to be able to input new ones.
+  - [X] Smallish textbox should work.
+  - [X] +Needs to auto-generate the "next" textbox to allow for easy multiple entry.+
+- [X] Want to be able to select existing ones from a list.
+  - [X] Display the last 3 that were used.
+  - [X] When typing in the tag input field, display existing ones based on what's typed.
+**** TODO Tag rendering
+- [X] Line 1: tag entry smallish textbox.
+  - [X] Between todo entry and add button.
+- [-] Line 2: Selected List.
+  - [X] Associate selected tag with todo item.
+  - [X] +Is there an ASCII checkmark that can go next to these?+
+    - [X] Actually, we just need it for HTML, so use &#10003;
+  - [X] +Need an x so we can delete them ... maybe a red x is enough?+
+  - [ ] Clicking on a selected tag will:
+    - [ ] remove it from the selected list
+    - [ ] remove it from association with the todo item
+- [-] Line 3: Candidate List - 3 tags.
+  - [X] Initially: the last 3 used tags.
+  - [-] List changes to:
+    - [X] Match the input in the todo field.
+    - [ ] Less than 10 matches, fill out with however many of the last 10 are needed.
+  - [-] Link to show all tags.
+    - [ ] Put right beneath the tag area.
+    - [X] +Once a tag is selected, close.+
+    - [ ] There will be a close link for the tag area.
+**** TODO Filtering
+- [ ] same basic UI layout - latest 3, input, selected tags
+- [ ] can go under existing filter
+  - [ ] or maybe to the right of the existing filter?
+- [ ] selecting a tag makes a search happen
+  - [ ] search is conducted against the lookup "table" and matches are displayed the same Filter search results are
+- [ ] enter a tag updates the list of 3 with matches
+- [X] fonts
+  - [X] increase 3 to 10
+  - [X] make the font smaller
+  - [X] keep the words further appart  
+*** DONE Persistence
+- [X] Tags file in every user folder.
+- [X] Have a "lookup file" with todo ID/tag combos?
+- [X] Should there be a tag ID?
+*** TODO Tags as objects (how the app handles them in memory)
+**** DONE Server
+- [X] *note* todos are just lists, not CLOS objects.
+- [X] I guess for now the representation can match the files.
+  - [X] Tags in their own object.
+  - [X] The todo/tag ID combos in their own object.
+**** TODO Client
+- [X] *note* todos are json objects.
+- [X] I guess for now the representation can match the files.
+- [ ] Render selected list when editing a todo  
+  

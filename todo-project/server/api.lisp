@@ -12,6 +12,24 @@
     (:get
      (todo-data-get id))))
 
+(define-api-endpoint tag-data *tag-api-endpoint* (id)
+  "REST endpoint for tags"
+  (case verb
+    (:post
+     (tag-data-add raw-data))
+    (:get
+     (tag-data-get id))))
+
+(define-api-endpoint tag-todo-data *tag-todo-api-endpoint* (id)
+  "REST endpoint for tags"
+  (case verb
+    (:put
+     (tag-todo-data-add raw-data))
+    (:post
+     (tags-todo-data-add raw-data))
+    (:get
+     (tag-todo-data-get id))))
+
 (define-api-endpoint app-settings-data *app-settings-api-endpoint* ()
   "REST endpoint for app settings"
   (case verb
