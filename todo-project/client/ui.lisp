@@ -70,9 +70,14 @@
          (button (onclick . "(filter-todos)") "Filter"))))
   t)
 
+(define-for-ps search-for-tag (tag-something)
+  (ps:chain console (log (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag-something id) (ps:@ tag-todo tag-id)))))))
+  ;; t
+  )
+
 (define-for-ps render-tag-filter ()
   (let ((filter-tag-candidate-area (ps:chain document (get-element-by-id "filter-tag-candidate-area"))))
-    (render-tag-candidates (ps:chain *tag-list* (slice 0 *max-candidate-tag-show-count*)) filter-tag-candidate-area "-filter-"))
+    (render-tag-candidates (ps:chain *tag-list* (slice 0 *max-candidate-tag-show-count*)) filter-tag-candidate-area "-filter-" #'search-for-tag))
   t)
 
 (define-for-ps get-tag-content-area-element ()
@@ -115,18 +120,18 @@
         (ps:chain *selected-tag-ids* (splice remove-tag-index 1)))))
   t)
 
-(define-for-ps display-candidate-tag (candidate-tag parent-element &optional (candidate-tag-id-prefix ""))
+(define-for-ps display-candidate-tag (candidate-tag parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'add-tag-to-new-todo))
   "displays 1 candidate tag"
   (let ((candidate-tag-id (+ *candidate-tag-text* candidate-tag-id-prefix (ps:@ candidate-tag id))))
     (jfh-web::with-html-elements
         (span
          (style . "margin: 5px;")
-         (a (id . "(progn candidate-tag-id)") (onclick . "(add-tag-to-new-todo candidate-tag)") "(ps:@ candidate-tag text)"))))
+         (a (id . "(progn candidate-tag-id)") (onclick . "(tag-click-handler candidate-tag)") "(ps:@ candidate-tag text)"))))
   t)
 
-(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix ""))
+(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'add-tag-to-new-todo))
   (ps:chain candidate-tags
-            (map #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix) t)))
+            (map #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t)))
   t)
 
 (define-for-ps render-tag-content (input event)
