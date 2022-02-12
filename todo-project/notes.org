@@ -69,12 +69,14 @@ appSettings = {
     - [X] +Once a tag is selected, close.+
     - [ ] There will be a close link for the tag area.
 **** TODO Filtering
-- [ ] same basic UI layout - latest 3, input, selected tags
-  - [ ] When mapping the candidate tag layout, need a distinct element ID and different on-click handler
+- [-] same basic UI layout - latest 3, input, selected tags
+  - [-] When mapping the candidate tag layout, need:
+    - [X] A distinct element ID.
+    - [ ] A different on-click handler.
 - [X] put it *above* the existing filter
   - [X] +or maybe to the right of the existing filter?+
-- [ ] selecting a tag makes a search happen
-  - [ ] search is conducted against the lookup "table" and matches are displayed the same Filter search results are
+- [ ] selecting a candidate tag makes a search happen
+  - [ ] search is conducted against the lookup list of tags and matches are displayed the same way Filter search results are
 - [ ] enter a tag updates the list of 3 with matches
 - [X] fonts
   - [X] increase 3 to 10
