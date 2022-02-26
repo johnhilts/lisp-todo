@@ -37,7 +37,8 @@
   (with-callback
       (get-app-settings-from-server)
     (get-todo-list-from-server)
-    (get-tag-list-from-server #'render-tag-filter))
+    (get-tag-list-from-server #'render-tag-filter)
+    (get-tag-todo-associaton-list-from-server))
   (let ((add-button (ps:chain document (get-element-by-id "todo-add-btn")))
         (todo-content (ps:chain document (get-element-by-id "todo-content"))))
     (ps:chain add-button (add-event-listener "click" add-todo false))
@@ -84,7 +85,7 @@
     (ps:chain selected-tags (for-each #'(lambda (tag-todo) (ps:chain *selected-filter-tag-todo-ids* (push tag-todo)))))
     (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
     ;; (add-associate-tag-to-todo (ps:create tag-id tag-id todo-id todo-id))
-    (let ((filter-tags (ps:chain *selected-filter-tag-todo-ids* (map #'(lambda (tag-todo) (ps:@ tag-todo tag-id)))))
+    (let ((filter-tags (ps:chain *selected-filter-tag-todo-ids* (map #'(lambda (tag-todo) (ps:@ tag-todo tag-id))) (filter #'(lambda (tag-id index tag-ids) (= (ps:chain tag-ids (find-index #'(lambda (id) (= id tag-id)))) index)))))
           (filter-todos (ps:chain *selected-filter-tag-todo-ids* (map #'(lambda (tag-todo) (ps:@ tag-todo todo-id))))))
       (render-selected-tags filter-tags candidate-tag-id-prefix)
       (render-todos-filtered-by-tags filter-todos)))

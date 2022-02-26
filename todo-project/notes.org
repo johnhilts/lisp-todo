@@ -69,15 +69,15 @@ appSettings = {
     - [X] +Once a tag is selected, close.+
     - [ ] There will be a close link for the tag area.
 **** TODO Filtering
-- [-] same basic UI layout - latest 3, input, selected tags
-  - [-] When mapping the candidate tag layout, need:
+- [X] same basic UI layout - latest 10, input, selected tags
+  - [X] When mapping the candidate tag layout, need:
     - [X] A distinct element ID.
-    - [ ] A different on-click handler.
+    - [X] A different on-click handler.
 - [X] put it *above* the existing filter
   - [X] +or maybe to the right of the existing filter?+
-- [ ] selecting a candidate tag makes a search happen
-  - [ ] search is conducted against the lookup list of tags and matches are displayed the same way Filter search results are
-- [ ] enter a tag updates the list of 3 with matches
+- [X] selecting a candidate tag makes a search happen
+  - [X] search is conducted against the lookup list of tags and matches are displayed the same way Filter search results are
+- [ ] enter a tag updates the list of 10 with matches
 - [X] fonts
   - [X] increase 3 to 10
   - [X] make the font smaller
@@ -95,5 +95,8 @@ appSettings = {
 **** TODO Client
 - [X] *note* todos are json objects.
 - [X] I guess for now the representation can match the files.
-- [ ] Render selected list when editing a todo  
+- [ ] Render selected list when editing a todo.
+  - [ ] For these, the selected tags will display right away since they're already populated.
+  - [ ] Layout should be the same - line 1: candidate tags, line 2: add new tag, line 3: selected tags
+  - [ ] And need to save any editted associations.
   

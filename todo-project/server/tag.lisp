@@ -82,4 +82,4 @@
     (let ((existing-tags (fetch-or-create-tag-todos))
           (user-data-path (get-user-data-path nil :by :login)))
       (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append existing-tags (fill-out-tags-todo-list model)))
-      (json:encode-json-to-string (list 'ok)))))))
+      (json:encode-json-to-string (list 'ok)))))
