@@ -26,8 +26,8 @@
       (:h1 (who:fmt "Todo List for ~a" authenticated-user)
            (:div
             (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-            (:div :id "tag-content" :hidden "true"
-                  (:div :id "tag-candidates" :class "tag-display"))
+            (:div :id "new-todo-tag-content" :hidden "true"
+                  (:div :id "new-todo-tag-candidates" :class "tag-display"))
             (:button :id "todo-add-btn" "Add")
             (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
            (:div
