@@ -8,12 +8,24 @@
   (when (probe-file quicklisp-init)
     (load quicklisp-init)))
 
-(push #p"/home/jfh/code/lisp/source/util-lib/web/jfh-web/" asdf:*central-registry*)
+(defun read-complete-file (path)
+  "read complete file all at once"
+  (with-open-file (in path :if-does-not-exist :create)
+    (read in nil)))
+
+;; "home/public/source/lib/lisp-util-lib/web/jfh-web/jfh-web.lisp"
+(let* ((app-root (cdr (assoc :app-root (read-complete-file ".config")))) 
+       (lib-root (cdr (assoc :lib-root (read-complete-file ".config"))))
+       (jfh-web-lib-path (make-pathname :directory (concatenate 'string lib-root "/web/jfh-web")))
+       (jfh-web-source-path (probe-file (concatenate 'string "/" lib-root "/web/jfh-web/jfh-web.lisp")))
+       (todo-app-path (make-pathname :directory app-root)))
+  
+  (push jfh-web-lib-path asdf:*central-registry*)
 ;;; (push #p"/home/jfh/code/lisp/source/util-lib/testing/jfh-testing/" asdf:*central-registry*)
 ;;; (push #p"/home/jfh/code/lisp/source/util-lib/web/test/jfh-web-test/" asdf:*central-registry*)
-(push #p"/home/jfh/code/lisp/source/web/todo/todo-project/" asdf:*central-registry*)
-(asdf:load-system "jfh-web")
-(compile-file #p"/home/jfh/code/lisp/source/util-lib/web/jfh-web/jfh-web.lisp")
+  (push todo-app-path asdf:*central-registry*)
+  (asdf:load-system "jfh-web")
+  (compile-file jfh-web-source-path))
 ;;; (asdf:load-system "jfh-testing")
 ;;; (asdf:load-system "jfh-web-test")
 ;;; (asdf:load-system "todo-project")
@@ -51,6 +63,6 @@
 
 (defun buildapp ()
   (asdf:load-system :todo-project)
-  (save-lisp-and-die "todo-app"
+  (sb-ext:save-lisp-and-die "todo-app"
                      :toplevel 'cl-user::main
                      :executable t))

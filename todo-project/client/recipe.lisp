@@ -15,7 +15,7 @@
   "define callback and get todo list from server and re-render html elements"
   (with-callback
       (get-from-server *recipe-api-endpoint*)
-    (let ((server-recipe-list (chain -j-s-o-n (parse (@ this response-text)))))
+    (let ((server-recipe-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
       (render-recipe-list server-recipe-list)
       (setf recipe-list server-recipe-list)
       (when optional-call-back
@@ -24,15 +24,15 @@
 
 (define-for-ps add-recipe (evt)
   "add recipe on client and server and re-render html elements"
-  (chain evt (prevent-default))
-  (let* ((recipe-name (chain (chain document (get-element-by-id "recipe-name")) value))
-         (recipe-ingredients (chain (chain document (get-element-by-id "recipe-ingredients-entry")) value))
-         (recipe-steps (chain (chain document (get-element-by-id "recipe-steps-entry")) value)))
+  (ps:chain evt (prevent-default))
+  (let* ((recipe-name (ps:chain (ps:chain document (get-element-by-id "recipe-name")) value))
+         (recipe-ingredients (ps:chain (ps:chain document (get-element-by-id "recipe-ingredients-entry")) value))
+         (recipe-steps (ps:chain (ps:chain document (get-element-by-id "recipe-steps-entry")) value)))
     (with-callback
         (get-recipe-list-from-server)
       (let* ((next-id (get-next-index recipe-list))
              (recipe-item  (create name recipe-name ingredients recipe-ingredients steps recipe-steps id next-id)))
-        (chain recipe-list (push recipe-item))
+        (ps:chain recipe-list (push recipe-item))
         (with-callback
             (send-new-recipe-item-to-server recipe-item)
           (with-callback

@@ -13,9 +13,10 @@
 ;;   (let ((recipe (get-recipe-by-id id)))
 ;;     (encode-plist-to-json-as-string recipe)))
 
-(defun fetch-or-create-recipes ()
+(defun fetch-or-create-recipes (&optional (get-user-data-path #'get-user-data-path) )
   "get todo from persisted data"
-  (fetch-or-create-data *recipe-file-path*))
+  (let ((user-data-path (if get-user-data-path (funcall get-user-data-path nil :by :login) "")))
+    (fetch-or-create-data (concatenate 'string user-data-path "/"  *recipe-file-name*))))
 
 (defun get-recipe-list ()
   "get todo list and encode as json"
@@ -33,9 +34,10 @@
   model)
 
 (define-data-update-handler recipe-data-add (model)
-    "add recipe data to persisted data"
+  "add recipe data to persisted data"
   (let ((new-id (getf model :id))
         (existing-recipes (fetch-or-create-recipes))
-        (parsed-data (parse-recipe-raw-data model)))
-    (write-complete-file *recipe-file-path* (append existing-recipes (list parsed-data)))
+        (parsed-data (parse-recipe-raw-data model))
+        (user-data-path (get-user-data-path nil :by :login)))
+    (write-complete-file (concatenate 'string user-data-path "/"  *recipe-file-name*) (append existing-recipes (list parsed-data)))
     (json:encode-json-to-string (list new-id))))
