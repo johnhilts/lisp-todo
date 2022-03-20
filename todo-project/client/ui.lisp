@@ -158,7 +158,10 @@
 (define-for-ps render-tag-content-for-new-todo (input event)
   (render-tag-content input "new-todo-"))
 
-(define-for-ps render-tag-content (input id-prefix)
+(define-for-ps render-tag-content-for-edit-todo (todo-id index)
+  (render-tag-content todo-id (+ "edit-todo-" index "-")))
+
+(define-for-ps render-tag-content (todo-id id-prefix)
   "render tag entry, selected tags, and tag candidates"
   (let ((tag-content-area (get-tag-content-area-element id-prefix))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
@@ -182,6 +185,9 @@
           (setf (ps:@ tag-content-area hidden) ps:f)
           (render-tag-candidates (ps:chain *tag-list* (slice 0 *max-candidate-tag-show-count*)) tag-candidate-area id-prefix)
           (render-tag-entry)
+          (when todo-id
+            (let ((tags-for-this-todo (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag-todo todo-id) todo-id))) (map #'(lambda (tag-todo) (ps:@ tag-todo tag-id))))))
+                (render-selected-tags tags-for-this-todo id-prefix)))
           ))))
   t)
 
@@ -211,6 +217,8 @@
                       (show-todo-edit-class-name (+ *show-todo-edit* index))
                       (hide-todo-edit-class-name (+ *hide-todo-edit* index))
                       (todo-text-id (+ *todo-text* index))
+                      (tag-content-id (+ "edit-todo-" index "-tag-content"))
+                      (tag-candidates-id (+ "edit-todo-" index "-tag-candidates"))
                       (pre-style (if (@ todo done) "text-decoration: line-through;color: #888;display:inline;" "display:inline;")))
                   (labels (
                            (show-input-for (todo show-edit)
@@ -222,6 +230,7 @@
                                (dolist (e show-todo-edit-elements) (setf (@ e hidden) (not show-edit)))
                                (setf (@ todo-text-element value) (@ todo text))
                                (ps:chain todo-text-element (focus)))
+                             (render-tag-content-for-edit-todo (@ todo id) index)
                              t)
                            (save-input-for (todo)
                              (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
@@ -259,8 +268,8 @@
                               (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
                             (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
                             (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
-                            (div (id . "edit-todo-tag-content") (hidden . "true")
-                                 (div (id . "edit-todo-tag-candidates") (class . "tag-display")))
+                            (div (id . "(progn tag-content-id)") (hidden . "true")
+                                 (div (id . "(progn tag-candidates-id)") (class . "tag-display")))
                             (span (br (ref . "(progn index)")))
                             (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
                             (span "  ")
