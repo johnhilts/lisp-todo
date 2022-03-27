@@ -64,13 +64,18 @@
   (let ((user-data-path (if get-user-data-path (funcall get-user-data-path nil :by :login) "")))
     (fetch-or-create-data (concatenate 'string user-data-path "/" *tag-todo-file-name*))))
 
-(define-data-update-handler tag-todo-data-add (model)
-    "add tag todo association data to persisted data"
-  (let ((new-id (getf model :id))
-        (existing-tags (fetch-or-create-tag-todos))
-        (user-data-path (get-user-data-path nil :by :login)))
-    (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append existing-tags (list model)))
-    (json:encode-json-to-string (list new-id))))
+(define-data-update-handler tag-todo-data-update (model)
+  "update tag todo association data to persisted data"
+  (flet ((fill-out-tags-todo-list (model)
+           (let ((todo-id (getf model :todo-id))
+                 (tag-ids (getf model :tag-ids)))
+             (reduce #'(lambda (acc cur) (append acc (list (list :todo-id todo-id :tag-id cur)))) tag-ids :initial-value ()))))
+    (let* ((todo-id (getf model :todo-id)) ;; getting this twice!
+           (existing-tags (fetch-or-create-tag-todos))
+           (filtered-tags (remove-if #'(lambda (e) (= todo-id (getf e :todo-id))) existing-tags))
+           (user-data-path (get-user-data-path nil :by :login)))
+      (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append filtered-tags (fill-out-tags-todo-list model)))
+      (json:encode-json-to-string (list todo-id)))))
 
 
 (define-data-update-handler tags-todo-data-add (model)

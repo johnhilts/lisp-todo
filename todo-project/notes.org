@@ -97,6 +97,7 @@ appSettings = {
 - [X] I guess for now the representation can match the files.
 - [-] Render selected list when editing a todo.
   - [ ] BUG Hide tags when done editting.
+  - [ ] Save any editted associations.
   - [X] For these, the selected tags will display right away since they're already populated.
   - [ ] Layout should be the same - line 1: candidate tags, line 2: add new tag, line 3: selected tags.
     - [ ] Do NOT create a set of Tag html elements for each todo item.
@@ -105,5 +106,4 @@ appSettings = {
         - [ ] Keep the parent element (ID) that the macro uses handy.
           - [ ] Pass it around to each todo item that's being edited.
       - [ ] Repopulate *just the data* on demand.
-  - [ ] And need to save any editted associations.
   

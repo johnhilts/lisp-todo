@@ -24,7 +24,7 @@
   "REST endpoint for tags"
   (case verb
     (:put
-     (tag-todo-data-add raw-data))
+     (tag-todo-data-update raw-data))
     (:post
      (tags-todo-data-add raw-data))
     (:get

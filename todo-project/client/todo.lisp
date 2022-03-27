@@ -72,6 +72,7 @@
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
+  (edit-associate-tags-to-todo (ps:@ todo id) *selected-tag-ids*)
   (render-todo-list todo-list)
   t)
 

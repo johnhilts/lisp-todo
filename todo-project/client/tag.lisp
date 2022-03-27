@@ -41,6 +41,10 @@
   "save new tag todo association list on server - use with new todo"
   (send-to-server *tag-todo-api-endpoint* "POST" tag-todos))
 
+(define-for-ps send-updated-tags-todo-item-to-server (tag-todos)
+  "save updated tag todo association list on server - use with existing todo"
+  (send-to-server *tag-todo-api-endpoint* "PUT" tag-todos))
+
 (define-for-ps get-tag-todo-associaton-list-from-server (&optional optional-call-back)
   "define callback and get tag todo association list from server"
   (with-callback
@@ -54,8 +58,15 @@
 (define-for-ps add-associate-tags-to-todo (todo-id tag-ids)
   "Idempotent function to add associations for tags to a todo - use when adding a new todo"
   (ps:chain event (prevent-default))
-  (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id))))))
+  (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id)))))) ; is this necessary??
   (send-new-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
+  t)
+
+(define-for-ps edit-associate-tags-to-todo (todo-id tag-ids)
+  "Idempotent function to add associations for tags to a todo - use when updating a todo"
+  (ps:chain event (prevent-default))
+  ;; (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id)))))) ; is this necessary??
+  (send-updated-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
   t)
 
 (define-for-ps add-associate-tag-to-todo (tag-todo-item)
