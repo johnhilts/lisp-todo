@@ -36,7 +36,8 @@
         (clear-field todo)
         (render-todo-list todo-list)
         (send-new-todo-item-to-server todo-item)
-        (add-associate-tags-to-todo next-id *selected-tag-ids*)))
+        (add-associate-tags-to-todo next-id *selected-tag-ids*)
+        (funcall *show-tag-content-handler*)))
     ;; calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
     (ps:chain todo (focus)))
   t)

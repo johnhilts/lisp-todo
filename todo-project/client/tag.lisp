@@ -18,10 +18,10 @@
         (optional-call-back))))
   t)
 
-(define-for-ps add-tag (event)
+(define-for-ps add-tag (id-prefix event)
   "add tag on client and server and re-render html elements"
   (ps:chain event (prevent-default))
-  (let* ((tag (ps:chain document (get-element-by-id "tag-input")))
+  (let* ((tag (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))))
          (tag-text (ps:chain tag value)))
     (with-callback
         (get-tag-list-from-server)
@@ -29,7 +29,7 @@
              (tag-item  (ps:create text tag-text id next-id)))
         (ps:chain *tag-list* (push tag-item))
         (ps:chain *selected-tag-ids* (push next-id))
-        (render-selected-tags *selected-tag-ids*)
+        (render-selected-tags *selected-tag-ids* id-prefix)
         (send-new-tag-item-to-server tag-item))))
   t)
 
@@ -58,14 +58,16 @@
 (define-for-ps add-associate-tags-to-todo (todo-id tag-ids)
   "Idempotent function to add associations for tags to a todo - use when adding a new todo"
   (ps:chain event (prevent-default))
-  (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id)))))) ; is this necessary??
+  (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id))))))
   (send-new-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
   t)
 
 (define-for-ps edit-associate-tags-to-todo (todo-id tag-ids)
   "Idempotent function to add associations for tags to a todo - use when updating a todo"
   (ps:chain event (prevent-default))
-  ;; (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id)))))) ; is this necessary??
+  (let ((filtered (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (not (= todo-id (ps:@ tag-todo todo-id))))))))
+    (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain filtered (push (create todo-id todo-id tag-id tag-id))))))
+    (setf *tags-todo-association-list* filtered))
   (send-updated-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
   t)
 

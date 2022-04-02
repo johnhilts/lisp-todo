@@ -93,11 +93,18 @@ appSettings = {
   - [X] Tags in their own object.
   - [X] The todo/tag ID combos in their own object.
 **** TODO Client
+- [ ] BUG update filter candidate tags after new one is added.  
+- [ ] Import tags!  
 - [X] *note* todos are json objects.
 - [X] I guess for now the representation can match the files.
+- [X] BUG add tag isn't working.
+- [X] Allow for any vs all matches.
 - [-] Render selected list when editing a todo.
-  - [ ] BUG Hide tags when done editting.
-  - [ ] Save any editted associations.
+  - [X] BUG Refresh updated tag associations.
+  - [X] BUG Hide tags when done editting.
+  - [X] BUG Tag elements get re-added!
+    - But only twice...
+  - [X] Save any editted associations.
   - [X] For these, the selected tags will display right away since they're already populated.
   - [ ] Layout should be the same - line 1: candidate tags, line 2: add new tag, line 3: selected tags.
     - [ ] Do NOT create a set of Tag html elements for each todo item.
@@ -106,4 +113,3 @@ appSettings = {
         - [ ] Keep the parent element (ID) that the macro uses handy.
           - [ ] Pass it around to each todo item that's being edited.
       - [ ] Repopulate *just the data* on demand.
-  
