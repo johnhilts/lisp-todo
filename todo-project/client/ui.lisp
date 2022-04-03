@@ -158,10 +158,13 @@
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"
   (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
-        (selected-tags (ps:chain selected-tag-ids (map #'(lambda (selected-tag-id) (ps:chain *taglist* (find #'(lambda (tag) (= (ps:@ tag id) selected-tag-id))))))))
-        (selected-tags-element parent-element))
+         (selected-tags (ps:chain selected-tag-ids (map #'(lambda (selected-tag-id) (ps:chain *taglist* (find #'(lambda (tag) (= (ps:@ tag id) selected-tag-id))))))))
+         (selected-tags-element parent-element)
+         (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
     (when selected-tags-element
       (clear-children parent-element))
+    (when import-selected-tags
+      (setf (ps:@ import-selected-tags value) selected-tag-ids))
     (ps:chain selected-tags
               (map
                #'(lambda (tag)
@@ -448,3 +451,39 @@
          (td (span (a (onclick . "(render-recipe-list)") "List")))
          (td #\Space #\Space #\Space)
          (td (span (a (onclick . "(render-recipe-add)") "Add")))))))
+
+(defun client-import ()
+  "Define client side functions to handle todo imports."
+  (ps:ps
+   ;; (defvar todo-list ([]))
+   ;; (defparameter *tag-list* ([]))
+   (defparameter *tags-todo-association-list* ([]))))
+
+(defun client-ui-import ()
+  "define client side UI functions"
+  (ps:ps
+    (defparameter *candidate-tag-text* "candidate-tag")
+    (defparameter *selected-tag-text* "selected-tag")
+
+    (defparameter *selected-tag-ids* (list))
+    ;; (defparameter *selected-filter-tag-todo-ids* (list))
+    (defparameter *max-candidate-tag-show-count* 1000)
+    ;; (defparameter *filter-tag-match-type* 'any)
+
+    (setf (ps:chain window onload) init-import)))
+
+(define-for-ps init-import ()
+  "initialize html elements and JS objects on page load"
+  (with-callback
+    ;;   (get-app-settings-from-server)
+    ;; (get-todo-list-from-server)
+    (get-tag-list-from-server)
+    ;; (get-tag-todo-associaton-list-from-server)
+    )
+  (let ((todo-content (ps:chain document (get-element-by-id "import-list"))))
+    ;; (ps:chain add-button (add-event-listener "click" add-todo false))
+    (ps:chain todo-content (add-event-listener "input" render-tag-content-for-import-todo todo-content event false))))
+
+
+(define-for-ps render-tag-content-for-import-todo (input event)
+  (render-tag-content input "import-todo-"))

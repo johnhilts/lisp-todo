@@ -93,8 +93,14 @@ appSettings = {
   - [X] Tags in their own object.
   - [X] The todo/tag ID combos in their own object.
 **** TODO Client
+- [ ] BUG *select-tag-ids* not updated when a tag is removed.
+  - Especially noticable on the import page.
 - [ ] BUG update filter candidate tags after new one is added.  
-- [ ] Import tags!  
+- [-] Import tags!
+  - [X] Render tags.
+  - [ ] Associate tags with new todos when the Import button is clicked.
+    - [ ] Add a hidden field that gets refreshed whenever the selected tags variable is updated.
+- [ ] Convert "prefix" in each todo to a tag, and create the tag-todo association.
 - [X] *note* todos are json objects.
 - [X] I guess for now the representation can match the files.
 - [X] BUG add tag isn't working.
