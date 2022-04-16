@@ -93,13 +93,22 @@ appSettings = {
   - [X] Tags in their own object.
   - [X] The todo/tag ID combos in their own object.
 **** TODO Client
+- [X] Import tags!
+  - [X] Render tags.
+  - [X] Associate tags with new todos when the Import button is clicked.
+    - [X] Add a hidden field that gets refreshed whenever the selected tags variable is updated.
+    - [X] Handle on the server side.
+      - [X] Trace =transform-lines-to-todos= so we have a list to experiment with.
+      - [X] Transform that list into the new todo IDs and return the list of IDs from =import-lines-into-todo-list=.
+      - [X] Associate the list of tag IDs with the list of todo IDs and save!
 - [ ] BUG *select-tag-ids* not updated when a tag is removed.
   - Especially noticable on the import page.
+- [ ] Remove line break from text of imported todos!
+- [ ] We need the "add" input for filter tags so they can be typed / searched, and then we don't have to rely on hunt and peck.
+  - Maybe make the render-tag-entry procedure "independent"?
+  - We might already have it??
+    - [ ] Need to test!
 - [ ] BUG update filter candidate tags after new one is added.  
-- [-] Import tags!
-  - [X] Render tags.
-  - [ ] Associate tags with new todos when the Import button is clicked.
-    - [ ] Add a hidden field that gets refreshed whenever the selected tags variable is updated.
 - [ ] Convert "prefix" in each todo to a tag, and create the tag-todo association.
 - [X] *note* todos are json objects.
 - [X] I guess for now the representation can match the files.

@@ -223,7 +223,9 @@
   (with-app-layout "EZ Utils - Import" (client-import client-app-settings client-ui-import)
     (:body
      (awhen (tbnl:post-parameter "import-list")
-       (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))
+       (let ((new-todo-ids (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))))
+         (awhen (tbnl:post-parameter "import-selected-tags")
+           (import-todo-tags-list it new-todo-ids)))
        (who:htm (:script :type "text/javascript"
                          (who:str
                           (ps:ps
@@ -239,7 +241,7 @@
                    (:div :id "import-todo-tag-candidates" :class "tag-display"))
              (:br )
              (:textarea :id "import-list" :name "import-list" :cols "100" :rows "35")
-             (:input :type "hidden" :id "import-selected-tags")
+             (:input :type "hidden" :id "import-selected-tags" :name "import-selected-tags")
              (:div
               (:button "Import")))))))
 

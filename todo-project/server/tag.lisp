@@ -64,6 +64,22 @@
   (let ((user-data-path (if get-user-data-path (funcall get-user-data-path nil :by :login) "")))
     (fetch-or-create-data (concatenate 'string user-data-path "/" *tag-todo-file-name*))))
 
+(defun import-todo-tags-list (tag-id-csv todo-ids)
+  "save association of todos and tags that were imported together."
+  (flet ((fill-out-tags-todo-list (tag-ids todo-ids)
+           (mapcan
+            #'(lambda (todo-id)
+                (mapcar
+                 #'(lambda (tag-id)
+                     (list :todo-id todo-id :tag-id tag-id))
+                 tag-ids))
+            todo-ids)))
+    (let ((existing-tags (fetch-or-create-tag-todos))
+          (user-data-path (get-user-data-path nil :by :login))
+          (tag-ids (mapcar #'parse-integer (split-string-by #\, tag-id-csv))))
+      (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append existing-tags (fill-out-tags-todo-list tag-ids todo-ids)))
+      (json:encode-json-to-string (list 'ok)))))
+
 (define-data-update-handler tag-todo-data-update (model)
   "update tag todo association data to persisted data"
   (flet ((fill-out-tags-todo-list (model)
@@ -76,7 +92,6 @@
            (user-data-path (get-user-data-path nil :by :login)))
       (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append filtered-tags (fill-out-tags-todo-list model)))
       (json:encode-json-to-string (list todo-id)))))
-
 
 (define-data-update-handler tags-todo-data-add (model)
   "add tag todo associations data to persisted data - use with new todo"

@@ -53,12 +53,13 @@
     (let* ((existing-todos (fetch-or-create-todos))
            (new-id (get-next-todo-index existing-todos))
            (formatted-list-name (get-list-name list-name new-id))
-           (user-data-path (get-user-data-path nil :by :login)))
-      (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) (append existing-todos (transform-lines-to-todos lines new-id formatted-list-name)))
+           (user-data-path (get-user-data-path nil :by :login))
+           (new-todos (transform-lines-to-todos lines new-id formatted-list-name)))
+      (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) (append existing-todos new-todos))
       (let ((app-settings (fetch-or-create-app-settings)))
         (setf (getf app-settings :filter-text) formatted-list-name)
-        (write-complete-file (concatenate 'string user-data-path "/" *app-settings-file-name*) app-settings))))
-  t)
+        (write-complete-file (concatenate 'string user-data-path "/" *app-settings-file-name*) app-settings))
+      (mapcar #'(lambda (e) (getf e :id)) new-todos))))
 
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"
