@@ -37,7 +37,7 @@
 
 (defun transform-lines-to-todos (lines start-new-id formatted-list-name)
   "transform lines (string ending in #\Newline) into a list of todo items"
-  (let ((split-lines (split-string-by #\Newline lines)))
+  (let ((split-lines (split-string-by #\Newline (remove #\Return lines))))
     (reduce #'(lambda (acc cur)
                 (let* ((prefix formatted-list-name)
                        (text (format nil "~a~a" prefix cur))
