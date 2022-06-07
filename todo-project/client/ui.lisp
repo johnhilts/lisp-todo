@@ -38,9 +38,14 @@
   "initialize html elements and JS objects on page load"
   (with-callback
       (get-app-settings-from-server)
-    (get-todo-list-from-server)
-    (get-tag-list-from-server #'render-tag-filter)
-    (get-tag-todo-associaton-list-from-server))
+    (with-callback
+        (get-tag-list-from-server)
+      (get-todo-list-from-server)
+      (render-tag-filter)
+      (get-tag-todo-associaton-list-from-server)
+      (set-filter-tag-match-type *filter-tag-match-type*)
+      t)
+    t)
   (let ((add-button (ps:chain document (get-element-by-id "todo-add-btn")))
         (todo-content (ps:chain document (get-element-by-id "todo-content"))))
     (ps:chain add-button (add-event-listener "click" add-todo false))
@@ -48,6 +53,8 @@
 
 (define-for-ps render-app-settings ()
   "render html elements for app settings"
+  (setf *selected-filter-tag-todo-ids* (@ *app-settings* selected-filter-tag-todo-ids))
+  (setf *filter-tag-match-type* (@ *app-settings* filter-tag-match-type))
   (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
     (jfh-web::with-html-elements
         (div
@@ -101,7 +108,7 @@
   "Filter the actual todos with the given list of todo IDs."
   (let ((filtered-todos (ps:chain todo-list (filter (lambda (todo) (>= (ps:chain filter-todo-ids (find-index #'(lambda (todo-id) (= todo-id (ps:chain (= (@ todo id))))))) 0))))))
     (render-todo-list filtered-todos)
-    )
+    (update-app-settings :can-re-render f))
   t)
 
 (define-for-ps get-filter-todo-ids (todo-ids tag-ids selected-filter-tag-todo-ids)

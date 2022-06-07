@@ -93,18 +93,21 @@ appSettings = {
   - [X] Tags in their own object.
   - [X] The todo/tag ID combos in their own object.
 **** TODO Client
+- [ ] App Settings should store the current filter tag selection!
+  - See the =render-todos-filtered-by-tags= function.
+  - *filter-tag-match-type* "all/any"
+  - *selected-filter-tag-todo-ids*
+  - =render-todo-filter= <-- where "filter-tag-candidates-selected" is rendered
+- [ ] BUG update filter candidate tags after new tag is added.  
 - [X] BUG on save, tag filter gets lost!
 - [X] BUG When a tag filter is removed, the filtered todos aren't updated!
   - Looks like only the UI has its tag removed, not memory.
 - [ ] BUG When a tag is removed from a todo update, both the select AND filtered todos aren't updated!
-- [ ] App Settings should store the current filter tag selection!
-  - See the =render-todos-filtered-by-tags= function.
 - [ ] BUG *select-tag-ids* and *filter candates* not updated when a tag is removed.
   - Especially noticeable on the import page.
   - Also very noticeable when filtering.
   - [ ] Fix for *select-tag-ids*
   - [ ] Fix for *filter candates*
-- [ ] BUG update filter candidate tags after new tag is added.  
 - [ ] MASS data conversion: Convert "prefix" in each todo to a tag, and create the tag-todo association.
 - [X] BUG modify a todo will lose its tag
   - We don't re-add it, so it's not added to the selected list
