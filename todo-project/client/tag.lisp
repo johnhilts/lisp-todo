@@ -29,6 +29,7 @@
              (tag-item  (ps:create text tag-text id next-id)))
         (ps:chain *tag-list* (push tag-item))
         (ps:chain *selected-tag-ids* (push next-id))
+        (render-tag-filter)
         (render-selected-tags *selected-tag-ids* id-prefix)
         (send-new-tag-item-to-server tag-item))))
   t)

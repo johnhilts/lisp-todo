@@ -157,6 +157,7 @@
   (let* ((filter-tag-candidates (ps:chain document (get-element-by-id "filter-tag-candidates")))
          (candidate-tag-id-prefix "filter-")
          (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates id) "-selected")))))
+    (clear-children filter-tag-candidates)
     (render-tag-candidates (ps:chain *tag-list*) filter-tag-candidates candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
         (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display"))))

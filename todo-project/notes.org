@@ -92,23 +92,34 @@ appSettings = {
 - [X] I guess for now the representation can match the files.
   - [X] Tags in their own object.
   - [X] The todo/tag ID combos in their own object.
+**** TODO this whole thing probably needs to be re-written
 **** TODO Client
-- [ ] App Settings should store the current filter tag selection!
-  - See the =render-todos-filtered-by-tags= function.
-  - *filter-tag-match-type* "all/any"
-  - *selected-filter-tag-todo-ids*
+- [-] App Settings should store the current filter tag selection!
+  - [X] Get basics into place
+    - See the =render-todos-filtered-by-tags= function.
+    - *selected-filter-tag-todo-ids*
+    - *filter-tag-match-type* "all/any"
+  - [ ] Need to handle page refresh better
   - =render-todo-filter= <-- where "filter-tag-candidates-selected" is rendered
-- [ ] BUG update filter candidate tags after new tag is added.  
-- [X] BUG on save, tag filter gets lost!
-- [X] BUG When a tag filter is removed, the filtered todos aren't updated!
-  - Looks like only the UI has its tag removed, not memory.
 - [ ] BUG When a tag is removed from a todo update, both the select AND filtered todos aren't updated!
 - [ ] BUG *select-tag-ids* and *filter candates* not updated when a tag is removed.
   - Especially noticeable on the import page.
   - Also very noticeable when filtering.
   - [ ] Fix for *select-tag-ids*
   - [ ] Fix for *filter candates*
+- [ ] BUG some of the ALL filter logic is wrong
+  - [ ] try with bread and water - should have some entries, but it shows zero
 - [ ] MASS data conversion: Convert "prefix" in each todo to a tag, and create the tag-todo association.
+- [X] BUG update filter candidate tags after new tag is added.
+  - [X] re-render
+    - =render-tag-filter= uses =*tag-list*= for its data
+    - tag data is added in:
+      - new todos: =add-tag= adds directly to =*tag-list*=
+      - edit todos: (same)
+  - [X] prevent duplicate display
+- [X] BUG on save, tag filter gets lost!
+- [X] BUG When a tag filter is removed, the filtered todos aren't updated!
+  - Looks like only the UI has its tag removed, not memory.
 - [X] BUG modify a todo will lose its tag
   - We don't re-add it, so it's not added to the selected list
   - On modify, all tags for a todo are delleted, expecting to get replaced.
