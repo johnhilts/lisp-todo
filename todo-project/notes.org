@@ -2,9 +2,9 @@
 
 ** Desired Features
 
-- [ ] cross out done items
-- [ ] hide done items
-- [ ] save all items on server
+- [X] cross out done items
+- [X] hide done items
+- [X] save all items on server
 
 ** Technical details
 *** To-do object
@@ -107,8 +107,15 @@ appSettings = {
   - Also very noticeable when filtering.
   - [ ] Fix for *select-tag-ids*
   - [ ] Fix for *filter candates*
-- [ ] BUG some of the ALL filter logic is wrong
-  - [ ] try with bread and water - should have some entries, but it shows zero
+- [ ] BUG indecisive tags while adding
+  - add 4 tags
+  - Remove the middle 2
+  - Try to add one back
+  - Completely random tag now selected
+- [X] BUG some of the ALL filter logic is wrong
+  - [X] Home all / any should be the same, but ALL has 1 less than ANY - why?!?
+  - [X] +try with bread and water - should have some entries, but it shows zero+
+    - Can't reproduce this one
 - [ ] MASS data conversion: Convert "prefix" in each todo to a tag, and create the tag-todo association.
 - [X] BUG update filter candidate tags after new tag is added.
   - [X] re-render

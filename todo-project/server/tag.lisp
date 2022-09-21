@@ -103,3 +103,14 @@
           (user-data-path (get-user-data-path nil :by :login)))
       (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) (append existing-tags (fill-out-tags-todo-list model)))
       (json:encode-json-to-string (list 'ok)))))
+
+(define-data-update-handler tag-todo-data-delete (model)
+  "delete tag todo association data from persisted data"
+  (let* ((todo-id (getf model :todo-id)) ;; getting this twice!
+         (tag-id  (getf model :tag-id))
+         (existing-tags (fetch-or-create-tag-todos))
+         (deleted-item-position (position-if #'(lambda (e) (and (= (getf e :tag-id) tag-id) (= (getf e :todo-id) todo-id))) existing-tags))
+         (updated-tags (splice-and-remove-item-in-list existing-tags deleted-item-position))
+         (user-data-path (get-user-data-path nil :by :login)))
+    (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) updated-tags)
+    (json:encode-json-to-string (list tag-id todo-id))))

@@ -23,7 +23,7 @@
                  (make-instance 'tbnl:easy-ssl-acceptor :port port :ssl-privatekey-file #P"../certs/server.key" :ssl-certificate-file #P"../certs/server.crt")
                  (make-instance 'tbnl:easy-acceptor :port port)))))
     (setf *the-http-server*
-          (restart-case (start (make-acceptor-instance))
+          (restart-case (tbnl:start (make-acceptor-instance))
             (re-start-server ()
               :report "Restart Web Server"
               (stop-server *the-http-server*)

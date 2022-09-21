@@ -17,6 +17,8 @@
   (case verb
     (:post
      (tag-data-add raw-data))
+    ;; (:delete
+    ;;  (todo-data-delete raw-data))
     (:get
      (tag-data-get id))))
 
@@ -27,6 +29,8 @@
      (tag-todo-data-update raw-data))
     (:post
      (tags-todo-data-add raw-data))
+    (:delete
+     (tag-todo-data-delete raw-data))
     (:get
      (tag-todo-data-get id))))
 

@@ -46,6 +46,10 @@
   "save updated tag todo association list on server - use with existing todo"
   (send-to-server *tag-todo-api-endpoint* "PUT" tag-todos))
 
+(define-for-ps delete-tag-todo-item-on-server (delete-id-object call-back)
+  "delete tag todo association item on server"
+  (send-to-server *tag-todo-api-endpoint* "DELETE" delete-id-object call-back))
+
 (define-for-ps get-tag-todo-associaton-list-from-server (&optional optional-call-back)
   "define callback and get tag todo association list from server"
   (with-callback
@@ -87,4 +91,12 @@
         (unless (ps:chain *tags-todo-association-list* (some tag-todo-association-exists))
           (ps:chain *tags-todo-association-list* (push tag-todo-item))
           (send-new-tag-todo-item-to-server tag-todo-item)))))
+  t)
+
+(define-for-ps delete-tag-todo (tag-id todo-id)
+  "delete tag todo association on client and server"
+  (delete-tag-todo-item-on-server (ps:create tag-id tag-id todo-id todo-id))
+  ;; (let ((delete-item-index (ps:chain todo-list (find-index #'(lambda (todo) (= (@ todo id) delete-id))))))
+  ;;   (ps:chain todo-list (splice delete-item-index 1)))
+  ;; (render-todo-list todo-list)
   t)
