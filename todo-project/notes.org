@@ -39,3 +39,97 @@ appSettings = {
 - todo object "DTO"
 - generic methods for I/O
   - call from http handler
+
+
+** TODO Tagging
+*** TODO UI
+- [X] Want to be able to input new ones.
+  - [X] Smallish textbox should work.
+  - [X] +Needs to auto-generate the "next" textbox to allow for easy multiple entry.+
+- [X] Want to be able to select existing ones from a list.
+  - [X] Display the last 3 that were used.
+  - [X] When typing in the tag input field, display existing ones based on what's typed.
+**** TODO Tag rendering
+- [X] Line 1: tag entry smallish textbox.
+  - [X] Between todo entry and add button.
+- [X] Line 2: Selected List.
+  - [X] Associate selected tag with todo item.
+  - [X] +Is there an ASCII checkmark that can go next to these?+
+    - [X] Actually, we just need it for HTML, so use &#10003;
+  - [X] +Need an x so we can delete them ... maybe a red x is enough?+
+  - [X] Clicking on a selected tag will:
+    - [X] remove it from the selected list
+    - [X] remove it from association with the todo item
+- [-] Line 3: Candidate List - 3 tags.
+  - [X] Initially: the last 3 used tags.
+  - [-] List changes to:
+    - [X] Match the input in the todo field.
+    - [ ] Less than 10 matches, fill out with however many of the last 10 are needed.
+  - [-] Link to show all tags.
+    - [ ] Put right beneath the tag area.
+    - [X] +Once a tag is selected, close.+
+    - [ ] There will be a close link for the tag area.
+**** TODO Filtering
+- [X] same basic UI layout - latest 10, input, selected tags
+  - [X] When mapping the candidate tag layout, need:
+    - [X] A distinct element ID.
+    - [X] A different on-click handler.
+- [X] put it *above* the existing filter
+  - [X] +or maybe to the right of the existing filter?+
+- [X] selecting a candidate tag makes a search happen
+  - [X] search is conducted against the lookup list of tags and matches are displayed the same way Filter search results are
+- [ ] enter a tag updates the list of 10 with matches
+- [X] fonts
+  - [X] increase 3 to 10
+  - [X] make the font smaller
+  - [X] keep the words further appart  
+*** DONE Persistence
+- [X] Tags file in every user folder.
+- [X] Have a "lookup file" with todo ID/tag combos?
+- [X] Should there be a tag ID?
+*** TODO Tags as objects (how the app handles them in memory)
+**** DONE Server
+- [X] *note* todos are just lists, not CLOS objects.
+- [X] I guess for now the representation can match the files.
+  - [X] Tags in their own object.
+  - [X] The todo/tag ID combos in their own object.
+**** TODO Client
+- [ ] BUG *select-tag-ids* and *filter candates* not updated when a tag is removed.
+  - Especially noticeable on the import page.
+  - Also very noticeable when filtering.
+  - [ ] Fix for *select-tag-ids*
+  - [ ] Fix for *filter candates*
+- [ ] BUG update filter candidate tags after new one is added.  
+- [ ] MASS data conversion: Convert "prefix" in each todo to a tag, and create the tag-todo association.
+- [X] Remove line break from text of imported todos!
+- [X] Import tags!
+  - [X] Render tags.
+  - [X] Associate tags with new todos when the Import button is clicked.
+    - [X] Add a hidden field that gets refreshed whenever the selected tags variable is updated.
+    - [X] Handle on the server side.
+      - [X] Trace =transform-lines-to-todos= so we have a list to experiment with.
+      - [X] Transform that list into the new todo IDs and return the list of IDs from =import-lines-into-todo-list=.
+      - [X] Associate the list of tag IDs with the list of todo IDs and save!
+- [X] We need the "add" input for filter tags so they can be typed / searched, and then we don't have to rely on hunt and peck.
+  - Maybe make the render-tag-entry procedure "independent"?
+  - We might already have it??
+    - [X] Need to test!
+- [X] *note* todos are json objects.
+- [X] I guess for now the representation can match the files.
+- [X] BUG add tag isn't working.
+- [X] Allow for any vs all matches.
+- [-] Render selected list when editing a todo.
+  - [X] BUG Refresh updated tag associations.
+  - [X] BUG Hide tags when done editting.
+  - [X] BUG Tag elements get re-added!
+    - But only twice...
+  - [X] Save any editted associations.
+  - [X] For these, the selected tags will display right away since they're already populated.
+  - [ ] Layout should be the same - line 1: candidate tags, line 2: add new tag, line 3: selected tags.
+    - [ ] Do NOT create a set of Tag html elements for each todo item.
+      - [ ] Generate the tag elements on demand.
+      - [ ] The elements can be pre-rendered and hidden.
+        - [ ] Keep the parent element (ID) that the macro uses handy.
+          - [ ] Pass it around to each todo item that's being edited.
+      - [ ] Repopulate *just the data* on demand.
+todo webapp - remove #\Return from imported todos
