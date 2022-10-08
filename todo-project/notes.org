@@ -133,3 +133,86 @@ appSettings = {
           - [ ] Pass it around to each todo item that's being edited.
       - [ ] Repopulate *just the data* on demand.
 todo webapp - remove #\Return from imported todos
+
+*** Starting Over!!
+**** Strategy
+- [ ] Restore Data Structures.
+  - [ ] Restore server-side code.
+  - [ ] Restore client-side code.
+    - [ ] Data definitions.
+    - [ ] Fetches from server.
+- [ ] Add client-side code.
+  - [ ] Manipulation of data structures.
+    - [ ] These will use the lists fed to them, and return an updated list.
+  - [ ] Establsih orchestrators.
+    - [ ] These will be context aware.
+  - [ ] Each of the 3 UI sections will have the same rendering logic.
+**** Data structures
+***** Todo Items
+- Already exists.
+***** Tag Items
+- New.
+***** Tag-Todo Items
+- New.
+- List of tag IDs grouped by the todo ID they're associated with.
+- Todo IDs are unique.
+- Tag IDs are unique /per todo ID/.
+***** UI  
+****** Common Elements
+******* Candidate Tags
+- Based on the list of Tag Items.
+******* Tag Entry
+- Input field to add new tags.
+******* Selected Tags
+- Tags selected for the current "Tag Context".
+****** Tag Contexts
+******* General Filter Tags
+- Use in conjuction with:
+  - Show/Hide Completed Items checkbox.
+  - Text search box.
+  - All / Any links.
+    - New.
+- Persist server side, same as other filter mechanisms.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
+- Can save as part of per-user app settings.
+******* Tags per Todo Item
+- Subset of Tag-Todo Items.
+- Manipulate the sub-section of the Tag-Todo items list.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Adds to the Tag-Todo Items.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- Render from Tag-Todo List for matching Todo ID.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
+******* Tags for a new Todo Item
+- Manipulate the sub-section of the Tag-Todo items list.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Will *NOT* add to the Tag-Todo Items.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- This will create a new entry in the Tag-Todo List on the server once Todo item is added.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
