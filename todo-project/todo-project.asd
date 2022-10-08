@@ -13,7 +13,8 @@
   (with-open-file (in path :if-does-not-exist :create)
     (read in nil)))
 
-;; "home/public/source/lib/lisp-util-lib/web/jfh-web/jfh-web.lisp"
+;; "/home/public/source/lib/lisp-util-lib/web/jfh-web/jfh-web.lisp"
+;; "/home/jfh/code/lisp/source/util-lib/web/jfh-web/jfh-web.lisp"
 (let* ((app-root (cdr (assoc :app-root (read-complete-file ".config")))) 
        (lib-root (cdr (assoc :lib-root (read-complete-file ".config"))))
        (jfh-web-lib-path (make-pathname :directory (concatenate 'string lib-root "/web/jfh-web")))
