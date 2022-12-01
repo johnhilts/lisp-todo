@@ -142,6 +142,7 @@ todo webapp - remove #\Return from imported todos
     - [ ] Data definitions.
     - [ ] Fetches from server.
 - [ ] Add client-side code.
+  - Do "experimentation" first :)
   - [ ] Manipulation of data structures.
     - [ ] These will use the lists fed to them, and return an updated list.
   - [ ] Establsih orchestrators.

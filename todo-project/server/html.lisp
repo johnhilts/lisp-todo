@@ -26,7 +26,8 @@
       (:h1 (who:fmt "Todo List for ~a" authenticated-user)
            (:div
             (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-            (:br)
+            (:div :id "new-todo-tag-content" :hidden "true"
+                  (:div :id "new-todo-tag-candidates" :class "tag-display"))
             (:button :id "todo-add-btn" "Add")
             (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
            (:div
@@ -178,7 +179,7 @@
        (:a :href "/logout" "Click here to logout!"))))))
 
 (defun get-version ()
-  "0.5")
+  "0.9")
 
 (tbnl:define-easy-handler (version-page :uri "/version") ()
   (who:with-html-output-to-string
@@ -219,31 +220,30 @@
            (:div :id "recipe-entry-fields")))))
 
 (defun make-import-todo-page ()
-  (who:with-html-output-to-string
-      (*standard-output* nil :prologue t :indent t)
-    (:html
-     (:head (:title "EZ Utils - Import")
-            (:link :type "text/css"
-                   :rel "stylesheet"
-                   :href (format-string  *static-root* "/styles.css?v=" (get-version))))
-     (:body
-      (awhen (tbnl:post-parameter "import-list")
-        (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))
-        (who:htm (:script :type "text/javascript"
-                          (who:str
-                           (ps:ps
-                            (setf (@ location href) "/todos"))))))
-      (:div
-       (:h2 "Import to todo list")
-       (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
-      (:div
-       (:form :method "post" :action "/import"
-              (:input :name "list-name" :type "text" :placeholder "Enter List Name (optional)" :style "width: 200px;")
-              (:br )
-              (:br )
-              (:textarea :name "import-list" :cols "100" :rows "35")
-              (:div
-               (:button "Import"))))))))
+  (with-app-layout "EZ Utils - Import" (client-import client-app-settings client-ui-import)
+    (:body
+     (awhen (tbnl:post-parameter "import-list")
+       (let ((new-todo-ids (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))))
+         (awhen (tbnl:post-parameter "import-selected-tags")
+           (import-todo-tags-list it new-todo-ids)))
+       (who:htm (:script :type "text/javascript"
+                         (who:str
+                          (ps:ps
+                           (setf (@ location href) "/todos"))))))
+     (:div
+      (:h2 "Import to todo list")
+      (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
+     (:div
+      (:form :method "post" :action "/import"
+             (:input :name "list-name" :type "text" :placeholder "Enter List Name (optional)" :style "width: 200px;")
+             (:br )
+             (:div :id "import-todo-tag-content" :hidden "true"
+                   (:div :id "import-todo-tag-candidates" :class "tag-display"))
+             (:br )
+             (:textarea :id "import-list" :name "import-list" :cols "100" :rows "35")
+             (:input :type "hidden" :id "import-selected-tags" :name "import-selected-tags")
+             (:div
+              (:button "Import")))))))
 
 (define-protected-page (import-todo "/import") ()
   (make-import-todo-page))
