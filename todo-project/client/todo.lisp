@@ -3,7 +3,9 @@
 (defun client-todo ()
   "define client side functions to handle todos"
   (ps:ps
-    (defvar todo-list ([]))))
+   (defvar todo-list ([]))
+   (defparameter *tag-list* ([]))
+   (defparameter *tags-todo-association-list* ([]))))
 
 (ps:ps
   (defmacro with-callback (fn &body body)
@@ -33,7 +35,9 @@
         (ps:chain todo-list (push todo-item))
         (clear-field todo)
         (render-todo-list todo-list)
-        (send-new-todo-item-to-server todo-item)))
+        (send-new-todo-item-to-server todo-item)
+        (add-associate-tags-to-todo next-id *selected-tag-ids*)
+        (funcall *show-tag-content-handler*)))
     ;; calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
     (ps:chain todo (focus)))
   t)
@@ -69,6 +73,7 @@
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
+  (edit-associate-tags-to-todo (ps:@ todo id) *selected-tag-ids*)
   (render-todo-list todo-list)
   t)
 

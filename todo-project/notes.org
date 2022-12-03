@@ -136,8 +136,8 @@ todo webapp - remove #\Return from imported todos
 
 *** Starting Over!!
 **** Strategy
-- [ ] Restore Data Structures.
-  - [ ] Restore server-side code.
+- [-] Restore Data Structures.
+  - [X] Restore server-side code.
   - [ ] Restore client-side code.
     - [ ] Data definitions.
     - [ ] Fetches from server.

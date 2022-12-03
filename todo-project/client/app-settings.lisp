@@ -24,5 +24,7 @@
         (input-filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value)))
     (setf (@ *app-settings* hide-done-items) input-hide-done-items)
     (setf (@ *app-settings* filter-text) input-filter-text)
+    (setf (@ *app-settings* selected-filter-tag-todo-ids) *selected-filter-tag-todo-ids*)
+    (setf (@ *app-settings* filter-tag-match-type) *filter-tag-match-type*)
     (send-to-server *app-settings-api-endpoint* "PUT" *app-settings*)
     (render-todo-list todo-list)))
