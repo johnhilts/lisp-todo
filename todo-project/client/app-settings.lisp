@@ -18,7 +18,7 @@
              t)))
     (get-from-server *app-settings-api-endpoint* local-call-back)))
 
-(define-for-ps update-app-settings ()
+(define-for-ps update-app-settings (&key (can-re-render t))
   "update app settings on client and server and re-render html elements"
   (let ((input-hide-done-items (@ (ps:chain document (get-element-by-id "hide-done")) checked))
         (input-filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value)))
@@ -27,4 +27,5 @@
     (setf (@ *app-settings* selected-filter-tag-todo-ids) *selected-filter-tag-todo-ids*)
     (setf (@ *app-settings* filter-tag-match-type) *filter-tag-match-type*)
     (send-to-server *app-settings-api-endpoint* "PUT" *app-settings*)
-    (render-todo-list todo-list)))
+    (when can-re-render
+        (render-todo-list todo-list))))

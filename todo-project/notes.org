@@ -136,13 +136,15 @@ todo webapp - remove #\Return from imported todos
 
 *** Starting Over!!
 **** Strategy
-- [-] Restore Data Structures.
+- [X] Restore Data Structures.
   - [X] Restore server-side code.
-  - [ ] Restore client-side code.
-    - [ ] Data definitions.
-    - [ ] Fetches from server.
+  - [X] Restore client-side code.
+    - [X] Data definitions.
+    - [X] Fetches from server.
 - [ ] Add client-side code.
   - Do "experimentation" first :)
+    - Experiment List
+      - [ ] 
   - [ ] Manipulation of data structures.
     - [ ] These will use the lists fed to them, and return an updated list.
   - [ ] Establsih orchestrators.
