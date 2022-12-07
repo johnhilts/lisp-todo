@@ -136,6 +136,7 @@ todo webapp - remove #\Return from imported todos
 
 *** Starting Over!!
 **** Strategy
+- [ ] Go through each new function, add an inline description, then add to the list here below, too.
 - [X] Restore Data Structures.
   - [X] Restore server-side code.
   - [X] Restore client-side code.
@@ -143,13 +144,24 @@ todo webapp - remove #\Return from imported todos
     - [X] Fetches from server.
 - [ ] Add client-side code.
   - Do "experimentation" first :)
-    - Experiment List
-      - [ ] 
-  - [ ] Manipulation of data structures.
-    - [ ] These will use the lists fed to them, and return an updated list.
-  - [ ] Establsih orchestrators.
-    - [ ] These will be context aware.
-  - [ ] Each of the 3 UI sections will have the same rendering logic.
+    - Data List
+      - *selected-tag-ids*
+        - Tag IDs that are currently selected in the UI
+      - *todos-filtered-by-tags*
+        - todo objects filter by multiple tag IDs
+      - *selected-filter-tag-todo-ids*
+        - *I think* these are the tag/todo combinations currently selected in the UI to filter the todo list.
+        - Saved as an App Setting
+      - *filter-tag-match-type*
+        - Is the current tag filter matching by *any* or *all*?
+        - Saved as an App Setting
+  - Experiment List
+    - [ ] 
+- [ ] Manipulation of data structures.
+  - [ ] These will use the lists fed to them, and return an updated list.
+- [ ] Establsih orchestrators.
+  - [ ] These will be context aware.
+- [ ] Each of the 3 UI sections will have the same rendering logic.
 **** Data structures
 ***** Todo Items
 - Already exists.
