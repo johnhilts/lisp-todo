@@ -35,7 +35,7 @@
     (ps:chain parent-element (remove-child (@ parent-element first-child)))))
     
 (define-for-ps init ()
-  "initialize html elements and JS objects on page load"
+  "Initialize html elements and JS objects on page load; get todos and tags from the server then render them on the client; add event handlers"
   (with-callback
       (get-app-settings-from-server)
     (with-callback
@@ -52,7 +52,7 @@
     (ps:chain todo-content (add-event-listener "input" render-tag-content-for-new-todo todo-content event false))))
 
 (define-for-ps render-app-settings ()
-  "render html elements for app settings"
+  "render html elements for app settings, including for tags selected for todo filter"
   (setf *selected-filter-tag-todo-ids* (@ *app-settings* selected-filter-tag-todo-ids))
   (when (null *selected-filter-tag-todo-ids*)
     (setf *selected-filter-tag-todo-ids* []))
@@ -92,6 +92,7 @@
   t)
 
 (define-for-ps set-filter-tag-match-type (filter-tag-match-type)
+  "Set filter tag match type to any or all."
   
   (setf *filter-tag-match-type* filter-tag-match-type)
   
@@ -107,13 +108,15 @@
   (render-filter-tag-todos "filter-"))
 
 (define-for-ps render-todos-filtered-by-tags (filter-todo-ids)
-  "Filter the actual todos with the given list of todo IDs."
+  "Filter the actual todos with the given list of todo IDs. The todo item list is filtered by tags."
   (let ((filtered-todos (ps:chain todo-list (filter (lambda (todo) (>= (ps:chain filter-todo-ids (find-index #'(lambda (todo-id) (= todo-id (ps:chain (= (@ todo id))))))) 0))))))
     (render-todo-list filtered-todos)
     (update-app-settings :can-re-render f))
   t)
 
 (define-for-ps get-filter-todo-ids (todo-ids tag-ids selected-filter-tag-todo-ids)
+  "Get todo items filtered by currently selected tag IDs (page level). 'ANY just returns all todo items; 'ALL returns todo items that match all the currently selected tags."
+  ;; TODO - Shouldn't 'ANY return todo items with at least 1 match instead of an unfiltered list??
   (labels ((matching-tag-todos (tag-todo tag-id todo-id)
              (and
               (= todo-id (@ tag-todo todo-id))
@@ -136,6 +139,7 @@
         (filter #'(lambda (todo-id) todo-id)))))))
 
 (define-for-ps search-for-tag (tag candidate-tag-id-prefix)
+  "(I think) this searches for todo items matching a tag; at the same time, the tag is removed from the tag candidate list."
   (let* ((tag-id (ps:@ tag id))
          (tag-list-element-id (+ candidate-tag-id-prefix *candidate-tag-text* tag-id))
          (selected-tags (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag id) (ps:@ tag-todo tag-id)))))))
@@ -151,13 +155,14 @@
         ;; TAGSTODOASSOCIATIONLIST.filter((tagTodo, index, self) => tagTodo.tagId == 1 && self.findIndex(x => x.id == tagTodo.id) === index)
         (filter-todo-ids (ps:chain *selected-filter-tag-todo-ids* (map #'(lambda (tag-todo) (ps:@ tag-todo todo-id))))))
     (render-selected-tags filter-tags candidate-tag-id-prefix)
-    ;; todo - this should be a field in app-settings!
+    ;; TODO - this should be a field in app-settings!
     (setf *todos-filtered-by-tags* (get-filter-todo-ids filter-todo-ids filter-tags *selected-filter-tag-todo-ids*))
     (render-todos-filtered-by-tags *todos-filtered-by-tags*))
   ;; (ps:chain console (log (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag id) (ps:@ tag-todo tag-id)))))))
   t)
 
 (define-for-ps render-tag-filter ()
+  "Renders page level tag filter."
   (let* ((filter-tag-candidates (ps:chain document (get-element-by-id "filter-tag-candidates")))
          (candidate-tag-id-prefix "filter-")
          (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates id) "-selected")))))
@@ -193,6 +198,7 @@
   t)
 
 (define-for-ps add-tag-to-todo (tag id-prefix)
+  "Add tag to a todo item's list of tags. Server not updated."
   (let* ((tag-id (ps:@ tag id))
          (tag-list-element-id (+ id-prefix *candidate-tag-text* tag-id))
          (selected-tags-element (ps:chain document (get-element-by-id (+ *selected-tag-text* tag-id))))
@@ -204,6 +210,7 @@
   t)
 
 (define-for-ps remove-tag-from-todo (tag todo-id id-prefix)
+  "Delete a tag from a todo item's tag list. Might update server?"
   (let* ((tag-id (ps:@ tag id))
          (tag-list-element-id (+ *selected-tag-text* tag-id)))
     (delete-tag-todo tag-id todo-id)
@@ -232,6 +239,7 @@
   t)
 
 (define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'add-tag-to-todo))
+  "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
   (ps:chain candidate-tags
             (map #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t)))
   t)
@@ -239,13 +247,15 @@
 (var *show-tag-content-handler*)
 
 (define-for-ps render-tag-content-for-new-todo (input event)
+  "Render tag content to use when adding a new todo item."
   (render-tag-content input "new-todo-"))
 
 (define-for-ps render-tag-content-for-edit-todo (todo-id index)
+  "Render tag content to use when editing a todo item."
   (render-tag-content todo-id (+ "edit-todo-" index "-")))
 
 (define-for-ps render-tag-content (todo-id id-prefix)
-  "render tag entry, selected tags, and tag candidates"
+  "render tag entry, selected tags, and tag candidates."
   (let ((tag-content-area (get-tag-content-area-element id-prefix))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
     (labels ((search-tags (event)
@@ -282,7 +292,7 @@
   t)
 
 (define-for-ps render-todo-list (todo-list)
-  "render html elements for todo list"
+  "Render html elements for todo list."
   (let* ((todo-list-table-body (ps:chain document (get-element-by-id "todo-list-body")))
          (parent-element todo-list-table-body)
          (column-header (ps:chain document (get-element-by-id "todo-list-column-header")))
