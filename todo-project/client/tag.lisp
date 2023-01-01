@@ -13,7 +13,7 @@
   (with-callback
       (get-from-server *tag-api-endpoint*)
     (let ((server-tag-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
-      (setf *tag-list* server-tag-list)
+      (tag-items 'initialize-tags server-tag-list)
       (when optional-call-back
         (optional-call-back))))
   t)
@@ -25,9 +25,9 @@
          (tag-text (ps:chain tag value)))
     (with-callback
         (get-tag-list-from-server)
-      (let* ((next-id (get-next-index *tag-list*))
+      (let* ((next-id (get-next-index (get-all-tags)))
              (tag-item  (ps:create text tag-text id next-id)))
-        (ps:chain *tag-list* (push tag-item))
+        (tag-items 'add-tag tag-item)
         (ps:chain *selected-tag-ids* (push next-id))
         (render-tag-filter)
         (render-selected-tags *selected-tag-ids* id-prefix)
@@ -55,7 +55,7 @@
   (with-callback
       (get-from-server *tag-todo-api-endpoint*)
     (let ((server-tag-todo-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
-      (setf *tags-todo-association-list* server-tag-todo-list)
+      (tag-todo-items 'initialize-tag-todos server-tag-todo-list)
       (when optional-call-back
         (optional-call-back))))
   t)
@@ -63,34 +63,33 @@
 (define-for-ps add-associate-tags-to-todo (todo-id tag-ids)
   "Idempotent function to add associations for tags to a todo - use when adding a new todo"
   (ps:chain event (prevent-default))
-  (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain *tags-todo-association-list* (push (create todo-id todo-id tag-id tag-id))))))
+  (ps:chain tag-ids (for-each #'(lambda (tag-id) (tag-todo-items 'add-tag-todo (create todo-id todo-id tag-id tag-id)))))
   (send-new-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
   t)
 
 (define-for-ps edit-associate-tags-to-todo (todo-id tag-ids)
   "Idempotent function to add associations for tags to a todo - use when updating a todo"
   (ps:chain event (prevent-default))
-  (let ((filtered (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (not (= todo-id (ps:@ tag-todo todo-id))))))))
-    (ps:chain tag-ids (for-each #'(lambda (tag-id) (ps:chain filtered (push (create todo-id todo-id tag-id tag-id))))))
-    (setf *tags-todo-association-list* filtered))
+  (tag-todo-items 'update-tags-by-todo-id todo-id tag-ids)
   (send-updated-tags-todo-item-to-server (ps:create todo-id todo-id tag-ids tag-ids))
   t)
 
 (define-for-ps add-associate-tag-to-todo (tag-todo-item)
   "Idempotent function to add an association for a tag to a todo"
   (ps:chain event (prevent-default))
-  (with-callback
-      (get-tag-todo-associaton-list-from-server)
-    (with-slots (tag-id todo-id) tag-todo-item
-      (let* ((tag-current-todo-list (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= todo-id (ps:@ tag-todo todo-id))))))
-             (is-selected-tag #'(lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))))
-             (missing-tags (ps:chain tag-current-todo-list (filter #'(lambda (tag-todo) (< (ps:chain *selected-tag-ids* (find-index is-selected-tag)) 0))))))
-        (ps:chain missing-tags (for-each #'(lambda (missing-tag) (ps:chain *selected-tag-ids* (push (ps:@ missing-tag tag-id))))))
-        (render-selected-tags *selected-tag-ids*))
-      (let ((tag-todo-association-exists #'(lambda (e) (and (= tag-id (ps:@ e tag-id)) (= todo-id (ps:@ e todo-id))))))
-        (unless (ps:chain *tags-todo-association-list* (some tag-todo-association-exists))
-          (ps:chain *tags-todo-association-list* (push tag-todo-item))
-          (send-new-tag-todo-item-to-server tag-todo-item)))))
+  (let ((tag-todos (get-all-tag-todos)))
+    (with-callback
+        (get-tag-todo-associaton-list-from-server)
+      (with-slots (tag-id todo-id) tag-todo-item
+        (let* ((tags-for-current-todo-id (remove-if-not* #'(lambda (tag-todo) (= todo-id (ps:@ tag-todo todo-id))) tag-todos))
+               (is-selected-tag #'(lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))))
+               (missing-tags (remove-if-not* #'(lambda (tag-todo) (< (position-if* is-selected-tag *selected-tag-ids*) 0)) tags-for-current-todo-id)))
+          (ps:chain missing-tags (for-each #'(lambda (missing-tag) (ps:chain *selected-tag-ids* (push (ps:@ missing-tag tag-id))))))
+          (render-selected-tags *selected-tag-ids*))
+        (let ((tag-todo-association-exists #'(lambda (e) (and (= tag-id (ps:@ e tag-id)) (= todo-id (ps:@ e todo-id))))))
+          (unless (some* tag-todo-association-exists tag-todos) ;; why did we have to add this guard clause?
+            (tag-todo-items 'add-tag-todo tag-todo-item)
+            (send-new-tag-todo-item-to-server tag-todo-item))))))
   t)
 
 (define-for-ps delete-tag-todo (tag-id todo-id)

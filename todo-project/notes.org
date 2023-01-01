@@ -136,7 +136,7 @@ todo webapp - remove #\Return from imported todos
 
 *** Starting Over!!
 **** Strategy
-- [ ] Go through each new function, add an inline description, then add to the list here below, too.
+- [X] Go through each new function, add an inline description, then add to the list here below, too.
 - [X] Restore Data Structures.
   - [X] Restore server-side code.
   - [X] Restore client-side code.
@@ -156,12 +156,103 @@ todo webapp - remove #\Return from imported todos
         - Is the current tag filter matching by *any* or *all*?
         - Saved as an App Setting
   - Experiment List
-    - [ ] 
+    - [X] Get selected tag IDs using *selected-tag-ids*
+      - Does this or should this have a context?
+      - Not used??
+    - [X] Get todo items filtered by tags using *todos-filtered-by-tags*
+    - [X] Get selected tag / todo combinations to filter the todo list using *selected-filter-tag-todo-ids*
+    - [X] Get filter tag match type using *filter-tag-match-type*
+    - [X] Set filter tag match type to any or all.
+    - [ ] Filter the actual todos with the given list of todo IDs. The todo item list is filtered by tags.
+    - [ ] Get todo items filtered by currently selected tag IDs (page level).
+      - [ ] 'ANY just returns all todo items;
+      - [ ] 'ALL returns todo items that match all the currently selected tags.
+      - [ ] Shouldn't 'ANY return todo items with at least 1 match instead of an unfiltered list??
+    - [ ] Search for todo items matching a tag;
+    - [ ] Remove tag from the tag candidate list.
+    - [ ] Add tag to a todo item's list of tags.
+    - [ ] Delete a tag from a todo item's tag list.
+  - Use cases
+    *ADD ALL THE USE CASES HERE ... they should hopefully match up with most of the experiments*
+    - [X] Get all candidate tags
+      - Same for filters and todo items
+      - Uses *tag-list*
+    - [ ] Get global filter candidate tags
+      - [ ] Make it an app setting
+      - [ ] Initialize from the tag list
+      - [ ] Refresh from the tag list if app setting empty
+    - [ ] Get per todo item candidate tags - new todo
+      - [ ] Create from tag list if new todo item
+    - [ ] Get per todo item candidate tags - existing todo
+      - [ ] Get from tag-dodo association list for current todo item
+    - [ ] *Move* tag from candidate tag list to tag-todo filter list
+      - "Global"
+      - [ ] Move *back*
+    - [ ] *Move* tag from candidate tag list to tag-todo list
+      - Per Item
+      - [ ] Move *back*
+    - [ ] Get all tag-todo *filter* list
+    - [ ] Get tag-dodo list per todo item
+      - New items won't have a todo ID yet
+        - Rely on UI element?
+    - [ ] Get todo list filtered by tags
+      - [ ] Any
+      - [ ] All
+      - [ ] None (no tags added to global filter)
 - [ ] Manipulation of data structures.
   - [ ] These will use the lists fed to them, and return an updated list.
 - [ ] Establsih orchestrators.
   - [ ] These will be context aware.
 - [ ] Each of the 3 UI sections will have the same rendering logic.
+***** code snippets
+#+begin_src lisp
+  ;; get candidate tags GLOBAL
+  (defun get-global-filter-candidate-tag-ids (tag-list candidate-tag-ids)
+    "Get tag IDs to use as candidates for the global filter"
+    (if candidate-tag-ids
+        (map* #'(lambda (tag) (ps:chain tag id)) candidate-tag-ids)
+        tag-list))
+  (get-global-filter-candidate-tag-ids (get-tag-list) app-settings-candidate-tag-ids)
+
+  ;; get per todo item candidate tags - new todo
+  (defun get-candidate-tag-ids-for-new-todo (tag-list candidate-tag-ids)
+    "Get candidate tag IDs for new todo"
+    (get-global-filter-candidate-tag-ids tag-list candidate-tag-ids))
+  (get-candidate-tag-ids-for-new-todo (get-tag-list) app-settings-candidate-tag-ids)
+
+  ;; Get per todo item candidate tags - existing todo
+  ;; TAGLIST.filter(tag => !selectedTagsForTodo16.find(selectedTagId => selectedTagId == tag.id))
+  (defun get-candidate-tag-ids-by-todo-id (tag-list tags-todo-association-list todo-id)
+    "Get candidate tag IDs by todo ID"
+    (let* ((selected-tag-ids (get-tag-id-list-by-todo-id tags-todo-association-list todo-id))
+           (candidate-tag-ids (remove-if* #'(lambda (tag-id) (not (find* tag-id selected-tag-ids))) tag-list))) 
+      candidate-tag-ids))
+
+  (defun select-tag-id-from-tag-list-for-todo (tag-id)
+    "Move tag ID from candidate tag list to tag-todo list."
+    (setf candidate-tag-ids (remove* tag-id candidate-tag-ids))
+    (setf selected-tags (push* tag-id selected-tag-ids))
+    (push (create todo-id todo-id tag-id tag-id) tags-todo-association-list))
+
+
+  ;; I have an implementation for this, and I think it works, but it's hard to understand
+  (defun get-todo-list-filtered-by-tags (tags-todo-association-list todo-ids tag-match-type)
+    "Get the list of todo items by tag-match-type"
+    (case tag-match-type
+      (any todo-ids) ;; only return the todo IDs if no tags selected for the filter
+      (all
+       (remove-if-not* #'(lambda (todo-id) todo-id)
+                       (map* #'(lambda (todo-id) (get-todos-that-match-all-selected-tags todo-id)) todo-ids)))))
+  
+#+end_src
+**** High level "rewrite"
+***** Startup
+#+begin_src lisp
+    (fetch-data todo-list)
+    (fetch-data tag-list)
+    (fetch-data tag-list)
+  (fetch-data tag-list)
+#+end_src
 **** Data structures
 ***** Todo Items
 - Already exists.

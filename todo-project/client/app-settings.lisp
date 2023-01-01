@@ -28,4 +28,4 @@
     (setf (@ *app-settings* filter-tag-match-type) *filter-tag-match-type*)
     (send-to-server *app-settings-api-endpoint* "PUT" *app-settings*)
     (when can-re-render
-        (render-todo-list todo-list))))
+        (render-todo-list (get-all-todos)))))

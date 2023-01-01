@@ -3,9 +3,10 @@
 (defun client-todo ()
   "define client side functions to handle todos"
   (ps:ps
-   (defvar todo-list ([]))
-   (defparameter *tag-list* ([]))
-   (defparameter *tags-todo-association-list* ([]))))
+   
+   (defparameter *todos* (make-todos ([])))
+   (defparameter *tags* (make-tags ([])))
+   (defparameter *tag-todos* (make-tag-todos ([])))))
 
 (ps:ps
   (defmacro with-callback (fn &body body)
@@ -30,11 +31,11 @@
          (todo-text (ps:chain todo value)))
     (with-callback
         (get-todo-list-from-server)
-      (let* ((next-id (get-next-index todo-list))
+      (let* ((next-id (get-next-index (get-all-todos)))
              (todo-item  (ps:create text todo-text done false id next-id)))
-        (ps:chain todo-list (push todo-item))
+        (todo-items 'add-todo todo-item)
         (clear-field todo)
-        (render-todo-list todo-list)
+        (render-todo-list (get-all-todos))
         (send-new-todo-item-to-server todo-item)
         (add-associate-tags-to-todo next-id *selected-tag-ids*)
         (funcall *show-tag-content-handler*)))
@@ -48,17 +49,18 @@
       (get-from-server *todo-api-endpoint*)
     (let ((server-todo-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
       (render-todo-list server-todo-list)
-      (setf todo-list server-todo-list)
+      (todo-items 'initialize-todos server-todo-list)
       (when optional-call-back
         (optional-call-back))))
   t)
 
 (define-for-ps update-todo (index todo-id)
       "update todo on client and server and re-render html elements"
-      (let* ((checked (@ (ps:chain document (get-element-by-id (+ "todo-check" index))) checked))
+      (let* ((todos (get-all-todos))
+             (checked (@ (ps:chain document (get-element-by-id (+ "todo-check" index))) checked))
              (label-pre (ps:chain document (query-selector (+ "#todo-label" index " pre"))))
-             (todo-list-index (@ (ps:chain todo-list (find-index #'(lambda (todo) (= todo-id (@ todo id)))))))
-             (todo-item (aref todo-list todo-list-index)))
+             (todo-list-index (position-if* #'(lambda (todo) (= todo-id (@ todo id))) todos))
+             (todo-item (aref todos todo-list-index)))
         (if checked
             (progn
               (setf (@ label-pre style "text-decoration") "line-through")
@@ -74,14 +76,13 @@
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
   (edit-associate-tags-to-todo (ps:@ todo id) *selected-tag-ids*)
-  (render-todo-list todo-list)
+  (render-todo-list (get-all-todos))
   t)
 
 (define-for-ps delete-todo-by-id (delete-id)
   "delete todo on client and server and re-render html elements"
   (delete-todo-item-on-server (ps:create id delete-id))
-  (let ((delete-item-index (ps:chain todo-list (find-index #'(lambda (todo) (= (@ todo id) delete-id))))))
-    (ps:chain todo-list (splice delete-item-index 1)))
-  (render-todo-list todo-list)
+  (todo-items 'delete-todo delete-id)
+  (render-todo-list (get-all-todos))
   t)
     

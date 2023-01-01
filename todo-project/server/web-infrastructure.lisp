@@ -53,7 +53,7 @@
   (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
     (ensure-directories-exist user-index-path))
   (format t "~&loaded user info~%" )
-    (start-server (getf (fetch-or-create-web-settings) :web-port))
+  (start-server (getf (fetch-or-create-web-settings) :web-port))
   (format t "~&server started~%" ))
 
 (defun stop-web-app ()
