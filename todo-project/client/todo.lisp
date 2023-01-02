@@ -12,6 +12,40 @@
   (defmacro with-callback (fn &body body)
     `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
 
+(define-dispatchable-functions todos (todos)
+  ((get-todos ()
+              todos)
+
+   (initialize-todos (new-todos)
+                     (setq todos new-todos))
+   
+   (add-todo (todo)
+             (push* todo todos))
+
+   (delete-todo (todo-id)
+                (let ((delete-item-index (position-if* #'(lambda (todo) (= (@ todo id) todo-id)) todos)))
+                  (ps:chain todos (splice delete-item-index 1))))))
+
+(define-for-ps todo-items (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of todos"
+  (apply (funcall *todos* op) parameters))
+
+(define-for-ps get-all-todos ()
+  "Get list of all todos"
+  (todo-items 'get-todos))
+
+(define-for-ps get-todos-filtered-by-tags ()
+  "Get todo items filtered by tags"
+  *todos-filtered-by-tags*)
+
+(define-for-ps set-todos-filtered-by-tags (todos-filtered-by-tags)
+  "Update todo items filtered by tags"
+  (setf *todos-filtered-by-tags* todos-filtered-by-tags))
+
+(define-for-ps get-todos-filtered-by-tags-for-single-todo-id (todos-filtered-by-tags)
+  "Filter tags by todo ID"
+  (ps:chain todos-filtered-by-tags (some #'(lambda (filtered-todo-id) (= filtered-todo-id (@ todo id))))))
+
 (define-for-ps send-new-todo-item-to-server (todo-item)
   "save new todo on server"
   (send-to-server *todo-api-endpoint* "POST" todo-item))

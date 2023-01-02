@@ -4,9 +4,51 @@
   (defmacro with-callback (fn &body body)
     `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
 
+(define-dispatchable-functions tags (tags)
+  ((get-tags ()
+             tags)
+
+   (initialize-tags (new-tags)
+               (setq tags new-tags))
+   
+   (add-tag (tag)
+            (push* tag tags))))
+
+(define-for-ps tag-items (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of tags"
+  (apply (funcall *tags* op) parameters)
+  ;; (funcall (funcall *tag-list* op) parameters)
+  )
+
+(define-for-ps get-all-tags ()
+  "Get list of all tags"
+  (tag-items 'get-tags))
+
+(define-for-ps get-tags-matching-search-input (tag-list search-input)
+  "Get tag list filtered by search input"
+  (remove-if-not* #'(lambda (tag) (>= (ps:chain (lower* (ps:@ tag text)) (index-of (lower* search-input))) 0)) tag-list))
+
+(define-for-ps get-tag-id-list-by-todo-id (tags-todo-association-list todo-id)
+  "Get the list of tag IDs associated to supplied todo ID"
+  (map* #'(lambda (tag-todo) (ps:@ tag-todo tag-id)) (remove-if-not* #'(lambda (tag-todo) (= (ps:@ tag-todo todo-id) todo-id)) tags-todo-association-list)))
+
+(define-for-ps add-selected-tags-to-selected-filter-tag-todo-ids (selected-tags selected-filter-tag-todo-ids)
+  "Add selected tags to the selected tag / todo combinations to filter the todo list"
+  (ps:chain selected-tags (for-each #'(lambda (tag-todo) (ps:chain selected-filter-tag-todo-ids (push tag-todo))))))
+
 (define-for-ps send-new-tag-item-to-server (tag-item)
   "save new tag on server"
   (send-to-server *tag-api-endpoint* "POST" tag-item))
+
+(define-for-ps get-filter-tags (selected-filter-tag-todo-ids)
+  "Get filter tags"
+  (flet ((get-tag-id-list (tag-todo)
+           "Get list of tag IDs"
+           (ps:@ tag-todo tag-id))
+         (get-tags-by-tag-id (tag-id index tag-ids) ;; I think this is doing a "distinct"
+           "Get tags by tag ID"
+           (= (position-if* #'(lambda (id) (= id tag-id)) tag-ids) index)))
+    (remove-if-not* #'get-tags-by-tag-id (map* #'get-tag-id-list selected-filter-tag-todo-ids))))
 
 (define-for-ps get-tag-list-from-server (&optional optional-call-back)
   "define callback and get tag list from server"
@@ -33,6 +75,62 @@
         (render-selected-tags *selected-tag-ids* id-prefix)
         (send-new-tag-item-to-server tag-item))))
   t)
+
+(define-dispatchable-functions tag-todos (tag-todos)
+  ((get-tag-todos ()
+                  tag-todos)
+
+   (initialize-tag-todos (new-tag-todos)
+                         (setq tag-todos new-tag-todos))
+   
+   (add-tag-todo (tag-todo)
+                 (push* tag-todo tag-todos))
+
+   (update-tags-by-todo-id (todo-id tag-ids)
+                           (let ((tags-without-matching-todo-id (remove-if-not* #'(lambda (tag-todo) (not (= todo-id (ps:@ tag-todo todo-id)))) tag-todos)))
+                             (initialize-tag-todos tags-without-matching-todo-id)
+                             (ps:chain tag-ids (for-each #'(lambda (tag-id) (add-tag-todo (create todo-id todo-id tag-id tag-id)))))))
+   
+   (delete-tag-todo-by-index (remove-tag-index)
+                             (ps:chain tag-todos (splice remove-tag-index 1)))))
+
+(define-for-ps get-selected-filter-tag-todo-ids ()
+  "Get selected tag / todo combinations to filter the todo list"
+  *selected-filter-tag-todo-ids*)
+
+(define-for-ps init-selected-filter-tag-todo-ids (app-settings-selected-filter-tag-todo-ids)
+  "Initialize the selected tag / todo combinations to filter the todo list"
+  (setf *selected-filter-tag-todo-ids* app-settings-selected-filter-tag-todo-ids)
+  (when (null (get-selected-filter-tag-todo-ids))
+    (setf *selected-filter-tag-todo-ids* [])))
+
+(define-for-ps remove-tag-id-from-selected-filter-tag-todo-ids (tag-id)
+  "Remove the given tag ID from the selected filter tag todo IDs"
+  (setf *selected-filter-tag-todo-ids* (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) *selected-filter-tag-todo-ids*)))
+
+(define-for-ps tag-todo-items (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of assoicated tag and todo items"
+  (apply (funcall *tag-todos* op) parameters))
+
+(define-for-ps get-all-tag-todos ()
+  "Get list of all associated tag and todo items"
+  (tag-todo-items 'get-tag-todos))
+
+(define-for-ps get-tags-todo-association-list-by-tag-id (tags-todo-association-list tag-id)
+  "Get tag-todo associations by Tag ID"
+  (remove-if-not* #'(lambda (tag-todo) (= tag-id (ps:@ tag-todo tag-id))) tags-todo-association-list))
+
+(define-for-ps get-tag-todo-index-by-id (tags-todo-association-list tag-id todo-id)
+  "Get index of tag-todo IDs that match given IDs"
+  (position-if* #'(lambda (tag-todo) (and (= (ps:@ tag-todo tag-id) tag-id) (= (ps:@ tag-todo todo-id) todo-id))) tags-todo-association-list))
+
+(define-for-ps remove-tag-todo-by-index (remove-tag-index)
+  "Removes tag-todo item from list; matches the item to remove by supplied index"
+  (tag-todo-items 'delete-tag-todo-by-index remove-tag-index))
+
+(define-for-ps get-todo-id-list-from-tag-todos (tag-todo-ids)
+  "Get list of todo IDs from tag-todo list"
+  (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) tag-todo-ids))
 
 (define-for-ps send-new-tag-todo-item-to-server (tag-todo-item)
   "save new tag todo association on server"
@@ -99,3 +197,4 @@
   ;;   (ps:chain todo-list (splice delete-item-index 1)))
   ;; (render-todo-list todo-list)
   t)
+

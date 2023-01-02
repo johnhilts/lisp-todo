@@ -21,22 +21,20 @@
     (setf (ps:chain window onload) init)))
 
 (ps:ps
-  (defmacro with-callback (fn &body body)
-    `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+ (defmacro with-callback (fn &body body)
+   `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
 
-;; (defun define-with-chained-callback ()
-  (ps:ps
-   (defmacro with-chained-callback (&body body)
-     (labels ((make-with-callback (fn body)
-                (cond
-                  ((null body)
-                   `(progn
-                      (,fn)
-                      t))
-                  (t `(with-callback ,fn ,(make-with-callback (car body) (cdr body)))))))
-       (let ((fn (car body)))
-         (make-with-callback fn (cdr body))))))
-;;)
+(ps:ps
+ (defmacro with-chained-callback (&body body)
+   (labels ((make-with-callback (fn body)
+              (cond
+                ((null body)
+                 `(progn
+                    (,fn)
+                    t))
+                (t `(with-callback ,fn ,(make-with-callback (car body) (cdr body)))))))
+     (let ((fn (car body)))
+       (make-with-callback fn (cdr body))))))
 
 (define-for-ps clear-field (field)
   "clear input field's value"
@@ -69,13 +67,14 @@
 
 (define-for-ps render-app-settings ()
   "render html elements for app settings, including for tags selected for todo filter"
-  (init-selected-filter-tag-todo-ids (@ *app-settings* selected-filter-tag-todo-ids))
-  (setf *filter-tag-match-type* (@ *app-settings* filter-tag-match-type))
-  (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
-    (jfh-web::with-html-elements
-        (div
-         (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ *app-settings* hide-done-items)"))
-         (label (for . "hide-done") "Hide Done Items.")))))
+  (let ((app-settings (app-settings 'get-app-settings)))
+    (init-selected-filter-tag-todo-ids (@ app-settings selected-filter-tag-todo-ids))
+    (setf *filter-tag-match-type* (@ app-settings filter-tag-match-type))
+    (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
+      (jfh-web::with-html-elements
+          (div
+           (input (id . "hide-done") (type . "checkbox") (onclick . "(update-app-settings)") (checked . "(@ app-settings hide-done-items)"))
+           (label (for . "hide-done") "Hide Done Items."))))))
 
 (define-for-ps filter-todos ()
   (let* ((filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
@@ -100,7 +99,7 @@
               (div (id . "filter-tag-candidates-selected")))
          (div
           (span (br (ref . "br")))
-          (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here") (value . "(@ *app-settings* filter-text)")))
+          (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here") (value . "(@ (app-settings 'get-app-settings) filter-text)")))
          (span "  ")
          (button (onclick . "(filter-todos)") "Filter"))))
   t)
@@ -108,202 +107,10 @@
 ;; *selected-tag-ids* is unused???
 ;; (define-for-ps get-selected-tag-ids ()
 ;;   *selected-tag-ids*)
-(ps:ps
- (defmacro find* (item seq)
-   "Support CL style find that transpiles into the correct JS forms"
-   `(ps:chain ,seq (find #'(lambda (e) (= e ,item)))))
-
- (defmacro find-if* (predicate seq)
-   "Support CL style find-if that transpiles into the correct JS forms such as find"
-   `(ps:chain ,seq (find ,predicate)))
-
- (defmacro remove* (item seq)
-   "Support CL style remove that transpiles into the correct JS forms"
-   `(remove-if-not* #'(lambda (e) (not (= e ,item))) ,seq))
-
- (defmacro position-if* (predicate seq)
-   "Support CL style position-if that transpiles into the correct JS forms such as findIndex"
-   `(ps:chain ,seq (find-index ,predicate)))
-
- (defmacro map* (predicate seq)
-   "Support CL style map that transpiles into the correct JS forms"
-   `(ps:chain ,seq (map ,predicate)))
-
- (defmacro remove-if-not* (predicate seq)
-   "Support CL style filtering that transpiles into the correct JS forms"
-   `(ps:chain ,seq (filter ,predicate)))
-
- (defmacro every* (predicate seq)
-   "Support CL style every that transpiles into the correct JS forms"
-   `(ps:chain ,seq (every ,predicate)))
-
- (defmacro some* (predicate seq)
-   "Support CL style every that transpiles into the correct JS forms"
-   `(ps:chain ,seq (some ,predicate)))
-
- (defmacro lower* (string)
-   "Shortand for JS version of STRING-DOWNCASE"
-   `(ps:chain ,string (to-lower-case)))
-
- (defmacro push* (item seq)
-   "Shortand for JS version of PUSH"
-   `(ps:chain ,seq (push ,item))))
-
-(defmacro define-dispatchable-functions (name args &body body)
-  (let ((function-name (read-from-string (concatenate 'string "make-" (string name)))))
-    (flet ((get-dispatchable-functions (acc cur)
-             (append (car cur) acc))
-           (get-dispatcher (dispatchable-functions)
-             `(dispatch (m)
-                        (cond
-                          ,@(reduce
-                             #'(lambda (acc cur)
-                                 (append acc `(((eq m ',(car cur)) #',(car cur)))))
-                             dispatchable-functions :initial-value ())
-                          (t
-                           (ps:chain console (log (+ ,(concatenate 'string "Unknown request -- " (string-upcase function-name) ": ") m))))))))
-      (let* ((dispatchable-functions (reduce #'get-dispatchable-functions body))
-             (labels body))
-        (setf (cdr (last (car labels))) (list (get-dispatcher dispatchable-functions)))
-        `(define-for-ps ,function-name (,@args)
-           (labels ,@labels
-             #'dispatch))))))
-
-(define-dispatchable-functions tags (tags)
-  ((get-tags ()
-             tags)
-
-   (initialize-tags (new-tags)
-               (setq tags new-tags))
-   
-   (add-tag (tag)
-            (push* tag tags))))
-
-(define-dispatchable-functions todos (todos)
-  ((get-todos ()
-              todos)
-
-   (initialize-todos (new-todos)
-                     (setq todos new-todos))
-   
-   (add-todo (todo)
-             (push* todo todos))
-
-   (delete-todo (todo-id)
-                (let ((delete-item-index (position-if* #'(lambda (todo) (= (@ todo id) todo-id)) todos)))
-                  (ps:chain todos (splice delete-item-index 1))))))
-
-(define-dispatchable-functions tag-todos (tag-todos)
-  ((get-tag-todos ()
-                  tag-todos)
-
-   (initialize-tag-todos (new-tag-todos)
-                         (setq tag-todos new-tag-todos))
-   
-   (add-tag-todo (tag-todo)
-                 (push* tag-todo tag-todos))
-
-   (update-tags-by-todo-id (todo-id tag-ids)
-                           (let ((tags-without-matching-todo-id (remove-if-not* #'(lambda (tag-todo) (not (= todo-id (ps:@ tag-todo todo-id)))) tag-todos)))
-                             (initialize-tag-todos tags-without-matching-todo-id)
-                             (ps:chain tag-ids (for-each #'(lambda (tag-id) (add-tag-todo (create todo-id todo-id tag-id tag-id)))))))
-   
-   (delete-tag-todo-by-index (remove-tag-index)
-                             (ps:chain tag-todos (splice remove-tag-index 1)))))
-
-(define-for-ps todo-items (op &rest parameters)
-  "Handle boilerplate function calls to consume the list of todos"
-  (apply (funcall *todos* op) parameters))
-
-(define-for-ps get-all-todos ()
-  "Get list of all todos"
-  (todo-items 'get-todos))
-
-(define-for-ps tag-items (op &rest parameters)
-  "Handle boilerplate function calls to consume the list of tags"
-  (apply (funcall *tags* op) parameters)
-  ;; (funcall (funcall *tag-list* op) parameters)
-  )
-
-(define-for-ps get-all-tags ()
-  "Get list of all tags"
-  (tag-items 'get-tags))
-
-(define-for-ps get-tags-matching-search-input (tag-list search-input)
-  "Get tag list filtered by search input"
-  (remove-if-not* #'(lambda (tag) (>= (ps:chain (lower* (ps:@ tag text)) (index-of (lower* search-input))) 0)) tag-list))
-
-(define-for-ps get-todos-filtered-by-tags ()
-  "Get todo items filtered by tags"
-  *todos-filtered-by-tags*)
-
-(define-for-ps set-todos-filtered-by-tags (todos-filtered-by-tags)
-  "Update todo items filtered by tags"
-  (setf *todos-filtered-by-tags* todos-filtered-by-tags))
-
-(define-for-ps get-todos-filtered-by-tags-for-single-todo-id (todos-filtered-by-tags)
-  "Filter tags by todo ID"
-  (ps:chain todos-filtered-by-tags (some #'(lambda (filtered-todo-id) (= filtered-todo-id (@ todo id))))))
-
-(define-for-ps get-selected-filter-tag-todo-ids ()
-  "Get selected tag / todo combinations to filter the todo list"
-  *selected-filter-tag-todo-ids*)
-
-(define-for-ps init-selected-filter-tag-todo-ids (app-settings-selected-filter-tag-todo-ids)
-  "Initialize the selected tag / todo combinations to filter the todo list"
-  (setf *selected-filter-tag-todo-ids* app-settings-selected-filter-tag-todo-ids)
-  (when (null (get-selected-filter-tag-todo-ids))
-    (setf *selected-filter-tag-todo-ids* [])))
-
-(define-for-ps remove-tag-id-from-selected-filter-tag-todo-ids (tag-id)
-  "Remove the given tag ID from the selected filter tag todo IDs"
-  (setf *selected-filter-tag-todo-ids* (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) *selected-filter-tag-todo-ids*)))
-
-(define-for-ps tag-todo-items (op &rest parameters)
-  "Handle boilerplate function calls to consume the list of assoicated tag and todo items"
-  (apply (funcall *tag-todos* op) parameters))
-
-(define-for-ps get-all-tag-todos ()
-  "Get list of all associated tag and todo items"
-  (tag-todo-items 'get-tag-todos))
-
-(define-for-ps get-tags-todo-association-list-by-tag-id (tags-todo-association-list tag-id)
-  "Get tag-todo associations by Tag ID"
-  (remove-if-not* #'(lambda (tag-todo) (= tag-id (ps:@ tag-todo tag-id))) tags-todo-association-list))
-
-(define-for-ps get-tag-todo-index-by-id (tags-todo-association-list tag-id todo-id)
-  "Get index of tag-todo IDs that match given IDs"
-  (position-if* #'(lambda (tag-todo) (and (= (ps:@ tag-todo tag-id) tag-id) (= (ps:@ tag-todo todo-id) todo-id))) tags-todo-association-list))
-
-(define-for-ps remove-tag-todo-by-index (remove-tag-index)
-  "Removes tag-todo item from list; matches the item to remove by supplied index"
-  (tag-todo-items 'delete-tag-todo-by-index remove-tag-index))
-
-(define-for-ps get-tag-id-list-by-todo-id (tags-todo-association-list todo-id)
-  "Get the list of tag IDs associated to supplied todo ID"
-  (map* #'(lambda (tag-todo) (ps:@ tag-todo tag-id)) (remove-if-not* #'(lambda (tag-todo) (= (ps:@ tag-todo todo-id) todo-id)) tags-todo-association-list)))
-
-(define-for-ps add-selected-tags-to-selected-filter-tag-todo-ids (selected-tags selected-filter-tag-todo-ids)
-  "Add selected tags to the selected tag / todo combinations to filter the todo list"
-  (ps:chain selected-tags (for-each #'(lambda (tag-todo) (ps:chain selected-filter-tag-todo-ids (push tag-todo))))))
 
 (define-for-ps get-filter-tag-match-type ()
   "Get filter tag match type"
   *filter-tag-match-type*)
-
-(define-for-ps get-filter-tags (selected-filter-tag-todo-ids)
-  "Get filter tags"
-  (flet ((get-tag-id-list (tag-todo)
-           "Get list of tag IDs"
-           (ps:@ tag-todo tag-id))
-         (get-tags-by-tag-id (tag-id index tag-ids) ;; I think this is doing a "distinct"
-           "Get tags by tag ID"
-           (= (position-if* #'(lambda (id) (= id tag-id)) tag-ids) index)))
-    (remove-if-not* #'get-tags-by-tag-id (map* #'get-tag-id-list selected-filter-tag-todo-ids))))
-
-(define-for-ps get-todo-id-list-from-tag-todos (tag-todo-ids)
-  "Get list of todo IDs from tag-todo list"
-  (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) tag-todo-ids))
 
 (define-for-ps render-filter-tag-match-type (filter-tag-match-type)
   "Render the part of ther UI related to the filter tag match type - ANY or ALL"
@@ -518,7 +325,7 @@
          (filtered-todos (ps:chain todos (filter
                                               #'(lambda (todo)
                                                   (and
-                                                   (or (not (@ *app-settings* hide-done-items))
+                                                   (or (not (@ (app-settings 'get-app-settings) hide-done-items))
                                                        (not (@ todo done)))
                                                    (or
                                                     (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))
