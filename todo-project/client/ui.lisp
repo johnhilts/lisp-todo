@@ -14,7 +14,7 @@
 
     (defparameter *selected-tag-ids* (list))
     (defparameter *todos-filtered-by-tags* (list))
-    (defparameter *selected-filter-tag-todo-ids* (list))
+    (defparameter *selected-filter-tag-todo-ids* (make-selected-filter-tag-todo-ids (list)))
     ;; (defparameter *max-candidate-tag-show-count* 10)
     (defparameter *filter-tag-match-type* 'any)
 

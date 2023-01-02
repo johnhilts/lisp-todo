@@ -94,20 +94,6 @@
    (delete-tag-todo-by-index (remove-tag-index)
                              (ps:chain tag-todos (splice remove-tag-index 1)))))
 
-(define-for-ps get-selected-filter-tag-todo-ids ()
-  "Get selected tag / todo combinations to filter the todo list"
-  *selected-filter-tag-todo-ids*)
-
-(define-for-ps init-selected-filter-tag-todo-ids (app-settings-selected-filter-tag-todo-ids)
-  "Initialize the selected tag / todo combinations to filter the todo list"
-  (setf *selected-filter-tag-todo-ids* app-settings-selected-filter-tag-todo-ids)
-  (when (null (get-selected-filter-tag-todo-ids))
-    (setf *selected-filter-tag-todo-ids* [])))
-
-(define-for-ps remove-tag-id-from-selected-filter-tag-todo-ids (tag-id)
-  "Remove the given tag ID from the selected filter tag todo IDs"
-  (setf *selected-filter-tag-todo-ids* (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) *selected-filter-tag-todo-ids*)))
-
 (define-for-ps tag-todo-items (op &rest parameters)
   "Handle boilerplate function calls to consume the list of assoicated tag and todo items"
   (apply (funcall *tag-todos* op) parameters))
@@ -198,3 +184,29 @@
   ;; (render-todo-list todo-list)
   t)
 
+
+(define-dispatchable-functions selected-filter-tag-todo-ids (tag-todo-ids) ;; note: this can be merged with "regula"r tag-todos
+  ((get-tag-todo-ids ()
+                  tag-todo-ids)
+
+   (initialize-tag-todo-ids (new-tag-todo-ids)
+                         (setq tag-todo-ids new-tag-todo-ids))))
+
+(define-for-ps selected-filter-tag-todo-ids (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of associated tag and todo IDs that the user selected"
+  (apply (funcall *selected-filter-tag-todo-ids* op) parameters))
+
+(define-for-ps get-selected-filter-tag-todo-ids ()
+  "Get selected tag / todo combinations to filter the todo list"
+  (selected-filter-tag-todo-ids 'get-tag-todo-ids))
+
+(define-for-ps init-selected-filter-tag-todo-ids (app-settings-selected-filter-tag-todo-ids)
+  "Initialize the selected tag / todo combinations to filter the todo list"
+  (selected-filter-tag-todo-ids 'initialize-tag-todo-ids app-settings-selected-filter-tag-todo-ids)
+  (when (null (get-selected-filter-tag-todo-ids))
+    (selected-filter-tag-todo-ids 'initialize-tag-todo-ids [])))
+
+(define-for-ps remove-tag-id-from-selected-filter-tag-todo-ids (tag-id)
+  "Remove the given tag ID from the selected filter tag todo IDs"
+  (let ((tag-todo-ids-without-tag-id (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) (get-selected-filter-tag-todo-ids))))
+    (selected-filter-tag-todo-ids 'initialize-tag-todo-ids tag-todo-ids-without-tag-id)))
