@@ -63,7 +63,7 @@
     (get-todo-list-from-server)
     (render-tag-filter)
     (get-tag-todo-associaton-list-from-server)
-    (set-filter-tag-match-type *filter-tag-match-type*)))
+    (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type)))))
 
 (define-for-ps render-app-settings ()
   "render html elements for app settings, including for tags selected for todo filter"
@@ -91,9 +91,13 @@
          (div (id . "filter-tag-candidate-area")
               (span "Choose tag to filter on")
               (span (style . "margin-left:30px;") "Match on: ")
-              (span (id . "match-any") (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;") (onclick . "(set-filter-tag-match-type 'any)") "ANY")
+              (span (id . "match-any")
+                    (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
               (span "|")
-              (span (id . "match-all") (style . "margin-left:15px; margin-right:15px; text-decoration:underline;") (onclick . "(set-filter-tag-match-type 'all)") "ALL")
+              (span (id . "match-all")
+                    (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL")
               (br (ref . "br"))
               (div (id . "filter-tag-candidates"))
               (div (id . "filter-tag-candidates-selected")))
@@ -124,7 +128,7 @@
        (set-color "match-all" 'red)
        (set-color "match-any" "")))))
 
-(define-for-ps set-filter-tag-match-type (filter-tag-match-type)
+(define-for-ps set-filter-tag-match-type-and-re-render-filter (filter-tag-match-type)
   "Set filter tag match type to any or all."
   (setf *filter-tag-match-type* filter-tag-match-type)
 
