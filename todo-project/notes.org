@@ -322,3 +322,122 @@ todo webapp - remove #\Return from imported todos
 - Add from the Candidate Tags list.
   - Then re-render candidate tag list UI.
     - Remove will also trigger a re-render candidate tag list UI.
+
+**** Existing flow
+***** Tags
+- init
+  - get-todo-list-from-server
+    - render-todo-list
+      - render-tag-content-for-edit-todo
+        - render-tag-content
+          - render-tag-candidates
+          - render-tag-entry
+          - render-selected-tags <-- can pass todo-id argument for *edits*
+  - render-tag-filter
+    - render-tag-candidates
+      - display-candidate-tag
+    - search-for-tag
+      - render-filter-tag-todos
+        - render-selected-tags <-- has todo-id parameter, but only possible to pass it as an argument *sometimes*
+**** Improved flow
+***** Core Tag Display Area
+- render-tag-candidates
+- render-tag-entry
+- render-selected-tags
+***** Tag Display Area Containers
+- Filter
+  - Doesn't use render-tag-entry
+- New Todo
+- Edit Todo
+***** Operations
+****** Filter Todos
+  - Get Selected Tags from Filter Container
+****** Add Todo
+  - Get Selected Tags from New Todo Container
+****** Save Todo
+  - Get Selected Tags from Edit Todo Container
+**** Updated Flow
+- init
+  - render-tag-filter
+    - render-tag-candidates
+      - search-for-tag <-- click handler
+        - render-filter-tag-todos
+          - render-selected-tags <-- using saved tag-todo IDs
+            - [X] Only use what's been added via the UI; no saved data
+          - set-todos-filtered-by-tags <-- what is this? Is it necessary?? might be, ignore for now
+          - render-todos-filtered-by-tags
+    - render-selected-tags <-- using saved tag-todo IDs, but should we?? shouldn't this be an app setting?? and only during initial page load
+      - [X] Pass [] for selected tag (ID)s on page load
+        
+  - get-todo-list-from-server -> render-todo-list
+    - render-tag-content-for-edit-todo
+      - render-tag-content (todo-id argument!)
+        - render-tag-candidates
+          - add-tag-to-selected-tags <-- click handler
+            - remove-tag-from-candidate-list
+            - get-selected-tag-ids-from-ui-elements
+            - render-selected-tags <-- already selected + new tag from click event
+        - render-tag-entry
+        - render-selected-tags
+          - remove-tag-from-selected
+            
+  - render-init
+    - render-tag-content-for-new-todo (event handler)
+      - render-tag-content
+        - render-tag-candidates
+          - add-tag-to-selected-tags <-- click handler
+            - remove-tag-from-candidate-list
+            - get-selected-tag-ids-from-ui-elements
+            - render-selected-tags
+        - render-tag-entry
+        - render-selected-tags
+          - remove-tag-from-selected
+
+**** Filtering todos by tags!
+***** No Tags selected in Filter
+- [ ] Tags have no effect on todos
+***** Tags Selected in Filter
+****** Any
+- [ ] Only Todos with at least 1 tag matching any tag in the Filter.
+****** All
+- [ ] Only Todos with all tags matching every tag in the Filter.
+***** Existing Operations
+- init
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+- click-handler for 'any
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+- click-handler for 'all
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+
+- search-for-tag <-- click handler
+  - render-filter-tag-todos
+    - set-todos-filtered-by-tags <-- this seems suspicious
+    - render-todos-filtered-by-tags
+      - render-todo-list
+
+- render-selected-tags
+  - remove-tag-from-selected <-- click handler
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+
+- remove-tag-from-todo <-- *UNREFERENCED*
+  - render-filter-tag-todos
+    - set-todos-filtered-by-tags <-- this seems suspicious
+    - render-todos-filtered-by-tags
+      - render-todo-list
+
+  

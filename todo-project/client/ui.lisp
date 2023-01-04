@@ -12,7 +12,7 @@
     (defparameter *candidate-tag-text* "candidate-tag")
     (defparameter *selected-tag-text* "selected-tag")
 
-    (defparameter *selected-tag-ids* (list))
+    (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))
     (defparameter *todos-filtered-by-tags* (list))
     (defparameter *selected-filter-tag-todo-ids* (make-selected-filter-tag-todo-ids (list)))
     ;; (defparameter *max-candidate-tag-show-count* 10)
@@ -51,7 +51,7 @@
   (let ((add-button (ps:chain document (get-element-by-id "todo-add-btn")))
         (todo-content (ps:chain document (get-element-by-id "todo-content"))))
     (ps:chain add-button (add-event-listener "click" add-todo false))
-    (ps:chain todo-content (add-event-listener "input" render-tag-content-for-new-todo todo-content event false))))
+    (ps:chain todo-content (add-event-listener "input" render-tag-content-for-new-todo event false))))
 
 (define-for-ps init ()
   "Initialize JS objects on page load; get todos and tags from the server then render them on the client"
@@ -61,9 +61,12 @@
       (get-app-settings-from-server)
     (get-tag-list-from-server)
     (get-todo-list-from-server)
-    (render-tag-filter)
     (get-tag-todo-associaton-list-from-server)
-    (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type)))))
+    ;; I need to wrap the following 2 procedural function calls inside a lambda so they both are invoked as part of the previous function's callback
+    #'(lambda () 
+        (render-tag-filter)
+        (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
+        t)))
 
 (define-for-ps render-app-settings ()
   "render html elements for app settings, including for tags selected for todo filter"
@@ -107,10 +110,6 @@
          (span "  ")
          (button (onclick . "(filter-todos)") "Filter"))))
   t)
-
-;; *selected-tag-ids* is unused???
-;; (define-for-ps get-selected-tag-ids ()
-;;   *selected-tag-ids*)
 
 (define-for-ps get-filter-tag-match-type ()
   "Get filter tag match type"
@@ -170,11 +169,11 @@
 (define-for-ps search-for-tag (tag candidate-tag-id-prefix)
   "(I think) this searches for todo items matching a tag; at the same time, the tag is removed from the tag candidate list."
   (let* ((tag-id (ps:@ tag id))
-         (tag-list-element-id (+ candidate-tag-id-prefix *candidate-tag-text* tag-id))
+         ;; (tag-list-element-id (+ candidate-tag-id-prefix *candidate-tag-text* tag-id))
          (selected-tags (get-tags-todo-association-list-by-tag-id (get-all-tag-todos) tag-id)))
-    (add-selected-tags-to-selected-filter-tag-todo-ids selected-tags (get-selected-filter-tag-todo-ids))
-    (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
+    (add-selected-tags-to-selected-filter-tag-todo-ids selected-tags)
     ;; (add-associate-tag-to-todo (ps:create tag-id tag-id todo-id todo-id))
+    (move-tag-from-candidate-to-selected tag candidate-tag-id-prefix)
     (render-filter-tag-todos candidate-tag-id-prefix))
   t)
 
@@ -184,10 +183,10 @@
          (filter-tags (get-filter-tags selected-tag-todo-ids))
          ;; TAGSTODOASSOCIATIONLIST.filter((tagTodo, index, self) => tagTodo.tagId == 1 && self.findIndex(x => x.id == tagTodo.id) === index)
          (filter-todo-ids (get-todo-id-list-from-tag-todos selected-tag-todo-ids)))
-    (render-selected-tags filter-tags candidate-tag-id-prefix)
     ;; TODO - this should be a field in app-settings!
     (set-todos-filtered-by-tags (get-filter-todo-ids filter-todo-ids filter-tags selected-tag-todo-ids (get-filter-tag-match-type)))
-    (render-todos-filtered-by-tags (get-todos-filtered-by-tags)))
+    (when (length (get-currently-selected-tag-ids candidate-tag-id-prefix))
+      (render-todos-filtered-by-tags (get-todos-filtered-by-tags))))
   ;; (ps:chain console (log (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag id) (ps:@ tag-todo tag-id)))))))
   t)
 
@@ -199,14 +198,15 @@
     (clear-children filter-tag-candidates)
     (render-tag-candidates (get-all-tags) filter-tag-candidates candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
-        (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display"))))
+        (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display")))
+    (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix))
   t)
 
 (define-for-ps get-tag-content-area-element (id-prefix)
   "get the element that contains the tag area"
   (ps:chain document (get-element-by-id (+ id-prefix "tag-content"))))
 
-(define-for-ps render-selected-tags (selected-tag-ids todo-id &optional (candidate-tag-id-prefix ""))
+(define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"
   (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
          (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) (get-all-tags))) selected-tag-ids))
@@ -216,29 +216,69 @@
       (clear-children parent-element))
     (when import-selected-tags
       (setf (ps:@ import-selected-tags value) selected-tag-ids))
-    (ps:chain selected-tags
-              (map
-               #'(lambda (tag)
-                   (let ((tag-id (+ *selected-tag-text* (ps:@ tag id))))
-                     (jfh-web::with-html-elements
-                         (span
-                          (style . "margin: 5px;")
-                          (a (id . "(progn tag-id)") (onclick . "(remove-tag-from-todo tag todo-id candidate-tag-id-prefix)") "(ps:@ tag text)"))))
-                   t))))
+    (map*
+     #'(lambda (tag)
+         (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
+           (jfh-web::with-html-elements
+               (span
+                (style . "margin: 5px;")
+                (a (id . "(progn tag-id)") (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
+         t)
+     selected-tags))
   t)
 
-(define-for-ps add-tag-to-todo (tag id-prefix)
-  "Add tag to a todo item's list of tags. Server not updated."
+(define-for-ps remove-tag-from-candidate-list (tag-id id-prefix)
+  "Remove tag from candidate list in UI."
+  (let ((tag-list-element-id (+ id-prefix *candidate-tag-text* tag-id)))
+    (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove)))
+  t)
+
+(define-for-ps get-currently-selected-tag-ids (id-prefix)
+  "Get selected tags from UI elements."
+  (labels ((get-tag-id-from-element-id (element-id)
+             (let ((regex (new (-reg-exp "\\d+$")))) ;; note: needed the "$" because for todo edits, there can be a number in the middle of the element ID
+               (when (ps:chain regex (test element-id))
+                 (parse-int (aref (ps:chain element-id (match regex)) 0)))))
+           (get-selected-tag-ids-from-ui-elements ()
+             (let* ((selected-tag-elements (ps:chain document (query-selector-all (+ "a[id^=" id-prefix *selected-tag-text*))))
+                    (iterable-selected-tag-elements (ps:chain -array (from selected-tag-elements)))
+                    (selected-tag-element-ids (map* #'(lambda (element) (ps:@ element id)) iterable-selected-tag-elements))
+                    (selected-tag-ids (map* #'get-tag-id-from-element-id selected-tag-element-ids)))
+               selected-tag-ids)))
+    (get-selected-tag-ids-from-ui-elements)))
+
+(define-for-ps move-tag-from-candidate-to-selected (tag id-prefix)
+  "Add tag to the list of selected tags."
+  (let ((tag-id (ps:@ tag id)))
+    (remove-tag-from-candidate-list tag-id id-prefix)
+    (let ((selected-tag-ids (get-currently-selected-tag-ids id-prefix)))
+      (ps:chain selected-tag-ids (push tag-id))
+      (render-selected-tags selected-tag-ids id-prefix)))
+  t)
+
+;; (define-for-ps add-tag-to-todo (tag id-prefix)
+;;   "Add tag to a todo item's list of tags. Server not updated."
+;;   (let* ((tag-id (ps:@ tag id))
+;;          (tag-list-element-id (+ id-prefix *candidate-tag-text* tag-id))
+;;          (selected-tags-element (ps:chain document (get-element-by-id (+ *selected-tag-text* tag-id))))
+;;          (selected-tag-ids (ps:@ selected-tags-element value))) ;; this is wrong; need to stash a hidden field with the tag IDs for each todo so that this works
+;;     (ps:chain selected-tag-ids (push tag-id))
+;;     (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
+;;     ;; (add-associate-tag-to-todo (ps:create tag-id tag-id todo-id todo-id))
+;;     (render-selected-tags selected-tag-ids id-prefix))
+;;   t)
+
+(define-for-ps remove-tag-from-selected (tag id-prefix)
+  "Delete a tag from the selected tag list"
   (let* ((tag-id (ps:@ tag id))
-         (tag-list-element-id (+ id-prefix *candidate-tag-text* tag-id))
-         (selected-tags-element (ps:chain document (get-element-by-id (+ *selected-tag-text* tag-id))))
-         (selected-tag-ids (ps:@ selected-tags-element value))) ;; this is wrong; need to stash a hidden field with the tag IDs for each todo so that this works
-    (ps:chain selected-tag-ids (push tag-id))
+         (tag-list-element-id (+ id-prefix *selected-tag-text* tag-id)))
     (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
-    ;; (add-associate-tag-to-todo (ps:create tag-id tag-id todo-id todo-id))
-    (render-selected-tags selected-tag-ids id-prefix))
+    (display-candidate-tag tag (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))) id-prefix #'search-for-tag)
+    (when (= "filter-" id-prefix)
+      (remove-tag-id-from-selected-filter-tag-todo-ids tag-id)
+      (render-filter-tag-todos id-prefix)))
   t)
-
+  
 (define-for-ps remove-tag-from-todo (tag todo-id id-prefix)
   "Delete a tag from a todo item's tag list. Might update server?"
   (let* ((tag-id (ps:@ tag id))
@@ -259,32 +299,32 @@
       (render-filter-tag-todos id-prefix)))
   t)
 
-(define-for-ps display-candidate-tag (candidate-tag parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'add-tag-to-todo))
+(define-for-ps display-candidate-tag (candidate-tag parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected))
   "displays 1 candidate tag"
   (let ((candidate-tag-id (+ candidate-tag-id-prefix *candidate-tag-text* (ps:@ candidate-tag id))))
     (jfh-web::with-html-elements
         (span
          (style . "margin: 5px;")
-         (a (id . "(progn candidate-tag-id)") (onclick . "(tag-click-handler candidate-tag candidate-tag-id-prefix)") "(ps:@ candidate-tag text)"))))
+         (a (id . "(progn candidate-tag-id)") (onclick . "(tag-click-handler candidate-tag candidate-tag-id-prefix)") "(ps:@ candidate-tag text)"))
+      ))
   t)
 
-(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'add-tag-to-todo))
+(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected))
   "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
-  (ps:chain candidate-tags
-            (map #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t)))
+  (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) candidate-tags)
   t)
 
 (var *show-tag-content-handler*)
 
-(define-for-ps render-tag-content-for-new-todo (input event)
+(define-for-ps render-tag-content-for-new-todo (event)
   "Render tag content to use when adding a new todo item."
-  (render-tag-content input "new-todo-"))
+  (render-tag-content "new-todo-"))
 
 (define-for-ps render-tag-content-for-edit-todo (todo-id index)
   "Render tag content to use when editing a todo item."
-  (render-tag-content todo-id (+ "edit-todo-" index "-")))
+  (render-tag-content (+ "edit-todo-" index "-") todo-id))
 
-(define-for-ps render-tag-content (todo-id id-prefix)
+(define-for-ps render-tag-content (id-prefix &optional todo-id)
   "render tag entry, selected tags, and tag candidates."
   (let ((tag-content-area (get-tag-content-area-element id-prefix))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
@@ -307,17 +347,16 @@
                (let ((hide (not show)))
                  (setf (ps:@ tag-content-area hidden) hide)))
              (tag-elements-already-exist ()
-                (ps:chain document (get-element-by-id (+ id-prefix "tag-input")))))
+               (ps:chain document (get-element-by-id (+ id-prefix "tag-input")))))
         (unless (tag-content-visible)
           (show-tag-content-area t)
           (setf *show-tag-content-handler* #'(lambda () (show-tag-content-area ps:f)))
           (unless (tag-elements-already-exist)
             (render-tag-candidates (get-all-tags) tag-candidate-area id-prefix)
             (render-tag-entry)
-            (when todo-id
-              (let ((tags-for-this-todo (get-tag-id-list-by-todo-id (get-all-tag-todos) todo-id)))
-                (render-selected-tags tags-for-this-todo todo-id id-prefix)
-                (setf *selected-tag-ids* tags-for-this-todo))))))))
+            (let ((tag-ids-for-this-todo (if todo-id (get-tag-id-list-by-todo-id (get-all-tag-todos) todo-id) ([]))))
+              (render-selected-tags tag-ids-for-this-todo id-prefix)
+              (selected-tag-ids-for-current-todo 'initialize-tag-ids tag-ids-for-this-todo)))))))
   t)
 
 (define-for-ps render-todo-list (todos)
@@ -326,87 +365,87 @@
          (parent-element todo-list-table-body)
          (column-header (ps:chain document (get-element-by-id "todo-list-column-header")))
          (filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
-         (filtered-todos (ps:chain todos (filter
-                                              #'(lambda (todo)
-                                                  (and
-                                                   (or (not (@ (app-settings 'get-app-settings) hide-done-items))
-                                                       (not (@ todo done)))
-                                                   (or
-                                                    (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))
-                                                    (get-todos-filtered-by-tags-for-single-todo-id (get-todos-filtered-by-tags))))))))
+         (filtered-todos  (remove-if-not*
+                           #'(lambda (todo)
+                               (and
+                                (or (not (@ (app-settings 'get-app-settings) hide-done-items))
+                                    (not (@ todo done)))
+                                (or
+                                 (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))
+                                 (get-todos-filtered-by-tags-for-single-todo-id (get-todos-filtered-by-tags)))))
+                           todos))
          (count (length filtered-todos))
          (use-plural-form (or (> count 1) (= 0 count)))
-         (checked-count (length (ps:chain filtered-todos (filter #'(lambda (todo) (@ todo done)))))))
+         (checked-count (length (remove-if-not* #'(lambda (todo) (@ todo done)) filtered-todos))))
     (clear-children parent-element)
     (setf (ps:chain column-header inner-text)
           (+ (if use-plural-form "To-do Items" "To-do Item") " " (ps:chain checked-count (to-string)) "/" (ps:chain count (to-string))))
-    (ps:chain filtered-todos
-              (map
-               #'(lambda (todo index)
-                   (let ((todo-checkbox-id (+ *todo-checkbox* index))
-                         (todo-label-id (+ *todo-label* index))
-                         (show-todo-edit-class-name (+ *show-todo-edit* index))
-                         (hide-todo-edit-class-name (+ *hide-todo-edit* index))
-                         (todo-text-id (+ *todo-text* index))
-                         (tag-content-id (+ "edit-todo-" index "-tag-content"))
-                         (tag-candidates-id (+ "edit-todo-" index "-tag-candidates"))
-                         (pre-style (if (@ todo done) "text-decoration: line-through;color: #888;display:inline;" "display:inline;")))
-                     (labels (
-                              (show-input-for (todo show-edit)
-                                "render text input for todo to edit it"
-                                (let ((hide-todo-edit-elements (ps:chain document (get-elements-by-class-name hide-todo-edit-class-name)))
-                                      (show-todo-edit-elements (ps:chain document (get-elements-by-class-name show-todo-edit-class-name)))
-                                      (todo-text-element (ps:chain document (get-element-by-id todo-text-id))))
-                                  (dolist (e hide-todo-edit-elements) (setf (@ e hidden) show-edit))
-                                  (dolist (e show-todo-edit-elements) (setf (@ e hidden) (not show-edit)))
-                                  (setf (@ todo-text-element value) (@ todo text))
-                                  (ps:chain todo-text-element (focus)))
-                                (render-tag-content-for-edit-todo (@ todo id) index)
-                                t)
-                              (save-input-for (todo)
-                                (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
-                                       (updated-text (@ todo-text-element value)))
-                                  (setf (@ todo text) updated-text)
-                                  (update-todo-from-edit todo)
-                                  (show-input-for todo false)
-                                  (funcall *show-tag-content-handler*))
-                                t)
-                              (delete-todo (todo)
-                                (when (confirm "Are you sure you want to remove this?")
-                                  (delete-todo-by-id (@ todo id)))
-                                (show-input-for todo false)
-                                t))
-                       (flet ((update-checked-count ()
-                                (let ((checked-count (length (ps:chain document (query-selector-all "label pre[style*=line-through]")))))
-                                  (setf (ps:chain column-header inner-text)
-                                        (+ (if use-plural-form "To-do Items" "To-do Item") " " (ps:chain (+ checked-count) (to-string)) "/" (ps:chain count (to-string)))))))
-                         (jfh-web::with-html-elements
-                             (tr
-                              (td
-                               (input
-                                (id . "(progn todo-checkbox-id)")
-                                (type . "checkbox")
-                                (onclick . "(update-todo (progn index) (@ todo id)))")
-                                (onclick . "(update-checked-count)")
-                                (checked . "(@ todo done)")
-                                (class . "(progn hide-todo-edit-class-name)"))
-                               (span "  ")
-                               (label
-                                (id . "(progn todo-label-id)")
-                                (for . "(progn todo-checkbox-id)")
-                                (class . "(progn hide-todo-edit-class-name)")
-                                (pre
-                                 (style . "(progn pre-style)")
-                                 (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
-                               (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
-                               (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
-                               (div (id . "(progn tag-content-id)") (hidden . "true")
-                                    (div (id . "(progn tag-candidates-id)") (class . "tag-display")))
-                               (span (br (ref . "(progn index)")))
-                               (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
-                               (span "  ")
-                               (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete"))))))
-                     t))))))
+    (map*
+     #'(lambda (todo index)
+         (let ((todo-checkbox-id (+ *todo-checkbox* index))
+               (todo-label-id (+ *todo-label* index))
+               (show-todo-edit-class-name (+ *show-todo-edit* index))
+               (hide-todo-edit-class-name (+ *hide-todo-edit* index))
+               (todo-text-id (+ *todo-text* index))
+               (tag-content-id (+ "edit-todo-" index "-tag-content"))
+               (tag-candidates-id (+ "edit-todo-" index "-tag-candidates"))
+               (pre-style (if (@ todo done) "text-decoration: line-through;color: #888;display:inline;" "display:inline;")))
+           (labels ((show-input-for (todo show-edit)
+                      "render text input for todo to edit it"
+                      (let ((hide-todo-edit-elements (ps:chain document (get-elements-by-class-name hide-todo-edit-class-name)))
+                            (show-todo-edit-elements (ps:chain document (get-elements-by-class-name show-todo-edit-class-name)))
+                            (todo-text-element (ps:chain document (get-element-by-id todo-text-id))))
+                        (dolist (e hide-todo-edit-elements) (setf (@ e hidden) show-edit))
+                        (dolist (e show-todo-edit-elements) (setf (@ e hidden) (not show-edit)))
+                        (setf (@ todo-text-element value) (@ todo text))
+                        (ps:chain todo-text-element (focus)))
+                      (render-tag-content-for-edit-todo (@ todo id) index)
+                      t)
+                    (save-input-for (todo)
+                      (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
+                             (updated-text (@ todo-text-element value)))
+                        (setf (@ todo text) updated-text)
+                        (update-todo-from-edit todo)
+                        (show-input-for todo false)
+                        (funcall *show-tag-content-handler*))
+                      t)
+                    (delete-todo (todo)
+                      (when (confirm "Are you sure you want to remove this?")
+                        (delete-todo-by-id (@ todo id)))
+                      (show-input-for todo false)
+                      t))
+             (flet ((update-checked-count ()
+                      (let ((checked-count (length (ps:chain document (query-selector-all "label pre[style*=line-through]")))))
+                        (setf (ps:chain column-header inner-text)
+                              (+ (if use-plural-form "To-do Items" "To-do Item") " " (ps:chain (+ checked-count) (to-string)) "/" (ps:chain count (to-string)))))))
+               (jfh-web::with-html-elements
+                   (tr
+                    (td
+                     (input
+                      (id . "(progn todo-checkbox-id)")
+                      (type . "checkbox")
+                      (onclick . "(update-todo (progn index) (@ todo id)))")
+                      (onclick . "(update-checked-count)")
+                      (checked . "(@ todo done)")
+                      (class . "(progn hide-todo-edit-class-name)"))
+                     (span "  ")
+                     (label
+                      (id . "(progn todo-label-id)")
+                      (for . "(progn todo-checkbox-id)")
+                      (class . "(progn hide-todo-edit-class-name)")
+                      (pre
+                       (style . "(progn pre-style)")
+                       (class . "(progn hide-todo-edit-class-name)") "(@ todo text)"))
+                     (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
+                     (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
+                     (div (id . "(progn tag-content-id)") (hidden . "true")
+                          (div (id . "(progn tag-candidates-id)") (class . "tag-display")))
+                     (span (br (ref . "(progn index)")))
+                     (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
+                     (span "  ")
+                     (button (hidden . "t") (onclick . "(delete-todo todo)") (class . "(progn show-todo-edit-class-name)") "Delete"))))))
+           t))
+     filtered-todos)))
 
 (defun client-ui-recipe ()
   "define client side UI functions"
@@ -555,4 +594,4 @@
 
 
 (define-for-ps render-tag-content-for-import-todo (input event)
-  (render-tag-content input "import-todo-"))
+  (render-tag-content "import-todo-"))

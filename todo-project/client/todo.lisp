@@ -71,7 +71,7 @@
         (clear-field todo)
         (render-todo-list (get-all-todos))
         (send-new-todo-item-to-server todo-item)
-        (add-associate-tags-to-todo next-id *selected-tag-ids*)
+        (add-associate-tags-to-todo next-id (get-all-selected-tag-ids-for-current-todo))
         (funcall *show-tag-content-handler*)))
     ;; calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
     (ps:chain todo (focus)))
@@ -109,7 +109,7 @@
 (define-for-ps update-todo-from-edit (todo)
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
-  (edit-associate-tags-to-todo (ps:@ todo id) *selected-tag-ids*)
+  (edit-associate-tags-to-todo (ps:@ todo id) (get-all-selected-tag-ids-for-current-todo))
   (render-todo-list (get-all-todos))
   t)
 

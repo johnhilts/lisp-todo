@@ -32,9 +32,9 @@
   "Get the list of tag IDs associated to supplied todo ID"
   (map* #'(lambda (tag-todo) (ps:@ tag-todo tag-id)) (remove-if-not* #'(lambda (tag-todo) (= (ps:@ tag-todo todo-id) todo-id)) tags-todo-association-list)))
 
-(define-for-ps add-selected-tags-to-selected-filter-tag-todo-ids (selected-tags selected-filter-tag-todo-ids)
+(define-for-ps add-selected-tags-to-selected-filter-tag-todo-ids (selected-tags)
   "Add selected tags to the selected tag / todo combinations to filter the todo list"
-  (ps:chain selected-tags (for-each #'(lambda (tag-todo) (ps:chain selected-filter-tag-todo-ids (push tag-todo))))))
+  (ps:chain selected-tags (for-each #'(lambda (tag-todo) (selected-filter-tag-todo-ids 'add-tag-todo tag-todo)))))
 
 (define-for-ps send-new-tag-item-to-server (tag-item)
   "save new tag on server"
@@ -49,6 +49,24 @@
            "Get tags by tag ID"
            (= (position-if* #'(lambda (id) (= id tag-id)) tag-ids) index)))
     (remove-if-not* #'get-tags-by-tag-id (map* #'get-tag-id-list selected-filter-tag-todo-ids))))
+
+(define-dispatchable-functions selected-tag-ids-for-current-todo (tag-ids)
+  ((get-tag-ids ()
+                tag-ids)
+
+   (initialize-tag-ids (new-tag-ids)
+                       (setq tag-ids new-tag-ids))
+   
+   (add-tag-id (tag-id)
+               (push* tag-id tag-ids))))
+
+(define-for-ps selected-tag-ids-for-current-todo (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of selected tag IDs for the current todo item"
+  (apply (funcall *selected-tag-ids-for-current-todo* op) parameters))
+
+(define-for-ps get-all-selected-tag-ids-for-current-todo ()
+  "Get list of all tags"
+  (selected-tag-ids-for-current-todo 'get-tag-ids))
 
 (define-for-ps get-tag-list-from-server (&optional optional-call-back)
   "define callback and get tag list from server"
@@ -70,9 +88,9 @@
       (let* ((next-id (get-next-index (get-all-tags)))
              (tag-item  (ps:create text tag-text id next-id)))
         (tag-items 'add-tag tag-item)
-        (ps:chain *selected-tag-ids* (push next-id))
+        (selected-tag-ids-for-current-todo 'add-tag-id (push next-id))
         (render-tag-filter)
-        (render-selected-tags *selected-tag-ids* id-prefix)
+        (render-selected-tags (get-all-selected-tag-ids-for-current-todo) id-prefix)
         (send-new-tag-item-to-server tag-item))))
   t)
 
@@ -85,6 +103,9 @@
    
    (add-tag-todo (tag-todo)
                  (push* tag-todo tag-todos))
+
+   (get-tag-todos-by-todo-id (todo-id)
+                             (remove-if-not* #'(lambda (tag-todo) (= todo-id (ps:@ tag-todo todo-id))) tag-todos))
 
    (update-tags-by-todo-id (todo-id tag-ids)
                            (let ((tags-without-matching-todo-id (remove-if-not* #'(lambda (tag-todo) (not (= todo-id (ps:@ tag-todo todo-id)))) tag-todos)))
@@ -167,9 +188,9 @@
       (with-slots (tag-id todo-id) tag-todo-item
         (let* ((tags-for-current-todo-id (remove-if-not* #'(lambda (tag-todo) (= todo-id (ps:@ tag-todo todo-id))) tag-todos))
                (is-selected-tag #'(lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))))
-               (missing-tags (remove-if-not* #'(lambda (tag-todo) (< (position-if* is-selected-tag *selected-tag-ids*) 0)) tags-for-current-todo-id)))
-          (ps:chain missing-tags (for-each #'(lambda (missing-tag) (ps:chain *selected-tag-ids* (push (ps:@ missing-tag tag-id))))))
-          (render-selected-tags *selected-tag-ids*))
+               (missing-tags (remove-if-not* #'(lambda (tag-todo) (< (position-if* is-selected-tag (get-all-selected-tag-ids-for-current-todo)) 0)) tags-for-current-todo-id)))
+          (ps:chain missing-tags (for-each #'(lambda (missing-tag) (selected-tag-ids-for-current-todo 'add-tag-id (ps:@ missing-tag tag-id)))))
+          (render-selected-tags (get-all-selected-tag-ids-for-current-todo)))
         (let ((tag-todo-association-exists #'(lambda (e) (and (= tag-id (ps:@ e tag-id)) (= todo-id (ps:@ e todo-id))))))
           (unless (some* tag-todo-association-exists tag-todos) ;; why did we have to add this guard clause?
             (tag-todo-items 'add-tag-todo tag-todo-item)
@@ -185,12 +206,15 @@
   t)
 
 
-(define-dispatchable-functions selected-filter-tag-todo-ids (tag-todo-ids) ;; note: this can be merged with "regula"r tag-todos
+(define-dispatchable-functions selected-filter-tag-todo-ids (tag-todo-ids) ;; note: this can be merged with "regular" tag-todos
   ((get-tag-todo-ids ()
                   tag-todo-ids)
 
    (initialize-tag-todo-ids (new-tag-todo-ids)
-                         (setq tag-todo-ids new-tag-todo-ids))))
+                            (setq tag-todo-ids new-tag-todo-ids))
+
+      (add-tag-todo (tag-todo)
+                    (push* tag-todo tag-todo-ids))))
 
 (define-for-ps selected-filter-tag-todo-ids (op &rest parameters)
   "Handle boilerplate function calls to consume the list of associated tag and todo IDs that the user selected"
