@@ -88,7 +88,7 @@
       (let* ((next-id (get-next-index (get-all-tags)))
              (tag-item  (ps:create text tag-text id next-id)))
         (tag-items 'add-tag tag-item)
-        (selected-tag-ids-for-current-todo 'add-tag-id (push next-id))
+        (selected-tag-ids-for-current-todo 'add-tag-id next-id)
         (render-tag-filter)
         (render-selected-tags (get-all-selected-tag-ids-for-current-todo) id-prefix)
         (send-new-tag-item-to-server tag-item))))

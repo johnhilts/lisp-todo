@@ -405,7 +405,7 @@
                       (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
                              (updated-text (@ todo-text-element value)))
                         (setf (@ todo text) updated-text)
-                        (update-todo-from-edit todo)
+                        (update-todo-from-edit todo index)
                         (show-input-for todo false)
                         (funcall *show-tag-content-handler*))
                       t)

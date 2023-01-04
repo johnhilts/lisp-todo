@@ -441,3 +441,20 @@ todo webapp - remove #\Return from imported todos
       - render-todo-list
 
   
+
+
+**** TODO remaining fixes
+- [ ] Filtering needs to be tweaked.
+  - [ ] Any
+    - Haven't observed any issues with tihs one *yet*.
+  - [ ] All
+    - Doesn't seem to filter exclusively enough.
+- [ ] Removing a tag from the selected in filter area doesn't update the filtered todos.
+- [X] Need to check that data is still saved correctly on the server.
+  - [X] Tag todo data not getting posted.
+    - [X] Existing todos
+    - [X] New todos
+- [ ] Check older list of bugs, etc
+- [ ] Make sure the image still builds properly.
+  - [ ] No "star" functions in the Javascript.
+  - [ ] No errors in the F12 console.
