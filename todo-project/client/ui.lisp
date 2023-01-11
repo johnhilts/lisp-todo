@@ -163,8 +163,9 @@
     (case filter-tag-match-type
       (any todo-ids)
       (all
-       (remove-if-not* #'(lambda (todo-id) todo-id)
-                       (map* #'get-todos-that-match-all-selected-tags todo-ids))))))
+       ;; (remove-if-not* #'(lambda (todo-id) todo-id)
+       ;;                 (map* #'get-todos-that-match-all-selected-tags todo-ids))
+       (get-todos-matching-all-selected-tags todo-ids selected-filter-tag-todo-ids tag-ids)))))
 
 (define-for-ps search-for-tag (tag candidate-tag-id-prefix)
   "(I think) this searches for todo items matching a tag; at the same time, the tag is removed from the tag candidate list."
@@ -179,16 +180,81 @@
 
 (define-for-ps render-filter-tag-todos (candidate-tag-id-prefix)
   "Render selected tags and todos."
-  (let* ((selected-tag-todo-ids (get-selected-filter-tag-todo-ids))
-         (filter-tags (get-filter-tags selected-tag-todo-ids))
-         ;; TAGSTODOASSOCIATIONLIST.filter((tagTodo, index, self) => tagTodo.tagId == 1 && self.findIndex(x => x.id == tagTodo.id) === index)
-         (filter-todo-ids (get-todo-id-list-from-tag-todos selected-tag-todo-ids)))
-    ;; TODO - this should be a field in app-settings!
-    (set-todos-filtered-by-tags (get-filter-todo-ids filter-todo-ids filter-tags selected-tag-todo-ids (get-filter-tag-match-type)))
-    (when (length (get-currently-selected-tag-ids candidate-tag-id-prefix))
-      (render-todos-filtered-by-tags (get-todos-filtered-by-tags))))
-  ;; (ps:chain console (log (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag id) (ps:@ tag-todo tag-id)))))))
+  (let* ((selected-tag-ids (get-currently-selected-tag-ids candidate-tag-id-prefix))
+         (tag-todos (get-all-tag-todos))
+         (tag-todo-matches-selection (lambda (tag-todo) (>= (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))) selected-tag-ids) 0)))
+         (matching-tag-todos (remove-if-not* #'tag-todo-matches-selection tag-todos))
+         (matching-todo-ids (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos)))
+    ;; (set-todos-filtered-by-tags (get-filter-todo-ids filter-todo-ids filter-tags selected-tag-ids (get-filter-tag-match-type)))
+    (when (length selected-tag-ids)
+      (render-todos-filtered-by-tags (get-filter-todo-ids matching-todo-ids selected-tag-ids matching-tag-todos (get-filter-tag-match-type)))))
   t)
+
+(define-for-ps test-all-filter ()
+  (let* ((selected-tag-ids (get-currently-selected-tag-ids "filter-"))
+         ;; (todo-ids (get-all-todo-ids))
+         (tag-todos (get-all-tag-todos))
+         (tag-todo-matches-selection (lambda (tag-todo) (>= (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))) selected-tag-ids) 0)))
+         (matching-tag-todos (remove-if-not* #'tag-todo-matches-selection tag-todos))
+         (distinct-todos #'(lambda (todo-id index todo-ids) (= (position-if* #'(lambda (id) (= id todo-id)) todo-ids) index)))
+         (matching-todo-ids (remove-if-not* #'distinct-todos (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos)))
+         (todo-matches-selection (lambda (todo) (>= (position-if* (lambda (todo-id) (= todo-id (ps:@ todo id))) matching-todo-ids) 0)))
+         (matching-todos (remove-if-not* #'todo-matches-selection (get-all-todos))))
+    ;; (render-todo-list matching-todos)
+    (get-todos-matching-all-selected-tags matching-todo-ids matching-tag-todos selected-tag-ids)
+    ))
+
+(define-for-ps get-todos-matching-all-selected-tags (matching-todo-ids matching-tag-todos selected-tag-ids)
+  (flet ((get-todos-with-flattened-tag-ids (todo-ids tag-todos)
+           (map*
+            (lambda (todo-id)
+              (create todo-id todo-id
+                      tag-ids (map*
+                               (lambda (tag-todo) (ps:@ tag-todo tag-id))
+                               (remove-if-not*
+                                (lambda (tag-todo) (= todo-id (ps:@ tag-todo todo-id)))
+                                tag-todos))))
+            todo-ids))
+         (identity (e)
+           (if e ps:t ps:f)))
+    (let ((todos-with-flattened-tag-ids (get-todos-with-flattened-tag-ids matching-todo-ids matching-tag-todos)))
+      (map* (lambda (todo-matching-all-select-ids) (ps:@ todo-matching-all-select-ids todo-id))
+            (remove-if-not* (lambda (todo+selected-tag-flag) (ps:@ todo+selected-tag-flag all-tags-match))
+                            (map* (lambda (todo+selected-tag-flags)
+                                    (create todo-id (ps:@ todo+selected-tag-flags todo-id)
+                                            all-tags-match (every* #'identity (ps:@ todo+selected-tag-flags flags)))) ;; are all the selected tags in the tag ID list for this todo?
+                                  (map*
+                                   (lambda (todo-with-flat-tag-ids)
+                                     (create
+                                      todo-id (ps:@ todo-with-flat-tag-ids todo-id)
+                                      flags
+                                      (map*
+                                       (lambda (selected-tag-id)
+                                         (>= (position-if* (lambda (tag-id) (= selected-tag-id tag-id)) (ps:@ todo-with-flat-tag-ids tag-ids)) 0))
+                                       selected-tag-ids)))
+                                   todos-with-flattened-tag-ids)))))))
+
+(define-for-ps OLD-get-todos-matching-all-selected-tags (matching-todos matching-tag-todos selected-tag-ids)
+  (let ((tag-id-matches-selected-by-todo
+         (lambda (tag-todo) (>= (position-if* (lambda (tag-id) (= tag-id (ps:@ tag-todo tag-id))) selected-tag-ids) 0))))
+    (remove-if-not*
+     (lambda (todo) (every* #'tag-id-matches-selected-by-todo (remove-if-not*
+                                                               (lambda (tag-todo) (= (ps:@ todo id) (ps:@ tag-todo todo-id)))
+                                                               matching-tag-todos)))
+     matching-todos)))
+
+;; (define-for-ps render-filter-tag-todos (candidate-tag-id-prefix)
+;;   "Render selected tags and todos."
+;;   (let* ((selected-tag-todo-ids (get-selected-filter-tag-todo-ids))
+;;          (filter-tags (get-filter-tags selected-tag-todo-ids))
+;;          ;; TAGSTODOASSOCIATIONLIST.filter((tagTodo, index, self) => tagTodo.tagId == 1 && self.findIndex(x => x.id == tagTodo.id) === index)
+;;          (filter-todo-ids (get-todo-id-list-from-tag-todos selected-tag-todo-ids)))
+;;     ;; TODO - this should be a field in app-settings!
+;;     (set-todos-filtered-by-tags (get-filter-todo-ids filter-todo-ids filter-tags selected-tag-todo-ids (get-filter-tag-match-type)))
+;;     (when (length (get-currently-selected-tag-ids candidate-tag-id-prefix))
+;;       (render-todos-filtered-by-tags (get-todos-filtered-by-tags))))
+;;   ;; (ps:chain console (log (ps:chain *tags-todo-association-list* (filter #'(lambda (tag-todo) (= (ps:@ tag id) (ps:@ tag-todo tag-id)))))))
+;;   t)
 
 (define-for-ps render-tag-filter ()
   "Renders page level tag filter."

@@ -192,7 +192,7 @@ todo webapp - remove #\Return from imported todos
       - Per Item
       - [ ] Move *back*
     - [ ] Get all tag-todo *filter* list
-    - [ ] Get tag-dodo list per todo item
+v    - [ ] Get tag-dodo list per todo item
       - New items won't have a todo ID yet
         - Rely on UI element?
     - [ ] Get todo list filtered by tags
@@ -446,7 +446,7 @@ todo webapp - remove #\Return from imported todos
 **** TODO remaining fixes
 - [ ] Filtering needs to be tweaked.
   - [ ] Any
-    - Haven't observed any issues with tihs one *yet*.
+    - Haven't observed any issues with this one *yet*.
   - [ ] All
     - Doesn't seem to filter exclusively enough.
 - [ ] Removing a tag from the selected in filter area doesn't update the filtered todos.
@@ -458,3 +458,88 @@ todo webapp - remove #\Return from imported todos
 - [ ] Make sure the image still builds properly.
   - [ ] No "star" functions in the Javascript.
   - [ ] No errors in the F12 console.
+***** Properly selecting all todo IDs that are paired with a tag that matches a tag ID in the global filter
+#+begin_src lisp
+  (let* ((selected-tag-ids (get-selected-tag-ids "filter-"))
+         (todo-ids (get-all-todo-ids))
+         (tag-todos (get-all-tag-todos))
+          (tag-todo-matches-selection (lambda (tag-todo) (gte (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo id))) selected-tag-todo-ids) 0)))
+         (matching-tag-todos (remove-if-not* #'tag-todo-matches-selection tag-todos))
+         (matching-todo-ids (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos))
+         (todo-matches-selection (lambda (todo) (gt 0 (position-if* (lambda (todo-id) (= todo-id (ps:@ todo id))) matching-todo-ids))))
+         (matching-todos (remove-if-not* #'todo-matches-selection (get-all-todos))))
+    (render-todo-list matching-todos))
+
+  (defun get-todos-matching-all-selected-tags (matching-todos matching-tag-todos selected-tag-ids)
+    (let ((tag-id-matches-selected-by-todo (lambda (tag-todo) (gte (position-if* (lambda (tag-id) (= tag-id (ps@ tag-todo tag-id))) selected-tag-ids)))))
+      (remove-if-not* (lambda (todo) (every* #'tag-id-matches-selected-by-todo) (remove-if-not* (lambda (tag-todo) (= (ps:@ todo id) (ps:@ tag-todo todo-id))) matching-tag-todos)) matching-todos)))
+#+end_src
+
+#+begin_src sql
+  select *
+  from matching-todos t
+  inner join matching-tag-todos tt on t.[todo-id] = tt.[todo-id]
+  where exists(select 1 from selected-tag-ids s where s.tagId = tt.tagId)
+#+end_src
+
+****** DONE try debugging =get-filter-todo-ids= in the browser
+- Suspicion: maybe the "when" isn't returning t/f as expected.
+****** js
+#+begin_src js
+    // get all the tag todos matching the selected tags 
+  let matchingTagTodos = getAllTagTodos().filter(tagTodo => getCurrentlySelectedTagIds("filter-").findIndex(selectedTagId => selectedTagId == tagTodo.tagId) >= 0)
+  // todos matching any tag
+  let todosMatchingAny = getAllTodos().filter(todo => matchingTagTodos.findIndex(tagTodo => tagTodo.todoId == todo.id) >= 0)
+  // todos matching all
+  let todosMatchingAll = ????
+      /*
+     ,*** IDEA ***
+     tag-todo pairs: flatten tag list per todo
+     flattened = {todoId: 123, tagIds: [1, 2, 3, 4]} 
+     flattened.filter(flat => flat.tagIds.every(tagId => getCurrentlySelectedTagIds('filter-').findIndex(selectedTagId => selectedTagId == tagId) > 0)
+        ,*/
+#+end_src
+******* How to flatten an associated list in Lisp
+#+begin_src lisp
+  (defparameter todos (list
+                       (list '(id . 1) '(name . "one"))
+                       (list '(id . 2) '(name . "two"))
+                       (list '(id . 3) '(name . "three"))))
+
+    (defparameter tag-todos (list
+                             (list '(todo-id . 1) '(tag-id . 3))
+                             (list '(todo-id . 1) '(tag-id . 4))
+                             (list '(todo-id . 2) '(tag-id . 3))
+                             (list '(todo-id . 3) '(tag-id . 4))))
+
+  (mapcar
+   (lambda (todo)
+     (list
+      (cons 'todo-id (cdr (assoc 'id todo)))
+      (cons 'tag-ids
+            (mapcar
+             (lambda (tag-todo)
+               (cdr (assoc 'tag-id tag-todo)))
+             (remove-if-not
+              (lambda (tag-todo)
+                (= (cdr (assoc 'id todo)) (cdr (assoc 'todo-id tag-todo))))
+              tag-todos)))))
+   todos)
+
+  ;; => (((TODO-ID . 1) (TAG-IDS 3 4)) ((TODO-ID . 2) (TAG-IDS 3)) ((TODO-ID . 3) (TAG-IDS 4)))
+#+end_src
+******* Another key idea: filter from the standpoint of the selected tag IDs - do *they* find a match for each one of themselves??
+******* Get just the todos with tags that match all of the selected tags
+#+begin_src lisp
+  (remove-if-not (lambda (todo+selected-tag-flag) (not (null (cdr todo+selected-tag-flag))))
+                 (mapcar (lambda (todo+selected-tag-flags) (cons (car todo+selected-tag-flags) (every #'identity todo+selected-tag-flags)))
+                         (mapcar
+                          (lambda (todo-with-flat-tag-ids)
+                            (cons
+                             (cdr (assoc 'todo-id todo-with-flat-tag-ids))
+                             (mapcar
+                              (lambda (selected-tag-id)
+                                (position-if (lambda (tag-id) (= selected-tag-id tag-id)) (cdr (assoc 'tag-ids todo-with-flat-tag-ids))))
+                              selected-tag-ids)))
+                          todos-with-flattened-tag-ids)))
+#+end_src
