@@ -34,14 +34,6 @@
   "Get list of all todos"
   (todo-items 'get-todos))
 
-(define-for-ps get-todos-filtered-by-tags ()
-  "Get todo items filtered by tags"
-  *todos-filtered-by-tags*)
-
-(define-for-ps set-todos-filtered-by-tags (todos-filtered-by-tags)
-  "Update todo items filtered by tags"
-  (setf *todos-filtered-by-tags* todos-filtered-by-tags))
-
 (define-for-ps get-todos-filtered-by-tags-for-single-todo-id (todos-filtered-by-tags)
   "Filter tags by todo ID"
   (ps:chain todos-filtered-by-tags (some #'(lambda (filtered-todo-id) (= filtered-todo-id (@ todo id))))))
