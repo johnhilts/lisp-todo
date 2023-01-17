@@ -586,7 +586,10 @@
   "Define client side functions to handle todo imports."
   (ps:ps
    ;; (defvar todo-list ([]))
-   (defparameter *tags-todo-association-list* ([]))))
+   ;; (defparameter *tags-todo-association-list* ([]))
+   (defparameter *tags* (make-tags ([])))
+   (defparameter *tag-todos* (make-tag-todos ([])))
+   (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))))
 
 (defun client-ui-import ()
   "define client side UI functions"
@@ -596,7 +599,7 @@
 
     (defparameter *selected-tag-ids* (list))
     ;; (defparameter *selected-filter-tag-todo-ids* (list))
-    (defparameter *max-candidate-tag-show-count* 1000)
+    ;; (defparameter *max-candidate-tag-show-count* 1000)
     ;; (defparameter *filter-tag-match-type* 'any)
 
     (setf (ps:chain window onload) init-import)))

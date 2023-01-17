@@ -192,7 +192,7 @@ todo webapp - remove #\Return from imported todos
       - Per Item
       - [ ] Move *back*
     - [ ] Get all tag-todo *filter* list
-v    - [ ] Get tag-dodo list per todo item
+    - [ ] Get tag-dodo list per todo item
       - New items won't have a todo ID yet
         - Rely on UI element?
     - [ ] Get todo list filtered by tags
@@ -444,12 +444,12 @@ v    - [ ] Get tag-dodo list per todo item
 
 
 **** TODO remaining fixes
-- [ ] Filtering needs to be tweaked.
-  - [ ] Any
+- [X] Filtering needs to be tweaked.
+  - [X] Any
     - Haven't observed any issues with this one *yet*.
-  - [ ] All
+  - [X] All
     - Doesn't seem to filter exclusively enough.
-- [ ] Removing a tag from the selected in filter area doesn't update the filtered todos.
+- [X] Removing a tag from the selected in filter area doesn't update the filtered todos.
 - [X] Need to check that data is still saved correctly on the server.
   - [X] Tag todo data not getting posted.
     - [X] Existing todos
@@ -506,7 +506,7 @@ v    - [ ] Get tag-dodo list per todo item
                        (list '(id . 2) '(name . "two"))
                        (list '(id . 3) '(name . "three"))))
 
-    (defparameter tag-todos (list
+  (defparameter tag-todos (list
                              (list '(todo-id . 1) '(tag-id . 3))
                              (list '(todo-id . 1) '(tag-id . 4))
                              (list '(todo-id . 2) '(tag-id . 3))
