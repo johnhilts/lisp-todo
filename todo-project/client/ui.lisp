@@ -91,17 +91,7 @@
     (jfh-web::with-html-elements
         (div
          (div (id . "filter-tag-candidate-area")
-              (span "Choose tag to filter on")
-              (span (style . "margin-left:30px;") "Match on: ")
-              (span (id . "match-any")
-                    (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
-                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
-              (span "|")
-              (span (id . "match-all")
-                    (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
-                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL")
-              (br (ref . "br"))
-              (div (id . "filter-tag-candidates"))
+              (div (id . "filter-tag-candidates") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))
               (div (id . "filter-tag-candidates-selected")))
          (div
           (span (br (ref . "br")))
@@ -221,7 +211,7 @@
     (clear-children filter-tag-candidates)
     (render-tag-candidates (get-all-tags) filter-tag-candidates candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
-        (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display")))
+        (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
     (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix))
   t)
 
@@ -236,16 +226,27 @@
          (selected-tags-element parent-element)
          (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
     (when selected-tags-element
-      (clear-children parent-element))
+      (clear-children parent-element)
+      (when (= "filter-" candidate-tag-id-prefix)
+        (jfh-web::with-html-elements
+            (div
+             (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Match:")
+             (span (id . "match-any")
+                   (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
+                   (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
+             (span "|")
+             (span (id . "match-all")
+                   (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
+                   (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL")))))
     (when import-selected-tags
       (setf (ps:@ import-selected-tags value) selected-tag-ids))
     (map*
      #'(lambda (tag)
          (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
            (jfh-web::with-html-elements
-               (span
-                (style . "margin: 5px;")
-                (a (id . "(progn tag-id)") (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
+               (span (id . "(progn tag-id)")
+                (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 2px;display:inline-block;")
+                (a (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
          t)
      selected-tags))
   t)
@@ -263,7 +264,7 @@
                (when (ps:chain regex (test element-id))
                  (parse-int (aref (ps:chain element-id (match regex)) 0)))))
            (get-selected-tag-ids-from-ui-elements ()
-             (let* ((selected-tag-elements (ps:chain document (query-selector-all (+ "a[id^=" id-prefix *selected-tag-text*))))
+             (let* ((selected-tag-elements (ps:chain document (query-selector-all (+ "span[id^=" id-prefix *selected-tag-text*))))
                     (iterable-selected-tag-elements (ps:chain -array (from selected-tag-elements)))
                     (selected-tag-element-ids (map* #'(lambda (element) (ps:@ element id)) iterable-selected-tag-elements))
                     (selected-tag-ids (map* #'get-tag-id-from-element-id selected-tag-element-ids)))
@@ -326,14 +327,18 @@
   "displays 1 candidate tag"
   (let ((candidate-tag-id (+ candidate-tag-id-prefix *candidate-tag-text* (ps:@ candidate-tag id))))
     (jfh-web::with-html-elements
-        (span
-         (style . "margin: 5px;")
-         (a (id . "(progn candidate-tag-id)") (onclick . "(tag-click-handler candidate-tag candidate-tag-id-prefix)") "(ps:@ candidate-tag text)"))
+        (span (id . "(progn candidate-tag-id)")
+         (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 2px;display:inline-block;")
+         (a (onclick . "(tag-click-handler candidate-tag candidate-tag-id-prefix)") "(ps:@ candidate-tag text)"))
       ))
   t)
 
 (define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected))
   "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
+  (when (= "filter-" candidate-tag-id-prefix)
+      (jfh-web::with-html-elements
+      (div
+       (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Choose tags to filter on:"))))
   (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) candidate-tags)
   t)
 
