@@ -10,6 +10,5 @@
   (asdf:load-system "jfh-testing")
   (asdf:load-system "jfh-web-test")
   (asdf:load-system "todo-project")
-  (compile-file #p"/home/jfh/code/lisp/source/web/todo/todo-project/client/common.lisp") ;; I don't know why I need to do this
   ;; (in-package #:todo-project)
   )
