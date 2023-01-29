@@ -227,17 +227,24 @@
          (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
     (when selected-tags-element
       (clear-children parent-element)
-      (when (= "filter-" candidate-tag-id-prefix)
-        (jfh-web::with-html-elements
-            (div
-             (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Match:")
-             (span (id . "match-any")
-                   (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
-                   (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
-             (span "|")
-             (span (id . "match-all")
-                   (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
-                   (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL")))))
+      (cond
+        ((= "import-todo-" candidate-tag-id-prefix)
+         (jfh-web::with-html-elements
+             (div (div (style . "margin: 5px;") "Tags to associate with imported To-Do Items:"))))
+        ((= "filter-" candidate-tag-id-prefix)
+         (jfh-web::with-html-elements
+             (div
+              (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Match:")
+              (span (id . "match-any")
+                    (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
+              (span "|")
+              (span (id . "match-all")
+                    (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL"))))
+        (t
+         (jfh-web::with-html-elements
+             (div (style . "margin: 5px;") (progn "Tags associated with this To-Do Item:"))))))
     (when import-selected-tags
       (setf (ps:@ import-selected-tags value) selected-tag-ids))
     (map*
@@ -245,8 +252,8 @@
          (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
            (jfh-web::with-html-elements
                (span (id . "(progn tag-id)")
-                (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 2px;display:inline-block;")
-                (a (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
+                     (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 10px;display:inline-block;")
+                     (a (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
          t)
      selected-tags))
   t)
@@ -328,17 +335,17 @@
   (let ((candidate-tag-id (+ candidate-tag-id-prefix *candidate-tag-text* (ps:@ candidate-tag id))))
     (jfh-web::with-html-elements
         (span (id . "(progn candidate-tag-id)")
-         (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 2px;display:inline-block;")
+         (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 10px;display:inline-block;")
          (a (onclick . "(tag-click-handler candidate-tag candidate-tag-id-prefix)") "(ps:@ candidate-tag text)"))
       ))
   t)
 
 (define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected))
   "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
-  (when (= "filter-" candidate-tag-id-prefix)
-      (jfh-web::with-html-elements
-      (div
-       (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Choose tags to filter on:"))))
+  (let ((tag-candidate-prompt (if (= "filter-" candidate-tag-id-prefix) "Choose tags to filter on:" "Choose tags to associate with this To-Do Item:")))
+    (jfh-web::with-html-elements
+        (div
+         (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
   (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) candidate-tags)
   t)
 
@@ -367,9 +374,11 @@
              (render-tag-entry ()
                (let ((parent-element tag-content-area))
                  (jfh-web::with-html-elements
-                     (div (input (type . "text") (id . "(+ id-prefix \"tag-input\")") (placeholder . "add new tag") (oninput . "(search-tags)"))
-                          (button (style . "margin-left: 30px;") (onclick . "(add-tag id-prefix)") "Add Tag")
-                          (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display")))))
+                     (div
+                      (div (class . "tag-display") (style . "border-color: green; border-style: solid;")
+                           (input (type . "text") (id . "(+ id-prefix \"tag-input\")") (placeholder . "add new tag") (oninput . "(search-tags)") (style . "margin-left: 5px;"))
+                           (button (style . "margin-left: 30px;") (onclick . "(add-tag id-prefix)") "Add Tag"))
+                      (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green; border-style: solid;")))))
                t)
              (show-tag-content-area (show)
                (let ((hide (not show)))
@@ -425,7 +434,7 @@
                         (dolist (e show-todo-edit-elements) (setf (@ e hidden) (not show-edit)))
                         (setf (@ todo-text-element value) (@ todo text))
                         (ps:chain todo-text-element (focus)))
-                      (render-tag-content-for-edit-todo (@ todo id) index)
+                       (render-tag-content-for-edit-todo (@ todo id) index)
                       t)
                     (save-input-for (todo)
                       (let* ((todo-text-element (ps:chain document (get-element-by-id todo-text-id)))
@@ -465,7 +474,7 @@
                      (a (onclick . "(show-input-for todo t)") (class . "(progn hide-todo-edit-class-name)") "  ...")
                      (textarea (id . "(progn todo-text-id)") (hidden . "t") (rows . "5") (cols . "100") (class . "(progn show-todo-edit-class-name)"))
                      (div (id . "(progn tag-content-id)") (hidden . "true")
-                          (div (id . "(progn tag-candidates-id)") (class . "tag-display")))
+                          (div (id . "(progn tag-candidates-id)") (class . "tag-display") (style . "border-color:green;border-style:solid;")))
                      (span (br (ref . "(progn index)")))
                      (button (hidden . "t") (onclick . "(save-input-for todo)") (class . "(progn show-todo-edit-class-name)") "Save")
                      (span "  ")
