@@ -17,7 +17,7 @@
   "generate todo HTML page"
   ;; I split this calling of ps functions into 2 operations because str is a macrolet that's only available under with-html-output-to-string
   ;; I have options to consider such as I can mimic str and then put it whereever I want and then only have to work with 1 list
-  (with-app-layout "Todo List" (client-todo client-app-settings client-ui) 
+  (with-app-layout "EZ Utils - Todo List" (client-todo client-app-settings client-ui) 
     (:body
      (:div :id "app-settings"
            (who:str (get-app-menu)))
@@ -220,10 +220,10 @@
            (:div :id "recipe-entry-fields")))))
 
 (defun make-import-todo-page ()
-  (with-app-layout "EZ Utils - Import" (client-import client-app-settings client-ui-import)
+  (with-app-layout "EZ Utils - Todo Import" (client-import client-app-settings client-ui-import)
     (:body
      (awhen (tbnl:post-parameter "import-list")
-       (let ((new-todo-ids (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))))
+       (let ((new-todo-ids (import-lines-into-todo-list it)))
          (awhen (tbnl:post-parameter "import-selected-tags")
            (import-todo-tags-list it new-todo-ids)))
        (who:htm (:script :type "text/javascript"
@@ -231,16 +231,14 @@
                           (ps:ps
                            (setf (@ location href) "/todos"))))))
      (:div
-      (:h2 "Import to todo list")
+      (:h2 "Import to To-do List")
       (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
      (:div
       (:form :method "post" :action "/import"
-             (:input :name "list-name" :type "text" :placeholder "Enter List Name (optional)" :style "width: 200px;")
-             (:br )
              (:div :id "import-todo-tag-content" :hidden "true"
-                   (:div :id "import-todo-tag-candidates" :class "tag-display"))
-             (:br )
-             (:textarea :id "import-list" :name "import-list" :cols "100" :rows "35")
+                   (:div :id "import-todo-tag-candidates" :class "tag-display" :style "border-color: green; border-style: solid;"))
+             (:p (:span "Each line will be imported as a separate To-Do Item."))
+             (:textarea :id "import-list" :name "import-list" :cols "100" :rows "25")
              (:input :type "hidden" :id "import-selected-tags" :name "import-selected-tags")
              (:div
               (:button "Import")))))))

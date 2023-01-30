@@ -35,31 +35,25 @@
         1
         (+ 1 (apply #'max id-list)))))
 
-(defun transform-lines-to-todos (lines start-new-id formatted-list-name)
+(defun transform-lines-to-todos (lines start-new-id)
   "transform lines (string ending in #\Newline) into a list of todo items"
   (let ((split-lines (split-string-by #\Newline (remove #\Return lines))))
     (reduce #'(lambda (acc cur)
-                (let* ((prefix formatted-list-name)
-                       (text (format nil "~a~a" prefix cur))
-                       (todo (list (list :text text :done 0 :id (+ start-new-id (length acc))))))
+                (let ((todo (list (list :text cur :done 0 :id (+ start-new-id (length acc))))))
                   (append acc todo)))
             split-lines :initial-value nil)))
 
-(defun import-lines-into-todo-list (lines list-name)
+(defun import-lines-into-todo-list (lines)
   "orchestrator called by web handler to take input and output it in desired form"
-  (flet ((get-list-name (input-list-name new-id)
-           (let ((list-name (or input-list-name "")))
-             (if (plusp (length list-name)) (format nil "~a - " list-name) (format nil "List ~d - " new-id)))))
-    (let* ((existing-todos (fetch-or-create-todos))
-           (new-id (get-next-todo-index existing-todos))
-           (formatted-list-name (get-list-name list-name new-id))
-           (user-data-path (get-user-data-path nil :by :login))
-           (new-todos (transform-lines-to-todos lines new-id formatted-list-name)))
-      (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) (append existing-todos new-todos))
       (let ((app-settings (fetch-or-create-app-settings)))
         (setf (getf app-settings :filter-text) formatted-list-name)
         (write-complete-file (concatenate 'string user-data-path "/" *app-settings-file-name*) app-settings))
-      (mapcar #'(lambda (e) (getf e :id)) new-todos))))
+  (let* ((existing-todos (fetch-or-create-todos))
+         (new-id (get-next-todo-index existing-todos))
+         (user-data-path (get-user-data-path nil :by :login))
+         (new-todos (transform-lines-to-todos lines new-id)))
+    (write-complete-file (concatenate 'string user-data-path "/" *todo-file-name*) (append existing-todos new-todos))
+    (mapcar #'(lambda (e) (getf e :id)) new-todos)))
 
 (define-data-update-handler todo-data-add (model)
     "add todo data to persisted data"

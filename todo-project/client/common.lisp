@@ -13,47 +13,45 @@
              (remove (car (member ',name *registered-ps-functions*)) (remove (cadr (member ',name *registered-ps-functions*)) *registered-ps-functions*)))
            (setf (getf *registered-ps-functions* ',name) #',name))))
 
-(defun client-side-macros ()
-  (ps:ps
-   (defmacro find* (item seq)
-     "Support CL style find that transpiles into the correct JS forms"
-     `(ps:chain ,seq (find #'(lambda (e) (= e ,item)))))
+(defpsmacro find* (item seq)
+  "Support CL style find that transpiles into the correct JS forms"
+  `(ps:chain ,seq (find #'(lambda (e) (= e ,item)))))
 
-   (defmacro find-if* (predicate seq)
-     "Support CL style find-if that transpiles into the correct JS forms such as find"
-     `(ps:chain ,seq (find ,predicate)))
+(defpsmacro find-if* (predicate seq)
+  "Support CL style find-if that transpiles into the correct JS forms such as find"
+  `(ps:chain ,seq (find ,predicate)))
 
-   (defmacro remove* (item seq)
-     "Support CL style remove that transpiles into the correct JS forms"
-     `(remove-if-not* #'(lambda (e) (not (= e ,item))) ,seq))
+(defpsmacro remove* (item seq)
+  "Support CL style remove that transpiles into the correct JS forms"
+  `(remove-if-not* #'(lambda (e) (not (= e ,item))) ,seq))
 
-   (defmacro position-if* (predicate seq)
-     "Support CL style position-if that transpiles into the correct JS forms such as findIndex"
-     `(ps:chain ,seq (find-index ,predicate)))
+(defpsmacro position-if* (predicate seq)
+  "Support CL style position-if that transpiles into the correct JS forms such as findIndex"
+  `(ps:chain ,seq (find-index ,predicate)))
 
-   (defmacro map* (predicate seq)
-     "Support CL style map that transpiles into the correct JS forms"
-     `(ps:chain ,seq (map ,predicate)))
+(defpsmacro map* (predicate seq)
+  "Support CL style map that transpiles into the correct JS forms"
+  `(ps:chain ,seq (map ,predicate)))
 
-   (defmacro remove-if-not* (predicate seq)
-     "Support CL style filtering that transpiles into the correct JS forms"
-     `(ps:chain ,seq (filter ,predicate)))
+(defpsmacro remove-if-not* (predicate seq)
+  "Support CL style filtering that transpiles into the correct JS forms"
+  `(ps:chain ,seq (filter ,predicate)))
 
-   (defmacro every* (predicate seq)
-     "Support CL style every that transpiles into the correct JS forms"
-     `(ps:chain ,seq (every ,predicate)))
+(defpsmacro every* (predicate seq)
+  "Support CL style every that transpiles into the correct JS forms"
+  `(ps:chain ,seq (every ,predicate)))
 
-   (defmacro some* (predicate seq)
-     "Support CL style every that transpiles into the correct JS forms"
-     `(ps:chain ,seq (some ,predicate)))
+(defpsmacro some* (predicate seq)
+  "Support CL style every that transpiles into the correct JS forms"
+  `(ps:chain ,seq (some ,predicate)))
 
-   (defmacro lower* (string)
-     "Shortand for JS version of STRING-DOWNCASE"
-     `(ps:chain ,string (to-lower-case)))
+(defpsmacro lower* (string)
+  "Shortand for JS version of STRING-DOWNCASE"
+  `(ps:chain ,string (to-lower-case)))
 
-   (defmacro push* (item seq)
-     "Shortand for JS version of PUSH"
-     `(ps:chain ,seq (push ,item)))))
+(defpsmacro push* (item seq)
+  "Shortand for JS version of PUSH"
+  `(ps:chain ,seq (push ,item)))
 
 (defmacro define-dispatchable-functions (name args &body body)
   (let ((function-name (read-from-string (concatenate 'string "make-" (string name)))))
