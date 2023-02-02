@@ -9,9 +9,6 @@
   ;; "/home/john/nfs-backup-todo-list.sexp"
   )
 
-(with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
-  (push (read in) *nfs-todos*))
-
 (defparameter *show-verbose* nil)
 
 (defun extract-tag (string &optional (show-verbose-output *show-verbose*))
@@ -27,16 +24,16 @@
 
 ;; "closet shelf - Box height + width: 11\"3/4 - depth is shorter"
 
-(defun extract-tags ()
+(defun extract-tags (todos)
   (remove-duplicates
    (remove-if-not
     #'identity
-    (loop for todo in (car *nfs-todos*)
+    (loop for todo in todos
 	 collect (extract-tag (getf todo :text))))
     :test #'string-equal))
 
-(defun create-tag-list ()
-  (let ((unique-tags (extract-tags)))
+(defun create-tag-list (todos)
+  (let ((unique-tags (extract-tags todos)))
     (do
      ((index 1 (incf index))
       (tags unique-tags (cdr tags))
@@ -105,13 +102,9 @@
    (get-untagged-todos todos tag-todo-pairs)
    updated-todos))
 
-(defparameter *todos* (car *nfs-todos*))
-(defparameter *tags* (create-tag-list))
-(defparameter *tag-todo-pairs* (create-tag-todo-pairs *todos* *tags*))
-
-(defun get-updated-todos ()
-  (let* ((updated-todos (update-todos-to-remove-tag-text *todos* *tag-todo-pairs*)))
-    (combine-updated-todos-with-untagged-todos updated-todos *todos* *tag-todo-pairs*)))
+(defun get-updated-todos (todos tag-todo-pairs)
+  (let* ((updated-todos (update-todos-to-remove-tag-text todos tag-todo-pairs)))
+    (combine-updated-todos-with-untagged-todos updated-todos todos tag-todo-pairs)))
 
 (defun write-complete-file (path list)
   "write complete file all at once"
@@ -119,7 +112,13 @@
     (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
 
 (defun update-files ()
-  (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos))
-  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-todo-list.sexp") *tag-todo-pairs*)
-  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-list.sexp") *tags*)
+  (let ((nfs-todos ()))
+    (with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
+      (push (read in) nfs-todos))
+    (let* ((todos (car nfs-todos))
+           (tags (create-tag-list todos))
+           (tag-todo-pairs (create-tag-todo-pairs todos tags)))
+      (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos todos tag-todo-pairs))
+      (write-complete-file (concatenate 'string *user-file-location* "/" "tag-todo-list.sexp") tag-todo-pairs)
+      (write-complete-file (concatenate 'string *user-file-location* "/" "tag-list.sexp") tags)))
   t)
