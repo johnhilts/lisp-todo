@@ -2,9 +2,14 @@
 
 (in-package #:todo-project-utility)
 
-(defparameter *nfs-todos* ())     
+(defparameter *nfs-todos* ())
 
-(with-open-file (in "/home/john/nfs-backup-todo-list.sexp" :direction :input)
+(defparameter *user-file-location*
+  "/home/jfh/code/lisp/source/web/todo/todo-project/users/1041626-21860-8277144-83417/"
+  ;; "/home/john/nfs-backup-todo-list.sexp"
+  )
+
+(with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
   (push (read in) *nfs-todos*))
 
 (defparameter *show-verbose* nil)
@@ -80,8 +85,10 @@
 
 (defun update-todo-to-remove-tag-text (todo)
   (let ((todo-text (getf todo :text))) 
-    (let ((demarker-position (position (get-tag-demarker todo-text) todo-text)))
-      (subseq todo-text (+ 2 demarker-position) (length todo-text)))))
+    (let* ((demarker-position (position (get-tag-demarker todo-text) todo-text))
+           (updated-todo-text (subseq todo-text (+ 2 demarker-position) (length todo-text))))
+      (setf (getf todo :text) updated-todo-text)
+      todo)))
 
 (defun update-todos-to-remove-tag-text (todos tag-todo-pairs)
   (let ((todos-with-tags (get-todos-with-tag todos tag-todo-pairs)))
@@ -102,5 +109,17 @@
 (defparameter *tags* (create-tag-list))
 (defparameter *tag-todo-pairs* (create-tag-todo-pairs *todos* *tags*))
 
-(let* ((updated-todos (update-todos-to-remove-tag-text *todos* *tag-todo-pairs*)))
-  (combine-updated-todos-with-untagged-todos updated-todos *todos* *tag-todo-pairs*))
+(defun get-updated-todos ()
+  (let* ((updated-todos (update-todos-to-remove-tag-text *todos* *tag-todo-pairs*)))
+    (combine-updated-todos-with-untagged-todos updated-todos *todos* *tag-todo-pairs*)))
+
+(defun write-complete-file (path list)
+  "write complete file all at once"
+  (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
+
+(defun update-files ()
+  (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos))
+  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-todo-list.sexp") *tag-todo-pairs*)
+  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-list.sexp") *tags*)
+  t)
