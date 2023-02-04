@@ -61,7 +61,8 @@
     (get-tag-list-from-server)
     (get-todo-list-from-server)
     (get-tag-todo-associaton-list-from-server)
-    ;; I need to wrap the following 2 procedural function calls inside a lambda so they both are invoked as part of the previous function's callback
+    (get-tag-mru-list-from-server)
+    ;; NOTE: I need to wrap the following 2 procedural function calls inside a lambda so they both are invoked as part of the previous function's callback
     #'(lambda () 
         (render-tag-filter)
         (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
@@ -205,11 +206,11 @@
 
 (define-for-ps render-tag-filter ()
   "Renders page level tag filter."
-  (let* ((filter-tag-candidates (ps:chain document (get-element-by-id "filter-tag-candidates")))
+  (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates")))
          (candidate-tag-id-prefix "filter-")
-         (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates id) "-selected")))))
-    (clear-children filter-tag-candidates)
-    (render-tag-candidates (get-all-tags) filter-tag-candidates candidate-tag-id-prefix #'search-for-tag)
+         (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected")))))
+    (clear-children filter-tag-candidates-area)
+    (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
         (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
     (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix))

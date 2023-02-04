@@ -6,7 +6,8 @@
    
    (defparameter *todos* (make-todos ([])))
    (defparameter *tags* (make-tags ([])))
-   (defparameter *tag-todos* (make-tag-todos ([])))))
+   (defparameter *tag-todos* (make-tag-todos ([])))
+   (defparameter *tag-mru* (make-tag-mru ([])))))
 
 (ps:ps
   (defmacro with-callback (fn &body body)

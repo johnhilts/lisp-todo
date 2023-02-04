@@ -235,3 +235,32 @@
   "Remove the given tag ID from the selected filter tag todo IDs"
   (let ((tag-todo-ids-without-tag-id (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) (get-selected-filter-tag-todo-ids))))
     (selected-filter-tag-todo-ids 'initialize-tag-todo-ids tag-todo-ids-without-tag-id)))
+
+
+(define-dispatchable-functions tag-mru (tag-mru)
+  ((get-tag-mru ()
+                tag-mru)
+
+   (initialize-tag-mru (new-tag-mru)
+                       (setq tag-mru new-tag-mru))
+
+   (update-tag-mru (tag-id)
+                   (ps:chain console (log "call the server")))))
+
+(define-for-ps tag-mru-items (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of MRU items"
+  (apply (funcall *tag-mru* op) parameters))
+
+(define-for-ps get-tag-mru ()
+  "Get list of tag MRU items"
+  (tag-mru-items 'get-tag-mru))
+
+(define-for-ps get-tag-mru-list-from-server (&optional optional-call-back)
+  "define callback and get tag mru list from server"
+  (with-callback
+      (get-from-server *tag-mru-api-endpoint*)
+    (let ((server-tag-mru-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
+      (tag-mru-items 'initialize-tag-mru server-tag-mru-list)
+      (when optional-call-back
+        (optional-call-back))))
+  t)

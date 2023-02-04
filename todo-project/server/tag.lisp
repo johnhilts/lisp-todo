@@ -114,3 +114,49 @@
          (user-data-path (get-user-data-path nil :by :login)))
     (write-complete-file (concatenate 'string user-data-path "/" *tag-todo-file-name*) updated-tags)
     (json:encode-json-to-string (list tag-id todo-id))))
+
+;;;; *************
+
+(defun get-tag-mru-list ()
+  "get tag MRU list and encode as json"
+  (encode-multiple-plists-to-json-as-string (fetch-or-create-tag-mrus)))
+
+(defun fetch-or-create-tag-mrus (&optional (get-user-data-path #'get-user-data-path) )
+  "get tag MRU from persisted data"
+  (let ((user-data-path (if get-user-data-path (funcall get-user-data-path nil :by :login) "")))
+    (fetch-or-create-data (concatenate 'string user-data-path "/" *tag-mru-file-name*))))
+
+(define-data-update-handler tag-mru-data-update (model)
+  "update tag todo association data to persisted data"
+  (flet ((fill-out-tags-todo-list (model)
+           (let ((todo-id (getf model :todo-id))
+                 (tag-ids (getf model :tag-ids)))
+             (reduce #'(lambda (acc cur) (append acc (list (list :todo-id todo-id :tag-id cur)))) tag-ids :initial-value ()))))
+    (let* ((todo-id (getf model :todo-id)) ;; getting this twice!
+           (existing-tags (fetch-or-create-tag-mrus))
+           (filtered-tags (remove-if #'(lambda (e) (= todo-id (getf e :todo-id))) existing-tags))
+           (user-data-path (get-user-data-path nil :by :login)))
+      (write-complete-file (concatenate 'string user-data-path "/" *tag-mru-file-name*) (append filtered-tags (fill-out-tags-todo-list model)))
+      (json:encode-json-to-string (list todo-id)))))
+
+(define-data-update-handler tags-todo-data-add (model)
+  "add tag todo associations data to persisted data - use with new todo"
+  (flet ((fill-out-tags-todo-list (model)
+           (let ((new-id (getf model :todo-id))
+                 (tag-ids (getf model :tag-ids)))
+             (reduce #'(lambda (acc cur) (append acc (list (list :todo-id new-id :tag-id cur)))) tag-ids :initial-value ()))))
+    (let ((existing-tags (fetch-or-create-tag-mrus))
+          (user-data-path (get-user-data-path nil :by :login)))
+      (write-complete-file (concatenate 'string user-data-path "/" *tag-mru-file-name*) (append existing-tags (fill-out-tags-todo-list model)))
+      (json:encode-json-to-string (list 'ok)))))
+
+(define-data-update-handler tag-mru-data-delete (model)
+  "delete tag todo association data from persisted data"
+  (let* ((todo-id (getf model :todo-id)) ;; getting this twice!
+         (tag-id  (getf model :tag-id))
+         (existing-tags (fetch-or-create-tag-mrus))
+         (deleted-item-position (position-if #'(lambda (e) (and (= (getf e :tag-id) tag-id) (= (getf e :todo-id) todo-id))) existing-tags))
+         (updated-tags (splice-and-remove-item-in-list existing-tags deleted-item-position))
+         (user-data-path (get-user-data-path nil :by :login)))
+    (write-complete-file (concatenate 'string user-data-path "/" *tag-mru-file-name*) updated-tags)
+    (json:encode-json-to-string (list tag-id todo-id))))
