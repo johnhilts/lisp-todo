@@ -111,14 +111,69 @@
   (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
     (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
 
-(defun update-files ()
+(defun get-todo-and-tag-data ()
   (let ((nfs-todos ()))
     (with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
       (push (read in) nfs-todos))
     (let* ((todos (car nfs-todos))
            (tags (create-tag-list todos))
            (tag-todo-pairs (create-tag-todo-pairs todos tags)))
-      (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos todos tag-todo-pairs))
-      (write-complete-file (concatenate 'string *user-file-location* "/" "tag-todo-list.sexp") tag-todo-pairs)
-      (write-complete-file (concatenate 'string *user-file-location* "/" "tag-list.sexp") tags)))
+      (values todos tags tag-todo-pairs))))
+
+(defun update-files (todos tags tag-todo-pairs)
+  (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos todos tag-todo-pairs))
+  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-todo-list.sexp") tag-todo-pairs)
+  (write-complete-file (concatenate 'string *user-file-location* "/" "tag-list.sexp") tags)
   t)
+
+(defun get-tag-ids-with-reference-counts (tag-todo-pairs)
+  (let ((tag-reference-table (make-hash-table)))
+    (mapc (lambda (tag-todo-pair)
+            (let* ((tag-id (getf tag-todo-pair :tag-id))
+                   (entry (gethash tag-id tag-reference-table 0)))
+              (setf (gethash tag-id tag-reference-table) (incf entry))))
+          tag-todo-pairs)
+    (let ((tag-reference-list ()))
+      (maphash
+       (lambda (k v)
+         (push (cons k v) tag-reference-list))
+       tag-reference-table)
+      (sort tag-reference-list #'>= :key #'cdr))))
+
+(defun get-top-10-tag-ids-by-reference (tag-reference-list)
+  (subseq tag-reference-list 0 10))
+
+(defun orchestrator-update-files ()
+  (multiple-value-bind (todos tags tag-todo-pairs)
+      (get-todo-and-tag-data)
+    (update-files todos tags tag-todo-pairs)))
+
+(defun orchestrator-make-tag-mru ()
+  (multiple-value-bind (todos tags tag-todo-pairs)
+      (get-todo-and-tag-data)
+    (declare (ignore todos tags))
+    (let* ((complete-mru (get-tag-ids-with-reference-counts tag-todo-pairs))
+           (top-10-mru (get-top-10-tag-ids-by-reference complete-mru)))
+      (write-complete-file (concatenate 'string *user-file-location* "/" "tag-mru-list.sexp") complete-mru)      
+      ;; (write-complete-file (concatenate 'string *user-file-location* "/" "tag-top-mru-list.sexp") top-10-mru)      
+      (values
+       complete-mru
+       top-10-mru))))
+
+(defun update-tag-mru (complete-mru top-10-mru tag-id reference-count)
+  (flet ((update-complete-mru ()
+           (setf (cdr (nth (position tag-id complete-mru :key #'car) complete-mru)) reference-count)
+           (sort complete-mru #'>= :key #'cdr))
+         (update-top-10-mru ()
+           (let ((insert-index (position-if #'(lambda (count) (> count reference-count)) top-10-mru :key #'cdr :from-end t)))
+             (if (and
+                  insert-index
+                  (< insert-index (1- (length top-10-mru))))
+                 (append
+                  (subseq top-10-mru 0 (1+ insert-index))
+                  (list (cons tag-id reference-count))
+                  (subseq top-10-mru (1+ insert-index) (- (length top-10-mru) 1)))
+                 top-10-mru))))
+    (values
+     (update-complete-mru)
+     (update-top-10-mru))))
