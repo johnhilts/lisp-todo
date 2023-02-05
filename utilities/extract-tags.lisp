@@ -136,9 +136,12 @@
     (let ((tag-reference-list ()))
       (maphash
        (lambda (k v)
-         (push (cons k v) tag-reference-list))
+         (push (list :tag-id k :reference-count v) tag-reference-list))
        tag-reference-table)
-      (sort tag-reference-list #'>= :key #'cdr))))
+      (sort
+       tag-reference-list
+       #'(lambda (tag-reference-count1 tag-reference-count2) (>= tag-reference-count1 tag-reference-count2))
+       :key #'(lambda (tag-reference) (getf tag-reference :reference-count))))))
 
 (defun get-top-10-tag-ids-by-reference (tag-reference-list)
   (subseq tag-reference-list 0 10))
@@ -153,12 +156,14 @@
       (get-todo-and-tag-data)
     (declare (ignore todos tags))
     (let* ((complete-mru (get-tag-ids-with-reference-counts tag-todo-pairs))
-           (top-10-mru (get-top-10-tag-ids-by-reference complete-mru)))
+           ;; (top-10-mru (get-top-10-tag-ids-by-reference complete-mru))
+           )
       (write-complete-file (concatenate 'string *user-file-location* "/" "tag-mru-list.sexp") complete-mru)      
       ;; (write-complete-file (concatenate 'string *user-file-location* "/" "tag-top-mru-list.sexp") top-10-mru)      
       (values
        complete-mru
-       top-10-mru))))
+       ;; top-10-mru
+       ))))
 
 (defun update-tag-mru (complete-mru top-10-mru tag-id reference-count)
   (flet ((update-complete-mru ()
