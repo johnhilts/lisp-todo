@@ -341,14 +341,15 @@
       ))
   t)
 
-(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected))
+(define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected) (is-search f))
   "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
+  (clear-children parent-element)
   (let ((tag-candidate-prompt (if (= "filter-" candidate-tag-id-prefix) "Choose tags to filter on:" "Choose tags to associate with this To-Do Item:")))
     (jfh-web::with-html-elements
         (div
          (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
   (labels ((get-candidate-tags ()
-             (let ((show-more (tag-mru-items 'get-show-more)))
+             (let ((show-more (or is-search (tag-mru-items 'get-show-more))))
                (if show-more candidate-tags (tag-mru-items 'get-tags-in-mru candidate-tags)))))
     (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) (get-candidate-tags))
     (flet ((toggle-show-more ()
@@ -377,7 +378,7 @@
                (clear-children (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
                (let* ((search-input (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))) value))
                       (search-results (get-tags-matching-search-input (get-all-tags) search-input)))
-                 (render-tag-candidates search-results tag-candidate-area id-prefix))
+                 (render-tag-candidates search-results tag-candidate-area id-prefix #'move-tag-from-candidate-to-selected t))
                t))
       (flet ((tag-content-visible ()
                (not (ps:@ tag-content-area hidden)))
