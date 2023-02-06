@@ -237,7 +237,7 @@
     (selected-filter-tag-todo-ids 'initialize-tag-todo-ids tag-todo-ids-without-tag-id)))
 
 
-(define-dispatchable-functions tag-mru (tag-mru)
+(define-dispatchable-functions tag-mru (tag-mru &optional (mru-top-limit 10) (show-more-flag f))
   ((get-tag-mru ()
                 tag-mru)
 
@@ -246,6 +246,25 @@
 
    (update-tag-mru (tag-id)
                    (ps:chain console (log "call the server")))))
+
+   (get-mru-top-limit ()
+                      mru-top-limit)
+
+   (get-show-more ()
+                  show-more-flag)
+
+   (update-show-more (show-more)
+                     (setf show-more-flag show-more))
+
+   (get-tags-in-mru (tags)
+                    (let ((top-tags (subseq* (get-tag-mru) 0 (get-mru-top-limit))))
+                      (map*
+                       (lambda (top-tag)
+                         (find-if*
+                          (lambda (tag)
+                            (=  (ps:@ tag id) (ps:@ top-tag tag-id)))
+                          tags))
+                       top-tags)))))
 
 (define-for-ps tag-mru-items (op &rest parameters)
   "Handle boilerplate function calls to consume the list of MRU items"

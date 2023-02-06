@@ -139,7 +139,7 @@
       (write-complete-file (concatenate 'string user-data-path "/" *tag-mru-file-name*) (append filtered-tags (fill-out-tags-todo-list model)))
       (json:encode-json-to-string (list todo-id)))))
 
-(define-data-update-handler tags-todo-data-add (model)
+(define-data-update-handler tags-mru-data-add (model)
   "add tag todo associations data to persisted data - use with new todo"
   (flet ((fill-out-tags-todo-list (model)
            (let ((new-id (getf model :todo-id))

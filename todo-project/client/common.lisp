@@ -53,6 +53,10 @@
   "Shortand for JS version of PUSH"
   `(ps:chain ,seq (push ,item)))
 
+(defpsmacro subseq* (seq start end)
+  "Shortand for JS version of SUBSEQ"
+  `(ps:chain ,seq (slice ,start ,end)))
+
 (defmacro define-dispatchable-functions (name args &body body)
   (let ((function-name (read-from-string (concatenate 'string "make-" (string name)))))
     (flet ((get-dispatchable-functions (acc cur)

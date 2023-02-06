@@ -547,3 +547,9 @@ todo webapp - remove #\Return from imported todos
 - [ ] Maybe get rid of list name?
   - [ ] OR, make it truly optional and don't add in a default list name.
 
+- [-] Show only the 10 most used.
+  - [-] Keep an MRU to track usage.
+    - [X] If no MRU yet, get the top 10 tags in terms of associated todo items
+      - Can easily get that count from tag todo pairs.
+  - [X] +Initially it will just be the ones I pick.+
+- [X] Have a "show all" option.

@@ -347,7 +347,16 @@
     (jfh-web::with-html-elements
         (div
          (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
-  (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) candidate-tags)
+  (labels ((get-candidate-tags ()
+             (let ((show-more (tag-mru-items 'get-show-more)))
+               (if show-more candidate-tags (tag-mru-items 'get-tags-in-mru candidate-tags)))))
+    (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) (get-candidate-tags))
+    (flet ((toggle-show-more ()
+             (tag-mru-items 'update-show-more (not (tag-mru-items 'get-show-more)))
+             (render-tag-candidates (get-candidate-tags) parent-element candidate-tag-id-prefix tag-click-handler))) ;; can we use ARGUMENTS somehow?
+      (let ((show-text (if (tag-mru-items 'get-show-more) "Show Less" "Show More")))
+        (jfh-web::with-html-elements
+            (div (style . "margin: 5px;margin-top: 5px; padding: 10px;") (a (onclick . "(toggle-show-more)")  show-text))))))
   t)
 
 (var *show-tag-content-handler*)
