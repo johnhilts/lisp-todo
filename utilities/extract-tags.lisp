@@ -188,16 +188,12 @@
 
 #|
 Fix these manually!
-(((:ID 5 :TEXT "Lights") (:ID 64 :TEXT "Christmas Lights 2021"))
- ((:ID 13 :TEXT "Lisp") (:ID 12 :TEXT "Lisp info list"))
- ((:ID 15 :TEXT "Sunny") (:ID 19 :TEXT "Shopping / Sunny"))
- ((:ID 25 :TEXT "Hellas bakery") (:ID 23 :TEXT "Hellas bakery."))
- ((:ID 28 :TEXT "Sushi") (:ID 43 :TEXT "Sushi twister birthday"))
- ((:ID 41 :TEXT "House") (:ID 18 :TEXT "House Subaru"))
- ((:ID 52 :TEXT "Einstein") (:ID 53 :TEXT "Einstein check "))
- ((:ID 78 :TEXT "Shoe boxes") (:ID 57 :TEXT "Shoe boxes "))
- ((:ID 81 :TEXT "Hina") (:ID 91 :TEXT "Hina boarding"))
- ((:ID 89 :TEXT "Sushi twister") (:ID 43 :TEXT "Sushi twister birthday"))
-((:ID 93 :TEXT "Shopping") (:ID 19 :TEXT "Shopping / Sunny")))
-** also** Trader Joe's
+(((:ID 5 :TEXT "Lights") (:ID 64 :TEXT "Christmas Lights 2021")) ;; "Lights 2022"
+ 
+ ((:ID 15 :TEXT "Sunny") (:ID 19 :TEXT "Shopping / Sunny")) ;; Just "Sunny"
+ ((:ID 25 :TEXT "Hellas bakery") (:ID 23 :TEXT "Hellas bakery.")) ;; Remove "."
+ ((:ID 41 :TEXT "House") (:ID 18 :TEXT "House Subaru")) ;; Just "Subaru"
+ ((:ID 78 :TEXT "Shoe boxes") (:ID 57 :TEXT "Shoe boxes "));; remove trailing space
+
+** ALSO ** Trader Joe's
 |#
