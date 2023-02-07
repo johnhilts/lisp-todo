@@ -72,12 +72,8 @@
 (define-for-ps render-app-settings ()
   "render html elements for app settings, including for tags selected for todo filter"
   (let ((app-settings (app-settings 'get-app-settings)))
-    ;; (init-selected-filter-tag-todo-ids (@ app-settings selected-filter-tag-todo-ids))
     (init-selected-filter-tag-ids (@ app-settings selected-filter-tag-ids))
     (setf *filter-tag-match-type* (@ app-settings filter-tag-match-type))
-    ;; (render-selected-tags (@ app-settings selected-filter-tag-ids) "filter-")
-    ;; (render-tag-filter)
-    ;; (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
     (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
       (jfh-web::with-html-elements
           (div
@@ -85,10 +81,6 @@
            (label (for . "hide-done") "Hide Done Items."))))))
 
 (define-for-ps filter-todos ()
-  ;; (let* ((filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
-  ;;        (filtered-todos (remove-if-not* (lambda (todo) (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))) (get-all-todos))))
-  ;;   (render-todo-list filtered-todos)
-  ;;   )
   (render-filter-tag-todos "filter-")
   (update-app-settings)
   t)
@@ -217,7 +209,6 @@
   (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates")))
          (candidate-tag-id-prefix "filter-")
          (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected")))))
-    ;; (clear-children filter-tag-candidates-area)
     (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
         (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
@@ -395,7 +386,6 @@
   (let ((tag-content-area (get-tag-content-area-element id-prefix))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
     (labels ((search-tags (event)
-               ;; (clear-children (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
                (let* ((search-input (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))) value))
                       (search-results (get-tags-matching-search-input (get-all-tags) search-input)))
                  (render-tag-candidates search-results tag-candidate-area id-prefix #'move-tag-from-candidate-to-selected t))

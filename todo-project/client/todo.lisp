@@ -62,13 +62,11 @@
              (todo-item  (ps:create text todo-text done false id next-id)))
         (todo-items 'add-todo todo-item)
         (clear-field todo)
-        ;; (render-todo-list (get-all-todos))
         (render-filter-tag-todos "filter-")
         (send-new-todo-item-to-server todo-item)
-        ;; (add-associate-tags-to-todo next-id (get-all-selected-tag-ids-for-current-todo))
         (add-associate-tags-to-todo next-id (get-currently-selected-tag-ids "new-todo-"))
         (funcall *show-tag-content-handler*)))
-    ;; calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
+    ;; NOTE - calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
     (ps:chain todo (focus)))
   t)
 
@@ -77,7 +75,6 @@
   (with-callback
       (get-from-server *todo-api-endpoint*)
     (let ((server-todo-list (ps:chain -j-s-o-n (parse (@ this response-text)))))
-      ;; (render-todo-list server-todo-list)
       (render-filter-tag-todos "filter-")
       (todo-items 'initialize-todos server-todo-list)
       (when optional-call-back
@@ -105,9 +102,7 @@
 (define-for-ps update-todo-from-edit (todo index)
   "update todo on client and server and re-render html elements"
   (send-updated-todo-item-to-server todo)
-  ;; (edit-associate-tags-to-todo (ps:@ todo id) (get-all-selected-tag-ids-for-current-todo))
   (edit-associate-tags-to-todo (ps:@ todo id) (get-currently-selected-tag-ids (+ "edit-todo-" index "-")))
-  ;; (render-todo-list (get-all-todos))
   (render-filter-tag-todos "filter-")
   t)
 
@@ -115,7 +110,6 @@
   "delete todo on client and server and re-render html elements"
   (delete-todo-item-on-server (ps:create id delete-id))
   (todo-items 'delete-todo delete-id)
-  ;; (render-todo-list (get-all-todos))
   (render-filter-tag-todos "filter-")
   t)
     

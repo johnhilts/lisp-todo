@@ -44,5 +44,4 @@
     (send-to-server *app-settings-api-endpoint* "PUT" app-settings)
     (app-settings 'update-app-settings app-settings)
     (when can-re-render
-      ;; (render-todo-list (get-all-todos))
       (render-filter-tag-todos "filter-"))))
