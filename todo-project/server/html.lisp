@@ -59,6 +59,7 @@
              (:html
               (:head
                (:meta :charset "utf-8")
+               (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
                (:title "Auth Failure")
                (:link :type "text/css"
                       :rel "stylesheet"
@@ -84,6 +85,7 @@
     (:html
      (:head
       (:meta :charset "utf-8")
+      (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
       (:title "Todo List - Login")
       (:link :type "text/css"
              :rel "stylesheet"
@@ -118,6 +120,7 @@
     (:html
      (:head
       (:meta :charset "utf-8")
+      (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
       (:title "Todo List - Signup")
       (:link :type "text/css"
              :rel "stylesheet"
