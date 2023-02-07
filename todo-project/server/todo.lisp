@@ -45,9 +45,6 @@
 
 (defun import-lines-into-todo-list (lines)
   "orchestrator called by web handler to take input and output it in desired form"
-      (let ((app-settings (fetch-or-create-app-settings)))
-        (setf (getf app-settings :filter-text) formatted-list-name)
-        (write-complete-file (concatenate 'string user-data-path "/" *app-settings-file-name*) app-settings))
   (let* ((existing-todos (fetch-or-create-todos))
          (new-id (get-next-todo-index existing-todos))
          (user-data-path (get-user-data-path nil :by :login))

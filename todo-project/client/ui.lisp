@@ -13,7 +13,8 @@
     (defparameter *selected-tag-text* "selected-tag")
 
     (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))
-    (defparameter *selected-filter-tag-todo-ids* (make-selected-filter-tag-todo-ids (list)))
+    (defparameter *selected-filter-tag-todo-ids* (make-selected-filter-tag-todo-ids (list))) ;; TODO - is this necessary?
+    (defparameter *selected-filter-tag-ids* (make-selected-filter-tag-ids (list)))
     ;; (defparameter *max-candidate-tag-show-count* 10)
     (defparameter *filter-tag-match-type* 'any)
 
@@ -71,8 +72,12 @@
 (define-for-ps render-app-settings ()
   "render html elements for app settings, including for tags selected for todo filter"
   (let ((app-settings (app-settings 'get-app-settings)))
-    (init-selected-filter-tag-todo-ids (@ app-settings selected-filter-tag-todo-ids))
+    ;; (init-selected-filter-tag-todo-ids (@ app-settings selected-filter-tag-todo-ids))
+    (init-selected-filter-tag-ids (@ app-settings selected-filter-tag-ids))
     (setf *filter-tag-match-type* (@ app-settings filter-tag-match-type))
+    ;; (render-selected-tags (@ app-settings selected-filter-tag-ids) "filter-")
+    ;; (render-tag-filter)
+    ;; (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
     (let ((parent-element (ps:chain document (get-element-by-id "app-settings"))))
       (jfh-web::with-html-elements
           (div
@@ -80,10 +85,12 @@
            (label (for . "hide-done") "Hide Done Items."))))))
 
 (define-for-ps filter-todos ()
-  (let* ((filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
-         (filtered-todos (remove-if-not* (lambda (todo) (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))) (get-all-todos))))
-    (render-todo-list filtered-todos)
-    (update-app-settings))
+  ;; (let* ((filter-text (@ (ps:chain document (get-element-by-id "todo-filter-text")) value))
+  ;;        (filtered-todos (remove-if-not* (lambda (todo) (ps:chain (@ todo text) (match (new (-reg-exp filter-text "i"))))) (get-all-todos))))
+  ;;   (render-todo-list filtered-todos)
+  ;;   )
+  (render-filter-tag-todos "filter-")
+  (update-app-settings)
   t)
 
 (define-for-ps render-todo-filter ()
@@ -154,7 +161,8 @@
   "(I think) this searches for todo items matching a tag; at the same time, the tag is removed from the tag candidate list."
   (let* ((tag-id (ps:@ tag id))
          (selected-tags (get-tags-todo-association-list-by-tag-id (get-all-tag-todos) tag-id)))
-    (add-selected-tags-to-selected-filter-tag-todo-ids selected-tags)
+    (add-selected-tags-to-selected-filter-tag-todo-ids selected-tags) ;; TODO - is this necessary?
+    (add-selected-tag-id-to-selected-filter-tag-ids tag-id)
     (move-tag-from-candidate-to-selected tag candidate-tag-id-prefix)
     (render-filter-tag-todos candidate-tag-id-prefix))
   t)
@@ -209,7 +217,7 @@
   (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates")))
          (candidate-tag-id-prefix "filter-")
          (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected")))))
-    (clear-children filter-tag-candidates-area)
+    ;; (clear-children filter-tag-candidates-area)
     (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
         (div (id . "(+ candidate-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
@@ -277,7 +285,12 @@
                     (selected-tag-element-ids (map* #'(lambda (element) (ps:@ element id)) iterable-selected-tag-elements))
                     (selected-tag-ids (map* #'get-tag-id-from-element-id selected-tag-element-ids)))
                selected-tag-ids)))
-    (get-selected-tag-ids-from-ui-elements)))
+    (let ((selected-tag-ids-from-ui-elements (get-selected-tag-ids-from-ui-elements)))
+      (if (ps:@ selected-tag-ids-from-ui-elements length)
+          selected-tag-ids-from-ui-elements
+          (if (= "filter-" id-prefix)
+              (get-selected-filter-tag-ids)
+              ([]))))))
 
 (define-for-ps move-tag-from-candidate-to-selected (tag id-prefix)
   "Add tag to the list of selected tags."
@@ -344,13 +357,20 @@
 (define-for-ps render-tag-candidates (candidate-tags parent-element &optional (candidate-tag-id-prefix "") (tag-click-handler #'move-tag-from-candidate-to-selected) (is-search f))
   "Renders list of tags that are candidates to be added to a todo, or used in the page level filter."
   (clear-children parent-element)
-  (let ((tag-candidate-prompt (if (= "filter-" candidate-tag-id-prefix) "Choose tags to filter on:" "Choose tags to associate with this To-Do Item:")))
+  (let* ((is-filter (= "filter-" candidate-tag-id-prefix))
+         (tag-candidate-prompt (if is-filter "Choose tags to filter on:" "Choose tags to associate with this To-Do Item:")))
     (jfh-web::with-html-elements
         (div
          (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
   (labels ((get-candidate-tags ()
-             (let ((show-more (or is-search (tag-mru-items 'get-show-more))))
-               (if show-more candidate-tags (tag-mru-items 'get-tags-in-mru candidate-tags)))))
+             (let* ((show-more (or is-search (tag-mru-items 'get-show-more)))
+                    (candidate-tags-all-or-top (if show-more candidate-tags (tag-mru-items 'get-tags-in-mru candidate-tags))))
+               (if (and is-filter (get-selected-filter-tag-todo-ids))
+                   (remove-if-not*
+                    (lambda (tag) (< (position-if* (lambda (app-tag) (= (ps:@ tag id) app-tag)) (get-selected-filter-tag-ids))
+                                     0))
+                    candidate-tags-all-or-top)
+                   candidate-tags-all-or-top))))
     (map* #'(lambda (candidate-tag) (display-candidate-tag candidate-tag parent-element candidate-tag-id-prefix tag-click-handler) t) (get-candidate-tags))
     (flet ((toggle-show-more ()
              (tag-mru-items 'update-show-more (not (tag-mru-items 'get-show-more)))
@@ -358,7 +378,7 @@
       (let ((show-text (if (tag-mru-items 'get-show-more) "Show Less" "Show More")))
         (jfh-web::with-html-elements
             (div (style . "margin: 5px;margin-top: 5px; padding: 10px;") (a (onclick . "(toggle-show-more)")  show-text))))))
-  t)
+  t))
 
 (var *show-tag-content-handler*)
 
@@ -375,7 +395,7 @@
   (let ((tag-content-area (get-tag-content-area-element id-prefix))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
     (labels ((search-tags (event)
-               (clear-children (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
+               ;; (clear-children (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
                (let* ((search-input (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))) value))
                       (search-results (get-tags-matching-search-input (get-all-tags) search-input)))
                  (render-tag-candidates search-results tag-candidate-area id-prefix #'move-tag-from-candidate-to-selected t))
@@ -614,7 +634,8 @@
    ;; (defparameter *tags-todo-association-list* ([]))
    (defparameter *tags* (make-tags ([])))
    (defparameter *tag-todos* (make-tag-todos ([])))
-   (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))))
+   (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))
+   (defparameter *tag-mru* (make-tag-mru ([])))))
 
 (defun client-ui-import ()
   "define client side UI functions"
@@ -636,6 +657,7 @@
     ;; (get-todo-list-from-server)
     (get-tag-list-from-server)
     ;; (get-tag-todo-associaton-list-from-server)
+    (get-tag-mru-list-from-server)
     )
   (let ((todo-content (ps:chain document (get-element-by-id "import-list"))))
     ;; (ps:chain add-button (add-event-listener "click" add-todo false))

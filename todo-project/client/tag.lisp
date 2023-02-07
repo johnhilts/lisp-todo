@@ -36,6 +36,10 @@
   "Add selected tags to the selected tag / todo combinations to filter the todo list"
   (ps:chain selected-tags (for-each #'(lambda (tag-todo) (selected-filter-tag-todo-ids 'add-tag-todo tag-todo)))))
 
+(define-for-ps add-selected-tag-id-to-selected-filter-tag-ids (selected-tag-id)
+  "Add selected tag ID to the selected tag IDs to filter the todo list"
+  (selected-filter-tag-ids 'add-tag-id selected-tag-id))
+
 (define-for-ps send-new-tag-item-to-server (tag-item)
   "save new tag on server"
   (send-to-server *tag-api-endpoint* "POST" tag-item))
@@ -237,6 +241,36 @@
     (selected-filter-tag-todo-ids 'initialize-tag-todo-ids tag-todo-ids-without-tag-id)))
 
 
+(define-dispatchable-functions selected-filter-tag-ids (tag-ids)
+  ((get-tag-ids ()
+                tag-ids)
+
+   (initialize-tag-ids (new-tag-ids)
+                       (setq tag-ids new-tag-ids))
+
+   (add-tag-id (tag-id)
+               (push* tag-id tag-ids))))
+
+(define-for-ps selected-filter-tag-ids (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of associated tag IDs that the user selected for the global filter"
+  (apply (funcall *selected-filter-tag-ids* op) parameters))
+
+(define-for-ps get-selected-filter-tag-ids ()
+  "Get selected tag IDs to filter the todo list"
+  (selected-filter-tag-ids 'get-tag-ids))
+
+(define-for-ps init-selected-filter-tag-ids (app-settings-selected-filter-tag-ids)
+  "Initialize the selected tag IDs to filter the todo list"
+  (selected-filter-tag-ids 'initialize-tag-ids app-settings-selected-filter-tag-ids)
+  (when (null (get-selected-filter-tag-ids))
+    (selected-filter-tag-ids 'initialize-tag-ids [])))
+
+(define-for-ps remove-tag-id-from-selected-filter-tag-ids (tag-id)
+  "Remove the given tag ID from the selected filter tag IDs"
+  (let ((tag-ids-without-tag-id (remove-if-not* #'(lambda (selected-tag-id) (not (= tag-id selected-tag-id))) (get-selected-filter-tag-ids))))
+    (selected-filter-tag-ids 'initialize-tag-ids tag-ids-without-tag-id)))
+
+
 (define-dispatchable-functions tag-mru (tag-mru &optional (mru-top-limit 10) (show-more-flag f))
   ((get-tag-mru ()
                 tag-mru)
@@ -245,7 +279,7 @@
                        (setq tag-mru new-tag-mru))
 
    (update-tag-mru (tag-id)
-                   (ps:chain console (log "call the server")))))
+                   (ps:chain console (log "call the server"))) ;; TODO - update MRU based on usage frequency
 
    (get-mru-top-limit ()
                       mru-top-limit)

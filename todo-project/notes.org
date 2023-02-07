@@ -552,4 +552,35 @@ todo webapp - remove #\Return from imported todos
     - [X] If no MRU yet, get the top 10 tags in terms of associated todo items
       - Can easily get that count from tag todo pairs.
   - [X] +Initially it will just be the ones I pick.+
+  - [X] Make sure search still works even for "hidden" tags.
 - [X] Have a "show all" option.
+
+****** TODO re-rendering todos
+******* render-filter-tag-todos
+- renders todo list based on tags
+  - honors filter text
+******* render-todo-list
+- renders todo list based on filter text
+  - doesn't look at tags
+******* catalog for render-todo-list
+- todo-project/client/ui.lisp:85:    (render-todo-list filtered-todos)
+  - filter-todos - called by filter button on-click event
+  - looks like the filtering logic is duplicated in filter-todos
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/ui.lisp:131:    (render-todo-list filtered-todos)
+  - called by render-todos-filtered-by-tags
+- todo-project/client/app-settings.lisp:47:        (render-todo-list (get-all-todos)))))
+  - [X] we can call (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:65:        (render-todo-list (get-all-todos))
+  - add-todo
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:79:      (render-todo-list server-todo-list)
+  - get-todo-list-from-server
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:108:  (render-todo-list (get-all-todos))
+  - update-todo-from-edit
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:115:  (render-todo-list (get-all-todos))
+  - delete-todo-by-id
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+
