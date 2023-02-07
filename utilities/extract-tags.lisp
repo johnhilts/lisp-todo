@@ -112,13 +112,16 @@
     (prin1 list out))) ;; print is just like prin1, except it precedes each output with a line break, and ends with a space
 
 (defun get-todo-and-tag-data ()
-  (let ((nfs-todos ()))
-    (with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
-      (push (read in) nfs-todos))
-    (let* ((todos (car nfs-todos))
-           (tags (create-tag-list todos))
-           (tag-todo-pairs (create-tag-todo-pairs todos tags)))
-      (values todos tags tag-todo-pairs))))
+  (flet ((normalize-single-quotes (todo)
+           (setf #1=(getf todo :text) (substitute #\' #\’ #1#))
+           todo))
+    (let ((nfs-todos ()))
+      (with-open-file (in (concatenate 'string *user-file-location* "nfs-backup-todo-list.sexp") :direction :input)
+        (push (read in) nfs-todos))
+      (let* ((todos (mapcar #'normalize-single-quotes (car nfs-todos)))
+             (tags (create-tag-list todos))
+             (tag-todo-pairs (create-tag-todo-pairs todos tags)))
+        (values todos tags tag-todo-pairs)))))
 
 (defun update-files (todos tags tag-todo-pairs)
   (write-complete-file (concatenate 'string *user-file-location* "/" "todo-list.sexp") (get-updated-todos todos tag-todo-pairs))
@@ -182,3 +185,19 @@
     (values
      (update-complete-mru)
      (update-top-10-mru))))
+
+#|
+Fix these manually!
+(((:ID 5 :TEXT "Lights") (:ID 64 :TEXT "Christmas Lights 2021"))
+ ((:ID 13 :TEXT "Lisp") (:ID 12 :TEXT "Lisp info list"))
+ ((:ID 15 :TEXT "Sunny") (:ID 19 :TEXT "Shopping / Sunny"))
+ ((:ID 25 :TEXT "Hellas bakery") (:ID 23 :TEXT "Hellas bakery."))
+ ((:ID 28 :TEXT "Sushi") (:ID 43 :TEXT "Sushi twister birthday"))
+ ((:ID 41 :TEXT "House") (:ID 18 :TEXT "House Subaru"))
+ ((:ID 52 :TEXT "Einstein") (:ID 53 :TEXT "Einstein check "))
+ ((:ID 78 :TEXT "Shoe boxes") (:ID 57 :TEXT "Shoe boxes "))
+ ((:ID 81 :TEXT "Hina") (:ID 91 :TEXT "Hina boarding"))
+ ((:ID 89 :TEXT "Sushi twister") (:ID 43 :TEXT "Sushi twister birthday"))
+((:ID 93 :TEXT "Shopping") (:ID 19 :TEXT "Shopping / Sunny")))
+** also** Trader Joe's
+|#
