@@ -32,10 +32,6 @@
   "Get the list of tag IDs associated to supplied todo ID"
   (map* #'(lambda (tag-todo) (ps:@ tag-todo tag-id)) (remove-if-not* #'(lambda (tag-todo) (= (ps:@ tag-todo todo-id) todo-id)) tags-todo-association-list)))
 
-(define-for-ps add-selected-tags-to-selected-filter-tag-todo-ids (selected-tags)
-  "Add selected tags to the selected tag / todo combinations to filter the todo list"
-  (ps:chain selected-tags (for-each #'(lambda (tag-todo) (selected-filter-tag-todo-ids 'add-tag-todo tag-todo)))))
-
 (define-for-ps add-selected-tag-id-to-selected-filter-tag-ids (selected-tag-id)
   "Add selected tag ID to the selected tag IDs to filter the todo list"
   (selected-filter-tag-ids 'add-tag-id selected-tag-id))
@@ -210,37 +206,6 @@
   ;; (render-todo-list todo-list)
   t)
 
-
-(define-dispatchable-functions selected-filter-tag-todo-ids (tag-todo-ids) ;; note: this can be merged with "regular" tag-todos
-  ((get-tag-todo-ids ()
-                  tag-todo-ids)
-
-   (initialize-tag-todo-ids (new-tag-todo-ids)
-                            (setq tag-todo-ids new-tag-todo-ids))
-
-      (add-tag-todo (tag-todo)
-                    (push* tag-todo tag-todo-ids))))
-
-(define-for-ps selected-filter-tag-todo-ids (op &rest parameters)
-  "Handle boilerplate function calls to consume the list of associated tag and todo IDs that the user selected"
-  (apply (funcall *selected-filter-tag-todo-ids* op) parameters))
-
-(define-for-ps get-selected-filter-tag-todo-ids ()
-  "Get selected tag / todo combinations to filter the todo list"
-  (selected-filter-tag-todo-ids 'get-tag-todo-ids))
-
-(define-for-ps init-selected-filter-tag-todo-ids (app-settings-selected-filter-tag-todo-ids)
-  "Initialize the selected tag / todo combinations to filter the todo list"
-  (selected-filter-tag-todo-ids 'initialize-tag-todo-ids app-settings-selected-filter-tag-todo-ids)
-  (when (null (get-selected-filter-tag-todo-ids))
-    (selected-filter-tag-todo-ids 'initialize-tag-todo-ids [])))
-
-(define-for-ps remove-tag-id-from-selected-filter-tag-todo-ids (tag-id)
-  "Remove the given tag ID from the selected filter tag todo IDs"
-  (let ((tag-todo-ids-without-tag-id (remove-if-not* #'(lambda (selected-tag-todo) (not (= tag-id (ps:@ selected-tag-todo tag-id)))) (get-selected-filter-tag-todo-ids))))
-    (selected-filter-tag-todo-ids 'initialize-tag-todo-ids tag-todo-ids-without-tag-id)))
-
-
 (define-dispatchable-functions selected-filter-tag-ids (tag-ids)
   ((get-tag-ids ()
                 tag-ids)
@@ -292,13 +257,15 @@
 
    (get-tags-in-mru (tags)
                     (let ((top-tags (subseq* (get-tag-mru) 0 (get-mru-top-limit))))
-                      (map*
-                       (lambda (top-tag)
-                         (find-if*
-                          (lambda (tag)
-                            (=  (ps:@ tag id) (ps:@ top-tag tag-id)))
-                          tags))
-                       top-tags)))))
+                      (remove-if-not*
+                       #'(lambda (e) e)
+                       (map*
+                        (lambda (top-tag)
+                          (find-if*
+                           (lambda (tag)
+                             (=  (ps:@ tag id) (ps:@ top-tag tag-id)))
+                           tags))
+                        top-tags))))))
 
 (define-for-ps tag-mru-items (op &rest parameters)
   "Handle boilerplate function calls to consume the list of MRU items"

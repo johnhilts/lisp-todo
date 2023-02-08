@@ -21,19 +21,21 @@
     (:body
      (:div :id "app-settings"
            (who:str (get-app-menu)))
-     (:div :id "todo-filter")
      (:div
-      (:h1 (who:fmt "Todo List for ~a" authenticated-user)
-           (:div
-            (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-            (:div :id "new-todo-tag-content" :hidden "true"
-                  (:div :id "new-todo-tag-candidates" :class "tag-display"))
-            (:button :id "todo-add-btn" "Add")
-            (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
-           (:div
-            (:table :id "todo-list"
-                    (:thead (:th :id "todo-list-column-header" "To-do Items"))
-                    (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)"))))))))))
+      (:h1 (who:fmt "Todo List for ~a" authenticated-user))
+      (:div
+       (:table :id "todo-list"
+               (:thead (:th :id "todo-list-column-header" "To-do Items"))
+               (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)")))))
+      (:div "&nbsp;")
+      (:div :id "todo-filter")
+      (:div "&nbsp;")
+      (:div
+       (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
+       (:div :id "new-todo-tag-content" :hidden "true"
+             (:div :id "new-todo-tag-candidates" :class "tag-display"))
+       (:button :id "todo-add-btn" "Add")
+       (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))))))
 
 (define-protected-page (todo-page "/todos") ()
   "HTTP endpoint for todo list"

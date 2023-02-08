@@ -13,7 +13,6 @@
     (defparameter *selected-tag-text* "selected-tag")
 
     (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))
-    (defparameter *selected-filter-tag-todo-ids* (make-selected-filter-tag-todo-ids (list))) ;; TODO - is this necessary?
     (defparameter *selected-filter-tag-ids* (make-selected-filter-tag-ids (list)))
     ;; (defparameter *max-candidate-tag-show-count* 10)
     (defparameter *filter-tag-match-type* 'any)
@@ -150,10 +149,8 @@
        (get-todos-matching-all-selected-tags todo-ids selected-filter-tag-todo-ids tag-ids)))))
 
 (define-for-ps search-for-tag (tag candidate-tag-id-prefix)
-  "(I think) this searches for todo items matching a tag; at the same time, the tag is removed from the tag candidate list."
-  (let* ((tag-id (ps:@ tag id))
-         (selected-tags (get-tags-todo-association-list-by-tag-id (get-all-tag-todos) tag-id)))
-    (add-selected-tags-to-selected-filter-tag-todo-ids selected-tags) ;; TODO - is this necessary?
+  "Click handler for candidate tags in global filter; moves tag from candiates to selected and filters and re-renders todo list"
+  (let ((tag-id (ps:@ tag id)))
     (add-selected-tag-id-to-selected-filter-tag-ids tag-id)
     (move-tag-from-candidate-to-selected tag candidate-tag-id-prefix)
     (render-filter-tag-todos candidate-tag-id-prefix))
@@ -276,19 +273,17 @@
                     (selected-tag-element-ids (map* #'(lambda (element) (ps:@ element id)) iterable-selected-tag-elements))
                     (selected-tag-ids (map* #'get-tag-id-from-element-id selected-tag-element-ids)))
                selected-tag-ids)))
-    (let ((selected-tag-ids-from-ui-elements (get-selected-tag-ids-from-ui-elements)))
-      (if (ps:@ selected-tag-ids-from-ui-elements length)
-          selected-tag-ids-from-ui-elements
-          (if (= "filter-" id-prefix)
-              (get-selected-filter-tag-ids)
-              ([]))))))
+    (if (= "filter-" id-prefix)
+        (get-selected-filter-tag-ids)
+        (get-selected-tag-ids-from-ui-elements))))
 
 (define-for-ps move-tag-from-candidate-to-selected (tag id-prefix)
   "Add tag to the list of selected tags."
   (let ((tag-id (ps:@ tag id)))
     (remove-tag-from-candidate-list tag-id id-prefix)
     (let ((selected-tag-ids (get-currently-selected-tag-ids id-prefix)))
-      (ps:chain selected-tag-ids (push tag-id))
+      (when (/= "filter-" id-prefix)
+        (ps:chain selected-tag-ids (push tag-id)))
       (render-selected-tags selected-tag-ids id-prefix)))
   t)
 
@@ -311,7 +306,7 @@
     (ps:chain (ps:chain document (get-element-by-id tag-list-element-id)) (remove))
     (display-candidate-tag tag (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))) id-prefix #'search-for-tag)
     (when (= "filter-" id-prefix)
-      (remove-tag-id-from-selected-filter-tag-todo-ids tag-id)
+      (remove-tag-id-from-selected-filter-tag-ids tag-id)
       (render-filter-tag-todos id-prefix)))
   t)
   
@@ -331,7 +326,7 @@
     ;;     (ps:chain selected-tag-ids (splice remove-tag-index 1))
     ;;     (setf *selected-tag-ids* selected-tag-ids)))
     (when (= "filter-" id-prefix)
-      (remove-tag-id-from-selected-filter-tag-todo-ids tag-id)
+      (remove-tag-id-from-selected-filter-tag-ids tag-id)
       (render-filter-tag-todos id-prefix)))
   t)
 
@@ -355,10 +350,10 @@
          (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
   (labels ((get-candidate-tags ()
              (let* ((show-more (or is-search (tag-mru-items 'get-show-more)))
-                    (candidate-tags-all-or-top (if show-more candidate-tags (tag-mru-items 'get-tags-in-mru candidate-tags))))
-               (if (and is-filter (get-selected-filter-tag-todo-ids))
+                    (candidate-tags-all-or-top (if show-more (get-all-tags) (tag-mru-items 'get-tags-in-mru candidate-tags))))
+               (if (and is-filter (get-selected-filter-tag-ids))
                    (remove-if-not*
-                    (lambda (tag) (< (position-if* (lambda (app-tag) (= (ps:@ tag id) app-tag)) (get-selected-filter-tag-ids))
+                    (lambda (tag) (< (position-if* (lambda (app-tag-id) (= (ps:@ tag id) app-tag-id)) (get-selected-filter-tag-ids))
                                      0))
                     candidate-tags-all-or-top)
                    candidate-tags-all-or-top))))
@@ -369,7 +364,7 @@
       (let ((show-text (if (tag-mru-items 'get-show-more) "Show Less" "Show More")))
         (jfh-web::with-html-elements
             (div (style . "margin: 5px;margin-top: 5px; padding: 10px;") (a (onclick . "(toggle-show-more)")  show-text))))))
-  t))
+  t)
 
 (var *show-tag-content-handler*)
 
