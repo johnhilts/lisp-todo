@@ -110,11 +110,13 @@
      (:html :lang "en"
             (:head
              (:meta :charset "utf-8")
+             (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
              (:title ,title)
              (:link :type "text/css"
                     :rel "stylesheet"
                     :href (format-string  *static-root* "/styles.css?v=" (get-version)))
              (:script :type "text/javascript"
+                      ;; (who:str (client-side-macros))
                       (who:str (jfh-web:define-ps-with-html-macro))
                       (who:str (share-server-side-constants))
                       ,@(mapcar

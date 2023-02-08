@@ -17,22 +17,25 @@
   "generate todo HTML page"
   ;; I split this calling of ps functions into 2 operations because str is a macrolet that's only available under with-html-output-to-string
   ;; I have options to consider such as I can mimic str and then put it whereever I want and then only have to work with 1 list
-  (with-app-layout "Todo List" (client-todo client-app-settings client-ui) 
+  (with-app-layout "EZ Utils - Todo List" (client-todo client-app-settings client-ui) 
     (:body
      (:div :id "app-settings"
            (who:str (get-app-menu)))
-     (:div :id "todo-filter")
      (:div
-      (:h1 (who:fmt "Todo List for ~a" authenticated-user)
-           (:div
-            (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-            (:br)
-            (:button :id "todo-add-btn" "Add")
-            (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))
-           (:div
-            (:table :id "todo-list"
-                    (:thead (:th :id "todo-list-column-header" "To-do Items"))
-                    (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)"))))))))))
+      (:h1 (who:fmt "Todo List for ~a" authenticated-user))
+      (:div
+       (:table :id "todo-list"
+               (:thead (:th :id "todo-list-column-header" "To-do Items"))
+               (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)")))))
+      (:div "&nbsp;")
+      (:div :id "todo-filter")
+      (:div "&nbsp;")
+      (:div
+       (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
+       (:div :id "new-todo-tag-content" :hidden "true"
+             (:div :id "new-todo-tag-candidates" :class "tag-display"))
+       (:button :id "todo-add-btn" "Add")
+       (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))))))
 
 (define-protected-page (todo-page "/todos") ()
   "HTTP endpoint for todo list"
@@ -58,6 +61,7 @@
              (:html
               (:head
                (:meta :charset "utf-8")
+               (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
                (:title "Auth Failure")
                (:link :type "text/css"
                       :rel "stylesheet"
@@ -83,6 +87,7 @@
     (:html
      (:head
       (:meta :charset "utf-8")
+      (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
       (:title "Todo List - Login")
       (:link :type "text/css"
              :rel "stylesheet"
@@ -117,6 +122,7 @@
     (:html
      (:head
       (:meta :charset "utf-8")
+      (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
       (:title "Todo List - Signup")
       (:link :type "text/css"
              :rel "stylesheet"
@@ -178,7 +184,7 @@
        (:a :href "/logout" "Click here to logout!"))))))
 
 (defun get-version ()
-  "0.5")
+  "0.9")
 
 (tbnl:define-easy-handler (version-page :uri "/version") ()
   (who:with-html-output-to-string
@@ -219,31 +225,28 @@
            (:div :id "recipe-entry-fields")))))
 
 (defun make-import-todo-page ()
-  (who:with-html-output-to-string
-      (*standard-output* nil :prologue t :indent t)
-    (:html
-     (:head (:title "EZ Utils - Import")
-            (:link :type "text/css"
-                   :rel "stylesheet"
-                   :href (format-string  *static-root* "/styles.css?v=" (get-version))))
-     (:body
-      (awhen (tbnl:post-parameter "import-list")
-        (import-lines-into-todo-list it (tbnl:post-parameter "list-name"))
-        (who:htm (:script :type "text/javascript"
-                          (who:str
-                           (ps:ps
-                            (setf (@ location href) "/todos"))))))
-      (:div
-       (:h2 "Import to todo list")
-       (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
-      (:div
-       (:form :method "post" :action "/import"
-              (:input :name "list-name" :type "text" :placeholder "Enter List Name (optional)" :style "width: 200px;")
-              (:br )
-              (:br )
-              (:textarea :name "import-list" :cols "100" :rows "35")
-              (:div
-               (:button "Import"))))))))
+  (with-app-layout "EZ Utils - Todo Import" (client-import client-app-settings client-ui-import)
+    (:body
+     (awhen (tbnl:post-parameter "import-list")
+       (let ((new-todo-ids (import-lines-into-todo-list it)))
+         (awhen (tbnl:post-parameter "import-selected-tags")
+           (import-todo-tags-list it new-todo-ids)))
+       (who:htm (:script :type "text/javascript"
+                         (who:str
+                          (ps:ps
+                           (setf (@ location href) "/todos"))))))
+     (:div
+      (:h2 "Import to To-do List")
+      (:a :href "/todos" :style "margin-left: 10px;margin-bottom: 20px;" "back to todo list"))
+     (:div
+      (:form :method "post" :action "/import"
+             (:div :id "import-todo-tag-content" :hidden "true"
+                   (:div :id "import-todo-tag-candidates" :class "tag-display" :style "border-color: green; border-style: solid;"))
+             (:p (:span "Each line will be imported as a separate To-Do Item."))
+             (:textarea :id "import-list" :name "import-list" :cols "100" :rows "25")
+             (:input :type "hidden" :id "import-selected-tags" :name "import-selected-tags")
+             (:div
+              (:button "Import")))))))
 
 (define-protected-page (import-todo "/import") ()
   (make-import-todo-page))

@@ -98,3 +98,8 @@ input {
 .login-input {
     margin: 5px;
 }
+
+.tag-display {
+    font-size: 12pt;
+    margin: 15px;
+}

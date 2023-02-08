@@ -39,3 +39,548 @@ appSettings = {
 - todo object "DTO"
 - generic methods for I/O
   - call from http handler
+
+
+** TODO Tagging
+*** TODO UI
+- [X] Want to be able to input new ones.
+  - [X] Smallish textbox should work.
+  - [X] +Needs to auto-generate the "next" textbox to allow for easy multiple entry.+
+- [X] Want to be able to select existing ones from a list.
+  - [X] Display the last 3 that were used.
+  - [X] When typing in the tag input field, display existing ones based on what's typed.
+**** TODO Tag rendering
+- [X] Line 1: tag entry smallish textbox.
+  - [X] Between todo entry and add button.
+- [X] Line 2: Selected List.
+  - [X] Associate selected tag with todo item.
+  - [X] +Is there an ASCII checkmark that can go next to these?+
+    - [X] Actually, we just need it for HTML, so use &#10003;
+  - [X] +Need an x so we can delete them ... maybe a red x is enough?+
+  - [X] Clicking on a selected tag will:
+    - [X] remove it from the selected list
+    - [X] remove it from association with the todo item
+- [-] Line 3: Candidate List - 3 tags.
+  - [X] Initially: the last 3 used tags.
+  - [-] List changes to:
+    - [X] Match the input in the todo field.
+    - [ ] Less than 10 matches, fill out with however many of the last 10 are needed.
+  - [-] Link to show all tags.
+    - [ ] Put right beneath the tag area.
+    - [X] +Once a tag is selected, close.+
+    - [ ] There will be a close link for the tag area.
+**** TODO Filtering
+- [X] same basic UI layout - latest 10, input, selected tags
+  - [X] When mapping the candidate tag layout, need:
+    - [X] A distinct element ID.
+    - [X] A different on-click handler.
+- [X] put it *above* the existing filter
+  - [X] +or maybe to the right of the existing filter?+
+- [X] selecting a candidate tag makes a search happen
+  - [X] search is conducted against the lookup list of tags and matches are displayed the same way Filter search results are
+- [ ] enter a tag updates the list of 10 with matches
+- [X] fonts
+  - [X] increase 3 to 10
+  - [X] make the font smaller
+  - [X] keep the words further appart  
+*** DONE Persistence
+- [X] Tags file in every user folder.
+- [X] Have a "lookup file" with todo ID/tag combos?
+- [X] Should there be a tag ID?
+*** TODO Tags as objects (how the app handles them in memory)
+**** DONE Server
+- [X] *note* todos are just lists, not CLOS objects.
+- [X] I guess for now the representation can match the files.
+  - [X] Tags in their own object.
+  - [X] The todo/tag ID combos in their own object.
+**** TODO Client
+- [ ] BUG *select-tag-ids* and *filter candates* not updated when a tag is removed.
+  - Especially noticeable on the import page.
+  - Also very noticeable when filtering.
+  - [ ] Fix for *select-tag-ids*
+  - [ ] Fix for *filter candates*
+- [ ] BUG update filter candidate tags after new one is added.  
+- [ ] MASS data conversion: Convert "prefix" in each todo to a tag, and create the tag-todo association.
+- [X] Remove line break from text of imported todos!
+- [X] Import tags!
+  - [X] Render tags.
+  - [X] Associate tags with new todos when the Import button is clicked.
+    - [X] Add a hidden field that gets refreshed whenever the selected tags variable is updated.
+    - [X] Handle on the server side.
+      - [X] Trace =transform-lines-to-todos= so we have a list to experiment with.
+      - [X] Transform that list into the new todo IDs and return the list of IDs from =import-lines-into-todo-list=.
+      - [X] Associate the list of tag IDs with the list of todo IDs and save!
+- [X] We need the "add" input for filter tags so they can be typed / searched, and then we don't have to rely on hunt and peck.
+  - Maybe make the render-tag-entry procedure "independent"?
+  - We might already have it??
+    - [X] Need to test!
+- [X] *note* todos are json objects.
+- [X] I guess for now the representation can match the files.
+- [X] BUG add tag isn't working.
+- [X] Allow for any vs all matches.
+- [-] Render selected list when editing a todo.
+  - [X] BUG Refresh updated tag associations.
+  - [X] BUG Hide tags when done editting.
+  - [X] BUG Tag elements get re-added!
+    - But only twice...
+  - [X] Save any editted associations.
+  - [X] For these, the selected tags will display right away since they're already populated.
+  - [ ] Layout should be the same - line 1: candidate tags, line 2: add new tag, line 3: selected tags.
+    - [ ] Do NOT create a set of Tag html elements for each todo item.
+      - [ ] Generate the tag elements on demand.
+      - [ ] The elements can be pre-rendered and hidden.
+        - [ ] Keep the parent element (ID) that the macro uses handy.
+          - [ ] Pass it around to each todo item that's being edited.
+      - [ ] Repopulate *just the data* on demand.
+todo webapp - remove #\Return from imported todos
+
+*** Starting Over!!
+**** Strategy
+- [X] Go through each new function, add an inline description, then add to the list here below, too.
+- [X] Restore Data Structures.
+  - [X] Restore server-side code.
+  - [X] Restore client-side code.
+    - [X] Data definitions.
+    - [X] Fetches from server.
+- [ ] Add client-side code.
+  - Do "experimentation" first :)
+    - Data List
+      - *selected-tag-ids*
+        - Tag IDs that are currently selected in the UI
+      - *todos-filtered-by-tags*
+        - todo objects filter by multiple tag IDs
+      - *selected-filter-tag-todo-ids*
+        - *I think* these are the tag/todo combinations currently selected in the UI to filter the todo list.
+        - Saved as an App Setting
+      - *filter-tag-match-type*
+        - Is the current tag filter matching by *any* or *all*?
+        - Saved as an App Setting
+  - Experiment List
+    - [X] Get selected tag IDs using *selected-tag-ids*
+      - Does this or should this have a context?
+      - Not used??
+    - [X] Get todo items filtered by tags using *todos-filtered-by-tags*
+    - [X] Get selected tag / todo combinations to filter the todo list using *selected-filter-tag-todo-ids*
+    - [X] Get filter tag match type using *filter-tag-match-type*
+    - [X] Set filter tag match type to any or all.
+    - [ ] Filter the actual todos with the given list of todo IDs. The todo item list is filtered by tags.
+    - [ ] Get todo items filtered by currently selected tag IDs (page level).
+      - [ ] 'ANY just returns all todo items;
+      - [ ] 'ALL returns todo items that match all the currently selected tags.
+      - [ ] Shouldn't 'ANY return todo items with at least 1 match instead of an unfiltered list??
+    - [ ] Search for todo items matching a tag;
+    - [ ] Remove tag from the tag candidate list.
+    - [ ] Add tag to a todo item's list of tags.
+    - [ ] Delete a tag from a todo item's tag list.
+  - Use cases
+    *ADD ALL THE USE CASES HERE ... they should hopefully match up with most of the experiments*
+    - [X] Get all candidate tags
+      - Same for filters and todo items
+      - Uses *tag-list*
+    - [ ] Get global filter candidate tags
+      - [ ] Make it an app setting
+      - [ ] Initialize from the tag list
+      - [ ] Refresh from the tag list if app setting empty
+    - [ ] Get per todo item candidate tags - new todo
+      - [ ] Create from tag list if new todo item
+    - [ ] Get per todo item candidate tags - existing todo
+      - [ ] Get from tag-dodo association list for current todo item
+    - [ ] *Move* tag from candidate tag list to tag-todo filter list
+      - "Global"
+      - [ ] Move *back*
+    - [ ] *Move* tag from candidate tag list to tag-todo list
+      - Per Item
+      - [ ] Move *back*
+    - [ ] Get all tag-todo *filter* list
+    - [ ] Get tag-dodo list per todo item
+      - New items won't have a todo ID yet
+        - Rely on UI element?
+    - [ ] Get todo list filtered by tags
+      - [ ] Any
+      - [ ] All
+      - [ ] None (no tags added to global filter)
+- [ ] Manipulation of data structures.
+  - [ ] These will use the lists fed to them, and return an updated list.
+- [ ] Establsih orchestrators.
+  - [ ] These will be context aware.
+- [ ] Each of the 3 UI sections will have the same rendering logic.
+***** code snippets
+#+begin_src lisp
+  ;; get candidate tags GLOBAL
+  (defun get-global-filter-candidate-tag-ids (tag-list candidate-tag-ids)
+    "Get tag IDs to use as candidates for the global filter"
+    (if candidate-tag-ids
+        (map* #'(lambda (tag) (ps:chain tag id)) candidate-tag-ids)
+        tag-list))
+  (get-global-filter-candidate-tag-ids (get-tag-list) app-settings-candidate-tag-ids)
+
+  ;; get per todo item candidate tags - new todo
+  (defun get-candidate-tag-ids-for-new-todo (tag-list candidate-tag-ids)
+    "Get candidate tag IDs for new todo"
+    (get-global-filter-candidate-tag-ids tag-list candidate-tag-ids))
+  (get-candidate-tag-ids-for-new-todo (get-tag-list) app-settings-candidate-tag-ids)
+
+  ;; Get per todo item candidate tags - existing todo
+  ;; TAGLIST.filter(tag => !selectedTagsForTodo16.find(selectedTagId => selectedTagId == tag.id))
+  (defun get-candidate-tag-ids-by-todo-id (tag-list tags-todo-association-list todo-id)
+    "Get candidate tag IDs by todo ID"
+    (let* ((selected-tag-ids (get-tag-id-list-by-todo-id tags-todo-association-list todo-id))
+           (candidate-tag-ids (remove-if* #'(lambda (tag-id) (not (find* tag-id selected-tag-ids))) tag-list))) 
+      candidate-tag-ids))
+
+  (defun select-tag-id-from-tag-list-for-todo (tag-id)
+    "Move tag ID from candidate tag list to tag-todo list."
+    (setf candidate-tag-ids (remove* tag-id candidate-tag-ids))
+    (setf selected-tags (push* tag-id selected-tag-ids))
+    (push (create todo-id todo-id tag-id tag-id) tags-todo-association-list))
+
+
+  ;; I have an implementation for this, and I think it works, but it's hard to understand
+  (defun get-todo-list-filtered-by-tags (tags-todo-association-list todo-ids tag-match-type)
+    "Get the list of todo items by tag-match-type"
+    (case tag-match-type
+      (any todo-ids) ;; only return the todo IDs if no tags selected for the filter
+      (all
+       (remove-if-not* #'(lambda (todo-id) todo-id)
+                       (map* #'(lambda (todo-id) (get-todos-that-match-all-selected-tags todo-id)) todo-ids)))))
+  
+#+end_src
+**** High level "rewrite"
+***** Startup
+#+begin_src lisp
+    (fetch-data todo-list)
+    (fetch-data tag-list)
+    (fetch-data tag-list)
+  (fetch-data tag-list)
+#+end_src
+**** Data structures
+***** Todo Items
+- Already exists.
+***** Tag Items
+- New.
+***** Tag-Todo Items
+- New.
+- List of tag IDs grouped by the todo ID they're associated with.
+- Todo IDs are unique.
+- Tag IDs are unique /per todo ID/.
+***** UI  
+****** Common Elements
+******* Candidate Tags
+- Based on the list of Tag Items.
+******* Tag Entry
+- Input field to add new tags.
+******* Selected Tags
+- Tags selected for the current "Tag Context".
+****** Tag Contexts
+******* General Filter Tags
+- Use in conjuction with:
+  - Show/Hide Completed Items checkbox.
+  - Text search box.
+  - All / Any links.
+    - New.
+- Persist server side, same as other filter mechanisms.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
+- Can save as part of per-user app settings.
+******* Tags per Todo Item
+- Subset of Tag-Todo Items.
+- Manipulate the sub-section of the Tag-Todo items list.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Adds to the Tag-Todo Items.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- Render from Tag-Todo List for matching Todo ID.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
+******* Tags for a new Todo Item
+- Manipulate the sub-section of the Tag-Todo items list.
+******** Candidate Tags.
+- From Tag Items list.
+  - UI Rendering: Filter out anything in the list of selected tags for this context.
+******** Add new tags
+- Adds to Tag Items list.
+- Will *NOT* add to the Tag-Todo Items.
+- Adds to Selected Tags list.
+  - re-render selected tags UI.
+******** Selected Tags.
+- This will create a new entry in the Tag-Todo List on the server once Todo item is added.
+- Add from the Candidate Tags list.
+  - Then re-render candidate tag list UI.
+    - Remove will also trigger a re-render candidate tag list UI.
+
+**** Existing flow
+***** Tags
+- init
+  - get-todo-list-from-server
+    - render-todo-list
+      - render-tag-content-for-edit-todo
+        - render-tag-content
+          - render-tag-candidates
+          - render-tag-entry
+          - render-selected-tags <-- can pass todo-id argument for *edits*
+  - render-tag-filter
+    - render-tag-candidates
+      - display-candidate-tag
+    - search-for-tag
+      - render-filter-tag-todos
+        - render-selected-tags <-- has todo-id parameter, but only possible to pass it as an argument *sometimes*
+**** Improved flow
+***** Core Tag Display Area
+- render-tag-candidates
+- render-tag-entry
+- render-selected-tags
+***** Tag Display Area Containers
+- Filter
+  - Doesn't use render-tag-entry
+- New Todo
+- Edit Todo
+***** Operations
+****** Filter Todos
+  - Get Selected Tags from Filter Container
+****** Add Todo
+  - Get Selected Tags from New Todo Container
+****** Save Todo
+  - Get Selected Tags from Edit Todo Container
+**** Updated Flow
+- init
+  - render-tag-filter
+    - render-tag-candidates
+      - search-for-tag <-- click handler
+        - render-filter-tag-todos
+          - render-selected-tags <-- using saved tag-todo IDs
+            - [X] Only use what's been added via the UI; no saved data
+          - set-todos-filtered-by-tags <-- what is this? Is it necessary?? might be, ignore for now
+          - render-todos-filtered-by-tags
+    - render-selected-tags <-- using saved tag-todo IDs, but should we?? shouldn't this be an app setting?? and only during initial page load
+      - [X] Pass [] for selected tag (ID)s on page load
+        
+  - get-todo-list-from-server -> render-todo-list
+    - render-tag-content-for-edit-todo
+      - render-tag-content (todo-id argument!)
+        - render-tag-candidates
+          - add-tag-to-selected-tags <-- click handler
+            - remove-tag-from-candidate-list
+            - get-selected-tag-ids-from-ui-elements
+            - render-selected-tags <-- already selected + new tag from click event
+        - render-tag-entry
+        - render-selected-tags
+          - remove-tag-from-selected
+            
+  - render-init
+    - render-tag-content-for-new-todo (event handler)
+      - render-tag-content
+        - render-tag-candidates
+          - add-tag-to-selected-tags <-- click handler
+            - remove-tag-from-candidate-list
+            - get-selected-tag-ids-from-ui-elements
+            - render-selected-tags
+        - render-tag-entry
+        - render-selected-tags
+          - remove-tag-from-selected
+
+**** Filtering todos by tags!
+***** No Tags selected in Filter
+- [ ] Tags have no effect on todos
+***** Tags Selected in Filter
+****** Any
+- [ ] Only Todos with at least 1 tag matching any tag in the Filter.
+****** All
+- [ ] Only Todos with all tags matching every tag in the Filter.
+***** Existing Operations
+- init
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+- click-handler for 'any
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+- click-handler for 'all
+  - set-filter-tag-match-type-and-re-render-filter
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+
+- search-for-tag <-- click handler
+  - render-filter-tag-todos
+    - set-todos-filtered-by-tags <-- this seems suspicious
+    - render-todos-filtered-by-tags
+      - render-todo-list
+
+- render-selected-tags
+  - remove-tag-from-selected <-- click handler
+    - render-filter-tag-todos
+      - set-todos-filtered-by-tags <-- this seems suspicious
+      - render-todos-filtered-by-tags
+        - render-todo-list
+
+- remove-tag-from-todo <-- *UNREFERENCED*
+  - render-filter-tag-todos
+    - set-todos-filtered-by-tags <-- this seems suspicious
+    - render-todos-filtered-by-tags
+      - render-todo-list
+
+  
+
+
+**** TODO remaining fixes
+- [X] Filtering needs to be tweaked.
+  - [X] Any
+    - Haven't observed any issues with this one *yet*.
+  - [X] All
+    - Doesn't seem to filter exclusively enough.
+- [X] Removing a tag from the selected in filter area doesn't update the filtered todos.
+- [X] Need to check that data is still saved correctly on the server.
+  - [X] Tag todo data not getting posted.
+    - [X] Existing todos
+    - [X] New todos
+- [ ] Check older list of bugs, etc
+- [ ] Make sure the image still builds properly.
+  - [ ] No "star" functions in the Javascript.
+  - [ ] No errors in the F12 console.
+***** Properly selecting all todo IDs that are paired with a tag that matches a tag ID in the global filter
+#+begin_src lisp
+  (let* ((selected-tag-ids (get-selected-tag-ids "filter-"))
+         (todo-ids (get-all-todo-ids))
+         (tag-todos (get-all-tag-todos))
+          (tag-todo-matches-selection (lambda (tag-todo) (gte (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo id))) selected-tag-todo-ids) 0)))
+         (matching-tag-todos (remove-if-not* #'tag-todo-matches-selection tag-todos))
+         (matching-todo-ids (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos))
+         (todo-matches-selection (lambda (todo) (gt 0 (position-if* (lambda (todo-id) (= todo-id (ps:@ todo id))) matching-todo-ids))))
+         (matching-todos (remove-if-not* #'todo-matches-selection (get-all-todos))))
+    (render-todo-list matching-todos))
+
+  (defun get-todos-matching-all-selected-tags (matching-todos matching-tag-todos selected-tag-ids)
+    (let ((tag-id-matches-selected-by-todo (lambda (tag-todo) (gte (position-if* (lambda (tag-id) (= tag-id (ps@ tag-todo tag-id))) selected-tag-ids)))))
+      (remove-if-not* (lambda (todo) (every* #'tag-id-matches-selected-by-todo) (remove-if-not* (lambda (tag-todo) (= (ps:@ todo id) (ps:@ tag-todo todo-id))) matching-tag-todos)) matching-todos)))
+#+end_src
+
+#+begin_src sql
+  select *
+  from matching-todos t
+  inner join matching-tag-todos tt on t.[todo-id] = tt.[todo-id]
+  where exists(select 1 from selected-tag-ids s where s.tagId = tt.tagId)
+#+end_src
+
+****** DONE try debugging =get-filter-todo-ids= in the browser
+- Suspicion: maybe the "when" isn't returning t/f as expected.
+****** js
+#+begin_src js
+    // get all the tag todos matching the selected tags 
+  let matchingTagTodos = getAllTagTodos().filter(tagTodo => getCurrentlySelectedTagIds("filter-").findIndex(selectedTagId => selectedTagId == tagTodo.tagId) >= 0)
+  // todos matching any tag
+  let todosMatchingAny = getAllTodos().filter(todo => matchingTagTodos.findIndex(tagTodo => tagTodo.todoId == todo.id) >= 0)
+  // todos matching all
+  let todosMatchingAll = ????
+      /*
+     ,*** IDEA ***
+     tag-todo pairs: flatten tag list per todo
+     flattened = {todoId: 123, tagIds: [1, 2, 3, 4]} 
+     flattened.filter(flat => flat.tagIds.every(tagId => getCurrentlySelectedTagIds('filter-').findIndex(selectedTagId => selectedTagId == tagId) > 0)
+        ,*/
+#+end_src
+******* How to flatten an associated list in Lisp
+#+begin_src lisp
+  (defparameter todos (list
+                       (list '(id . 1) '(name . "one"))
+                       (list '(id . 2) '(name . "two"))
+                       (list '(id . 3) '(name . "three"))))
+
+  (defparameter tag-todos (list
+                             (list '(todo-id . 1) '(tag-id . 3))
+                             (list '(todo-id . 1) '(tag-id . 4))
+                             (list '(todo-id . 2) '(tag-id . 3))
+                             (list '(todo-id . 3) '(tag-id . 4))))
+
+  (mapcar
+   (lambda (todo)
+     (list
+      (cons 'todo-id (cdr (assoc 'id todo)))
+      (cons 'tag-ids
+            (mapcar
+             (lambda (tag-todo)
+               (cdr (assoc 'tag-id tag-todo)))
+             (remove-if-not
+              (lambda (tag-todo)
+                (= (cdr (assoc 'id todo)) (cdr (assoc 'todo-id tag-todo))))
+              tag-todos)))))
+   todos)
+
+  ;; => (((TODO-ID . 1) (TAG-IDS 3 4)) ((TODO-ID . 2) (TAG-IDS 3)) ((TODO-ID . 3) (TAG-IDS 4)))
+#+end_src
+******* Another key idea: filter from the standpoint of the selected tag IDs - do *they* find a match for each one of themselves??
+******* Get just the todos with tags that match all of the selected tags
+#+begin_src lisp
+  (remove-if-not (lambda (todo+selected-tag-flag) (not (null (cdr todo+selected-tag-flag))))
+                 (mapcar (lambda (todo+selected-tag-flags) (cons (car todo+selected-tag-flags) (every #'identity todo+selected-tag-flags)))
+                         (mapcar
+                          (lambda (todo-with-flat-tag-ids)
+                            (cons
+                             (cdr (assoc 'todo-id todo-with-flat-tag-ids))
+                             (mapcar
+                              (lambda (selected-tag-id)
+                                (position-if (lambda (tag-id) (= selected-tag-id tag-id)) (cdr (assoc 'tag-ids todo-with-flat-tag-ids))))
+                              selected-tag-ids)))
+                          todos-with-flattened-tag-ids)))
+#+end_src
+***** TODO Imports
+- [ ] Maybe get rid of list name?
+  - [ ] OR, make it truly optional and don't add in a default list name.
+
+- [-] Show only the 10 most used.
+  - [-] Keep an MRU to track usage.
+    - [X] If no MRU yet, get the top 10 tags in terms of associated todo items
+      - Can easily get that count from tag todo pairs.
+  - [X] +Initially it will just be the ones I pick.+
+  - [X] Make sure search still works even for "hidden" tags.
+- [X] Have a "show all" option.
+
+****** TODO re-rendering todos
+******* render-filter-tag-todos
+- renders todo list based on tags
+  - honors filter text
+******* render-todo-list
+- renders todo list based on filter text
+  - doesn't look at tags
+******* catalog for render-todo-list
+- todo-project/client/ui.lisp:85:    (render-todo-list filtered-todos)
+  - filter-todos - called by filter button on-click event
+  - looks like the filtering logic is duplicated in filter-todos
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/ui.lisp:131:    (render-todo-list filtered-todos)
+  - called by render-todos-filtered-by-tags
+- todo-project/client/app-settings.lisp:47:        (render-todo-list (get-all-todos)))))
+  - [X] we can call (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:65:        (render-todo-list (get-all-todos))
+  - add-todo
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:79:      (render-todo-list server-todo-list)
+  - get-todo-list-from-server
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:108:  (render-todo-list (get-all-todos))
+  - update-todo-from-edit
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+- todo-project/client/todo.lisp:115:  (render-todo-list (get-all-todos))
+  - delete-todo-by-id
+  - [X] try calling (render-filter-tag-todos "filter-") from here
+
