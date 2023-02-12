@@ -1,12 +1,11 @@
-
 (in-package #:todo-project)
 
 (defmacro define-api-endpoint (name end-point params &body body)
-  `(define-easy-handler (,name :uri ,end-point) (,@params)
+  `(tbnl:define-easy-handler (,name :uri ,end-point) (,@params)
      "macro to DRY REST endpoint declarations"
      (setf (content-type*) "application/json")
-     (let* ((raw-data  (raw-post-data :force-text t))
-            (verb (request-method *request*)))
+     (let* ((raw-data  (tbnl:raw-post-data :force-text t))
+            (verb (tbnl:request-method tbnl:*request*)))
        ,@body)))
 
 (defmacro define-data-update-handler (name model &body body)
@@ -96,11 +95,35 @@
         (has-description (and (atom possible-description) (stringp possible-description)))
         (description (if has-description possible-description nil))
         (body-after-description (if has-description (cdr body) body)))
-    `(define-easy-handler (,name :uri ,end-point) (,@params)
+    `(tbnl:define-easy-handler (,name :uri ,end-point) (,@params)
        ,(when description description)
         (multiple-value-bind (authenticated-user present-p)
            (get-authenticated-user)
          (if present-p
              ,@body-after-description
-             (redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
+             (tbnl:redirect (format nil "/login?redirect-back-to=~a" (url-encode ,end-point))))))))
+
+(defmacro with-app-layout (title unique-client-scripts &body body)
+  "macro to DRY app pages with the same basic layout."
+  `(who:with-html-output-to-string
+       (*standard-output* nil :prologue t :indent t)
+     (:html :lang "en"
+            (:head
+             (:meta :charset "utf-8")
+             (:meta :name "viewport" :content "width=device-width, initial-scale=1.0")
+             (:title ,title)
+             (:link :type "text/css"
+                    :rel "stylesheet"
+                    :href (format-string  *static-root* "/styles.css?v=" (get-version)))
+             (:script :type "text/javascript"
+                      ;; (who:str (client-side-macros))
+                      (who:str (jfh-web:define-ps-with-html-macro))
+                      (who:str (share-server-side-constants))
+                      ,@(mapcar
+                         #'(lambda (e)
+                             `(who:str (,e)))
+                         unique-client-scripts)
+                        (dolist (e (invoke-registered-ps-functions))
+                        (who:str(funcall e)))))
+            ,@body)))
 

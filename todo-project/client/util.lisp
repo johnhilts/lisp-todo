@@ -2,7 +2,7 @@
 
 (defun share-server-side-constants ()
   "feed server side constants to parenscript"
-  (ps
+  (ps:ps
     (defmacro share-server-side-constants ()
       (flet (
              (a-defvar (e) (equal 'defvar (car e)))
@@ -15,10 +15,10 @@
 
     (share-server-side-constants)))
 
-(define-for-ps get-next-index (todo-list)
-  "calculate next index for todo list"
-  (let ((id-list (chain todo-list (map #'(lambda (todo) (@ todo id)))))
+(define-for-ps get-next-index (list-with-id)
+  "calculate next index for any list with an id field"
+  (let ((id-list (chain list-with-id (map #'(lambda (item) (@ item id)))))
         (max-fn (@ -Math max)))
     (if (length id-list)
-        (+ 1 (chain max-fn (apply null id-list)))
+        (+ 1 (ps:chain max-fn (apply null id-list)))
         1)))

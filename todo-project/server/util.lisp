@@ -57,6 +57,15 @@ key points:
                                 (replace-r (subseq string  (+ search-position (length search))) search replace)))))))
     (replace-r string search replace)))
 
+(defun set-nil-to-empty-list (plist)
+  "wrapper to cl-json's encode-json-plist-to-string to support JS false"
+  (let ((json (json:encode-json-plist-to-string plist)))
+    (string-replace
+     (string-replace
+      json
+      "\"done\":0," "\"done\":false,")
+     "\"hideDoneItems\":0" "\"hideDoneItems\":false")))
+
 (defun encode-plist-to-json-as-string (plist)
   "wrapper to cl-json's encode-json-plist-to-string to support JS false"
   (let ((json (json:encode-json-plist-to-string plist)))
