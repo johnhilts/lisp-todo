@@ -146,7 +146,9 @@
     (case filter-tag-match-type
       (any todo-ids)
       (all
-       (get-todos-matching-all-selected-tags todo-ids selected-filter-tag-todo-ids tag-ids)))))
+       (if (length selected-filter-tag-todo-ids)
+           (get-todos-matching-all-selected-tags todo-ids selected-filter-tag-todo-ids tag-ids)
+           todo-ids)))))
 
 (define-for-ps search-for-tag (tag candidate-tag-id-prefix)
   "Click handler for candidate tags in global filter; moves tag from candiates to selected and filters and re-renders todo list"
@@ -161,10 +163,9 @@
   (let* ((selected-tag-ids (get-currently-selected-tag-ids candidate-tag-id-prefix))
          (tag-todos (get-all-tag-todos))
          (tag-todo-matches-selection (lambda (tag-todo) (>= (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))) selected-tag-ids) 0)))
-         (matching-tag-todos (remove-if-not* #'tag-todo-matches-selection tag-todos))
+         (matching-tag-todos (if (length selected-tag-ids) (remove-if-not* #'tag-todo-matches-selection tag-todos) tag-todos))
          (matching-todo-ids (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos)))
-    (when (length selected-tag-ids)
-      (render-todos-filtered-by-tags (get-filter-todo-ids matching-todo-ids selected-tag-ids matching-tag-todos (get-filter-tag-match-type)))))
+    (render-todos-filtered-by-tags (get-filter-todo-ids matching-todo-ids selected-tag-ids matching-tag-todos (get-filter-tag-match-type))))
   t)
 
 (define-for-ps get-todos-matching-all-selected-tags (matching-todo-ids matching-tag-todos selected-tag-ids)
