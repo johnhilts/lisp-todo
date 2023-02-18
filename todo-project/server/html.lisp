@@ -24,9 +24,10 @@
      (:div
       (:h1 (who:fmt "Todo List for ~a" authenticated-user))
       (:div
-       (:table :id "todo-list"
-               (:thead (:th :id "todo-list-column-header" "To-do Items"))
-               (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)")))))
+       (:h2
+        (:table :id "todo-list"
+                (:thead (:th :id "todo-list-column-header" "To-do Items"))
+                (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)"))))))
       (:div "&nbsp;")
       (:div :id "todo-filter")
       (:div "&nbsp;")
