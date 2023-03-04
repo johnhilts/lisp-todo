@@ -350,8 +350,8 @@
         (div
          (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") tag-candidate-prompt))))
   (labels ((get-candidate-tags ()
-             (let* ((show-more (or is-search (tag-mru-items 'get-show-more)))
-                    (candidate-tags-all-or-top (if show-more (get-all-tags) (tag-mru-items 'get-tags-in-mru candidate-tags))))
+             (let* ((show-more (tag-mru-items 'get-show-more))
+                    (candidate-tags-all-or-top (if is-search candidate-tags (if show-more (get-all-tags) (tag-mru-items 'get-tags-in-mru candidate-tags)))))
                (if (and is-filter (get-selected-filter-tag-ids))
                    (remove-if-not*
                     (lambda (tag) (< (position-if* (lambda (app-tag-id) (= (ps:@ tag id) app-tag-id)) (get-selected-filter-tag-ids))
