@@ -2,9 +2,9 @@
 
 ** Desired Features
 
-- [ ] cross out done items
-- [ ] hide done items
-- [ ] save all items on server
+- [X] cross out done items
+- [X] hide done items
+- [X] save all items on server
 
 ** Technical details
 
@@ -444,6 +444,7 @@ todo webapp - remove #\Return from imported todos
 
 
 **** TODO remaining fixes
+- [ ] Check older list of bugs, etc
 - [X] Filtering needs to be tweaked.
   - [X] Any
     - Haven't observed any issues with this one *yet*.
@@ -454,10 +455,9 @@ todo webapp - remove #\Return from imported todos
   - [X] Tag todo data not getting posted.
     - [X] Existing todos
     - [X] New todos
-- [ ] Check older list of bugs, etc
-- [ ] Make sure the image still builds properly.
-  - [ ] No "star" functions in the Javascript.
-  - [ ] No errors in the F12 console.
+- [X] Make sure the image still builds properly.
+  - [X] No "star" functions in the Javascript.
+  - [X] No errors in the F12 console.
 ***** Properly selecting all todo IDs that are paired with a tag that matches a tag ID in the global filter
 #+begin_src lisp
   (let* ((selected-tag-ids (get-selected-tag-ids "filter-"))
@@ -544,13 +544,18 @@ todo webapp - remove #\Return from imported todos
                           todos-with-flattened-tag-ids)))
 #+end_src
 ***** TODO Imports
-- [ ] Maybe get rid of list name?
-  - [ ] OR, make it truly optional and don't add in a default list name.
-
+- [X] Maybe get rid of list name?
+  - [X] OR, make it truly optional and don't add in a default list name.
+- [ ] After entering imports, can we update the fiter to match the tags used on the import screen?
+  - It would only work if we save the selected tag IDs as an app setting.
+    - Maybe we should do that? (can be in the next stage, though)
+***** TODO Tags
 - [-] Show only the 10 most used.
   - [-] Keep an MRU to track usage.
     - [X] If no MRU yet, get the top 10 tags in terms of associated todo items
       - Can easily get that count from tag todo pairs.
+    - [ ] Add 1 when a tag is selected for the global filter.
+    - [ ] Subtract 1 when a tag is removed from the global filter.
   - [X] +Initially it will just be the ones I pick.+
   - [X] Make sure search still works even for "hidden" tags.
 - [X] Have a "show all" option.
@@ -583,4 +588,146 @@ todo webapp - remove #\Return from imported todos
 - todo-project/client/todo.lisp:115:  (render-todo-list (get-all-todos))
   - delete-todo-by-id
   - [X] try calling (render-filter-tag-todos "filter-") from here
+***** TODO filter display
+****** filter area
+- (:div :id "todo-filter")
+  - who-html for the div with global filter tags and filter text
+    #+begin_src javascript
+      // hide the filter area - one way to do it, reference other code for how to toggile visibility, like for the input to add a new toddo item
+      document.getElementById("todo-filter").hidden = true
+    #+end_src
+- hides everything
+  - Not sure if this would work well or not
+    #+begin_src javascript
+      document.getElementById("todo-filter").parentElement.hidden=true
+    #+end_src
+  - This could also work
+    #+begin_src javascript
+      document.getElementById("todo-list-area").hidden=true
+    #+end_src
+***** Unused functions
+     add-tag-to-todo # commented out
+     remove-tag-from-todo
+     get-todos-filtered-by-tags-for-single-todo-id
+     get-filter-tags
+     get-tags-todo-association-list-by-tag-id
+     get-todo-id-list-from-tag-todos
 
+#+HEADERS: :classname MyTest2
+#+BEGIN_SRC java
+  public class MyTest2 {
+      public static void main(String[] args) {
+          System.out.println("Hello, World!");
+      }
+  }
+#+END_SRC
+
+#+RESULTS:
+: Hello, World!
+* Todo Page Organization as of <2023-05-04 Thu>
+** Header
+- <div id="app-settings">
+*** Hide Done Items
+<div><input type="checkbox" id="hide-done"></div>
+*** Menu Links
+- <div><span /></div></div>
+** Todo List for YOUR NAME
+- Does this <div> really contain everything outside of the header?!?
+  - It does!
+- <div><h1 />
+*** Todo Items n / N
+- <div id= "todo-list-area"><h2><table id= "todo-list"><thead "To-do Items">
+**** Body
+- <tbody id="todo-list-body"></table></h2></div>
+***** Todo List
+*** Filter
+- <div id="todo-filter" />
+*** Tag General Filter List (going away)
+- <div>
+**** Candidates (going away)
+- <div id="filter-tag-candidate-area">
+  - <div id="filter-tag-candidates" />
+  - <div id="filter-tag-candidates-selected">
+***** Tag Summary (new!)
+   - <div id="filter-selected-tags">
+****** Filter ANY | ALL
+     - <div />
+****** seleted filter taga
+     - <span>Tag Name</span>
+     - </div></div>
+***** General Filter Text
+- <div>
+  - <input id="todo-filter-text" />
+****** Filter Button
+  - <button>Filter</button></div>
+*** New Todo Textarea
+- <div><textarea id="todo-content" />
+**** New Todo Tag area
+- <div id="new-todo-tag-content">
+***** New Todo Tag Candidates
+- <div id="new-todo-tag-candidates" />
+***** New Tag input
+***** New Todo selected tags
+*** Add and Import buttons
+- <button id="todo-add-btn" />
+- <button>Import...</button>
+** TODO Next set of changes <2023-05-13 Sat>
+- [ ] There are 2 "filter-selected-tags".
+  - One of them is in the *newly independent* =render-tag-entry= (ln 129)
+    - Called directly from =init=.
+    - I think we want to keep this one.
+  - One of them is in the *newly created* =render-tag-summary= (ln 242)
+    - Called directly from =init=.
+    - [X] Removed
+  - One of them is in the *existing* =render-tag-filter= (ln 253)
+    - Called directly from =init=.
+      - Maybe this is the one we *get rid of*.
+  - One of them is in the *existing* =render-tag-content= (ln 484)
+    - This one isn't used as part of filtering - it's used with entry.
+  - [ ] Only display *one*.
+  - Ideal layout
+    - [X] Selected tags
+    - [ ] Add new / tag filter input area.
+      - [ ] Make search-tags independent.
+      - [ ] Make render-tag-entry independent.
+	- [ ] Change add button to clearly say "Add New Tag".
+    - [-] Candidate area
+      - [X] Change position
+      - [ ] Get rid of show more / less
+- [ ] Go back to "main" todo screen when done with tags.
+** DONE Changes starting on <2023-05-05 Fri>
+- [X] Add ID to for "todo-new-entry-and-import"
+- [X] Make new hidden div "tag-filter-content"
+- [X] Make "todo-list-area", "todo-list-filter", "todo-new-entry-and-import" hideable when tag summary is clicked
+- [X] Extract "filter-tag-candidate-area" from out of "todo-list-filter" and move it to "tag-filter-content"
+** DONE Immediate fix discovered <2023-05-08 Mon>
+- [X] Why aren't selected tags visible??
+* Import Page Organization as of ???
+* TODO tag UI re-design <2023-04-04 Tue 22:03>
+** TODO Main Screen (todos)
+- [ ] only display selected tag names
+  - [ ] If none selected, show "Tags ..."
+- [ ] tap / click a tag shows tag screen
+  - Show candidates + selected, similar to RENDER-TAG-FILTER
+    - Hide eveything else at the same time.
+      - See :not selector, as in here: https://stackoverflow.com/questions/52557181/exclusive-css-selector
+      - +Or just do a (big) modal?+
+*** TODO New todo
+- [ ] make current tag selection the default tags for a new todo.
+- [ ] if different tags are selected, then *those* become the default.
+- [ ] Show the word "Tags..."
+  - [ ] Tap / click to reveal the Tag UI
+** TODO Tag UI
+- [ ] Tags have their own screen to themselves.
+- [ ] We can start out with the same layout we have now.
+*** TODO New
+**** TODO Sorting
+ - [ ] By most frequently used.
+ - [ ] By alphabetical order.
+ - [ ] Represent by labels at the top and bottom
+ - [ ] Each subsequent label tap / click toggles asc / desc for that sort.
+**** TODO Todo text
+- [ ] Display the text so it can be seen which item is being updated.
+  - [ ] Handle new todos appropriately.
+* TODO Forgot Password
+* TODO Reset Password

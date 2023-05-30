@@ -23,15 +23,14 @@
            (who:str (get-app-menu)))
      (:div
       (:h1 (who:fmt "Todo List for ~a" authenticated-user))
-      (:div
+      (:div :id "todo-list-area"
        (:h2
         (:table :id "todo-list"
                 (:thead (:th :id "todo-list-column-header" "To-do Items"))
                 (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)"))))))
-      (:div "&nbsp;")
       (:div :id "todo-filter")
-      (:div "&nbsp;")
-      (:div
+      (:div :id "filter-tag-content" :hidden "true")
+      (:div :id "todo-new-entry-and-import"
        (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
        (:div :id "new-todo-tag-content" :hidden "true"
              (:div :id "new-todo-tag-candidates" :class "tag-display"))

@@ -19,12 +19,14 @@
 
     (setf (ps:chain window onload) init)))
 
-(ps:ps
- (defmacro with-callback (fn &body body)
-   `(,(car fn) ,@(cdr fn) #'(lambda (),@body))))
+;;(ps:ps
+;; (defmacro
+(defpsmacro with-callback (fn &body body)
+   `(,(car fn) ,@(cdr fn) #'(lambda (),@body)));;)
 
-(ps:ps
- (defmacro with-chained-callback (&body body)
+;; (ps:ps
+;; (defmacro
+(defpsmacro with-chained-callback (&body body)
    (labels ((make-with-callback (fn body)
               (cond
                 ((null body)
@@ -33,7 +35,7 @@
                     t))
                 (t `(with-callback ,fn ,(make-with-callback (car body) (cdr body)))))))
      (let ((fn (car body)))
-       (make-with-callback fn (cdr body))))))
+       (make-with-callback fn (cdr body))))) ;;)
 
 (define-for-ps clear-field (field)
   "clear input field's value"
@@ -42,10 +44,12 @@
     
 (define-for-ps clear-children (parent-element)
   "remove all child nodes of a parent element"
-  (while (ps:chain parent-element (has-child-nodes))
-    (ps:chain parent-element (remove-child (@ parent-element first-child)))))
+  (ps:loop
+     while (ps:chain parent-element (has-child-nodes))
+     do
+	(ps:chain parent-element (remove-child (@ parent-element first-child)))))
 
-(define-for-ps render-init ()
+(define-for-ps init-event-handlers ()
   "Initialize html elements on page load; add event handlers"
   (let ((add-button (ps:chain document (get-element-by-id "todo-add-btn")))
         (todo-content (ps:chain document (get-element-by-id "todo-content"))))
@@ -54,7 +58,7 @@
 
 (define-for-ps init ()
   "Initialize JS objects on page load; get todos and tags from the server then render them on the client"
-  (render-init)
+  (init-event-handlers)
 
   (with-chained-callback
       (get-app-settings-from-server)
@@ -65,6 +69,8 @@
     ;; NOTE: I need to wrap the following 2 procedural function calls inside a lambda so they both are invoked as part of the previous function's callback
     #'(lambda () 
         (render-tag-filter)
+	(render-tag-entry "filter-")
+        (render-tag-summary)
         (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
         t)))
 
@@ -89,14 +95,38 @@
   (let ((parent-element (ps:chain document (get-element-by-id "todo-filter"))))
     (jfh-web::with-html-elements
         (div
-         (div (id . "filter-tag-candidate-area")
-              (div (id . "filter-tag-candidates") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))
-              (div (id . "filter-tag-candidates-selected")))
          (div
           (span (br (ref . "br")))
           (input (id . "todo-filter-text") (type . "textbox") (placeholder . "Enter text to filter on here") (value . "(@ (app-settings 'get-app-settings) filter-text)")))
          (span "  ")
          (button (onclick . "(filter-todos)") "Filter"))))
+  t)
+
+(define-for-ps render-tag-filter-ui ()
+  "render html elements for tag filter - this is the new one"
+  (let ((parent-element (ps:chain document (get-element-by-id "filter-tag-content"))))
+    (jfh-web::with-html-elements
+        (div
+         (div (id . "filter-tag-candidate-area")
+              (div (id . "filter-tag-candidates-selected"))
+              (div (id . "filter-tag-candidates") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))))))
+  t)
+
+(define-for-ps render-tag-entry (id-prefix)
+  "Independent tag entry and search"
+  (let ((tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
+    (flet ((search-tags (event)
+	     (let* ((search-input (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))) value))
+		    (search-results (get-tags-matching-search-input (get-all-tags) search-input)))
+	       (render-tag-candidates search-results tag-candidate-area id-prefix #'move-tag-from-candidate-to-selected t))
+	     t))
+      (let ((parent-element (get-tag-content-area-element id-prefix)))
+	(jfh-web::with-html-elements
+            (div
+             (div (class . "tag-display") (style . "border-color: green; border-style: solid;")
+		  (input (type . "text") (id . "(+ id-prefix \"tag-input\")") (placeholder . "add new tag") (oninput . "(search-tags)") (style . "margin-left: 5px;"))
+		  (button (style . "margin-left: 30px;") (onclick . "(add-tag id-prefix)") "Add Tag"))
+             (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green; border-style: solid;")))))))
   t)
 
 (define-for-ps get-filter-tag-match-type ()
@@ -202,6 +232,18 @@
                               (map* #'each-todo-with-all-tags-match-flag ;; are all the selected tags in the tag ID list for this todo?
                                     (map* #'each-todo-with-tag-id-flags todos-with-flattened-tag-ids))))))))
 
+(define-for-ps render-tag-summary ()
+  "Renders page level tag filter summary."
+  (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates"))) ;; can we s/filter/summary?
+         (summary-tag-id-prefix "summary-")
+         (filter-tag-id-prefix "filter-")
+         (parent-element (ps:chain document (get-element-by-id "todo-filter"))))
+    ;; (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
+    (jfh-web::with-html-elements
+        (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
+    (render-selected-tags-summary (get-currently-selected-tag-ids filter-tag-id-prefix) summary-tag-id-prefix))
+  t)
+
 (define-for-ps render-tag-filter ()
   "Renders page level tag filter."
   (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates")))
@@ -216,6 +258,51 @@
 (define-for-ps get-tag-content-area-element (id-prefix)
   "get the element that contains the tag area"
   (ps:chain document (get-element-by-id (+ id-prefix "tag-content"))))
+
+(define-for-ps show-tag-area ()
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-list-area")) hidden) t)
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-filter")) hidden) t)
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-new-entry-and-import")) hidden) t)
+  (setf (ps:@ (ps:chain document (get-element-by-id "filter-tag-content")) hidden) nil))
+
+(define-for-ps render-selected-tags-summary (selected-tag-ids &optional (candidate-tag-id-prefix ""))
+  "render the tags selected to go with the current todo item"
+  (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
+         (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) (get-all-tags))) selected-tag-ids))
+         (selected-tags-element parent-element)
+         (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
+    (when selected-tags-element
+      (clear-children parent-element)
+      (cond
+        ((= "import-todo-" candidate-tag-id-prefix)
+         (jfh-web::with-html-elements
+             (div (div (style . "margin: 5px;") "Tags to associate with imported To-Do Items:"))))
+        ((= "filter-" candidate-tag-id-prefix)
+         (jfh-web::with-html-elements
+             (div
+              (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Filter:")
+              (span (id . "match-any")
+                    (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
+              (span "|")
+              (span (id . "match-all")
+                    (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
+                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL"))))
+        (t
+         (jfh-web::with-html-elements
+             (div (style . "margin: 5px;") (progn "Tags associated with this To-Do Item:"))))))
+    (when import-selected-tags
+      (setf (ps:@ import-selected-tags value) selected-tag-ids))
+    (map*
+     #'(lambda (tag)
+         (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
+           (jfh-web::with-html-elements
+               (span (id . "(progn tag-id)")
+                     (style . "margin: 5px;margin-top: 5px;display:inline-block;")
+                     (a (onclick . "(show-tag-area)") "(ps:@ tag text)"))))
+         t)
+     (subseq* selected-tags 0 2)))
+  t)
 
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"

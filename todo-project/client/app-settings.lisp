@@ -28,6 +28,7 @@
              (app-settings 'initialize-app-settings server-app-settings)
              (render-app-settings)
              (render-todo-filter)
+	     (render-tag-filter-ui)
              (call-back)
              t)))
     (get-from-server *app-settings-api-endpoint* local-call-back)))
