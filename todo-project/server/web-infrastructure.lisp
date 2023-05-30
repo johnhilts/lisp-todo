@@ -35,30 +35,34 @@
          (call-back #'(lambda (web-settings) (if web-settings web-settings default-web-settings))))
     (fetch-or-create-data *web-settings-file-path* call-back)))
 
-(defun start-web-app ()
+(defun start-web-app (&optional (start-swank t))
   "Start the web app: 
 - Start the swank server if there's a configured port.  
 - Change some Hunchentoot Session settings.  
 - Start Hunchentoot."
-  (setf *system-settings* (fetch-or-create-system-settings))
-  (format t "~&swank-port:~a~%" (getf *system-settings* :start-swank) )
-  (aif (getf *system-settings* :start-swank)
-       (progn
-	 (start-swank it)
-	 (format t "~&started swank server~%" ))
-       (format t "~&didn't start swank server~%" ))
-  (setf *session-max-time* (* 24 7 60 60))
-  (setf *rewrite-for-session-urls* nil)
-  (publish-static-content)
-  (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
-    (ensure-directories-exist user-index-path))
-  (format t "~&loaded user info~%" )
-  (start-server (getf (fetch-or-create-web-settings) :web-port))
-  (format t "~&server started~%" ))
+  (flet ((start-swank-if-configured ()
+	   (let ((swank-port (getf *system-settings* :start-swank))) (format t "~&swank-port:~a~%" swank-port )
+	     (if swank-port
+		 (progn
+		   (start-swank swank-port)
+		   (format t "~&started swank server~%" ))
+		 (format t "~&didn't start swank server~%" )))))
+    (setf *system-settings* (fetch-or-create-system-settings))
+    (when start-swank
+      (start-swank-if-configured))
+    (setf *session-max-time* (* 24 7 60 60))
+    (setf *rewrite-for-session-urls* nil)
+    (publish-static-content)
+    (let ((user-index-path (format nil "~a/user-index.sexp" *users-root-folder-path*)))
+      (ensure-directories-exist user-index-path))
+    (format t "~&loaded user info~%" )
+    (start-server (getf (fetch-or-create-web-settings) :web-port))
+    (format t "~&server started~%" )))
 
-(defun stop-web-app ()
+(defun stop-web-app (&optional (stop-swank t))
   "stop the web app"
   (stop-server *the-http-server*)
   (awhen (getf *system-settings* :start-swank)
-    (stop-swank it)))
+    (when stop-swank
+      (stop-swank it))))
 

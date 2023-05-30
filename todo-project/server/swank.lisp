@@ -21,3 +21,6 @@
     (swank:stop-server it)
     (format t "Stopped swank at port: ~A." it)))
 
+;;; start swank by specifying the IP Address as the interface argument
+;; (swank:create-server :port 4005 :interface "192.168.1.18"
+;;                           :dont-close t)
