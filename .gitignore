@@ -20,6 +20,10 @@
 *.fasl~
 *.md~
 *.asd~
+*.sexp~
+*.config~
+*test*.sexp
+*.orig
 \#*.*\#
 .\#*.lisp
 *.swp
