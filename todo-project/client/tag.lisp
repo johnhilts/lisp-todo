@@ -236,7 +236,7 @@
     (selected-filter-tag-ids 'initialize-tag-ids tag-ids-without-tag-id)))
 
 
-(define-dispatchable-functions tag-mru (tag-mru &optional (mru-top-limit 10) (show-more-flag f))
+(define-dispatchable-functions tag-mru (tag-mru &optional (mru-top-limit 10) (show-more-flag t))
   ((get-tag-mru ()
                 tag-mru)
 

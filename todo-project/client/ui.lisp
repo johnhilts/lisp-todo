@@ -126,7 +126,8 @@
              (div (class . "tag-display") (style . "border-color: green; border-style: solid;")
 		  (input (type . "text") (id . "(+ id-prefix \"tag-input\")") (placeholder . "add new tag") (oninput . "(search-tags)") (style . "margin-left: 5px;"))
 		  (button (style . "margin-left: 30px;") (onclick . "(add-tag id-prefix)") "Add Tag"))
-             (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green; border-style: solid;")))))))
+             ;; (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green; border-style: solid;"))
+             )))))
   t)
 
 (define-for-ps get-filter-tag-match-type ()
@@ -236,12 +237,11 @@
   "Renders page level tag filter summary."
   (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates"))) ;; can we s/filter/summary?
          (summary-tag-id-prefix "summary-")
-         (filter-tag-id-prefix "filter-")
          (parent-element (ps:chain document (get-element-by-id "todo-filter"))))
     ;; (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
         (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
-    (render-selected-tags-summary (get-currently-selected-tag-ids filter-tag-id-prefix) summary-tag-id-prefix))
+    (render-selected-tags-summary (get-selected-filter-tag-ids) summary-tag-id-prefix))
   t)
 
 (define-for-ps render-tag-filter ()
@@ -301,7 +301,9 @@
                      (style . "margin: 5px;margin-top: 5px;display:inline-block;")
                      (a (onclick . "(show-tag-area)") "(ps:@ tag text)"))))
          t)
-     (subseq* selected-tags 0 2)))
+     ;; (subseq* selected-tags 0 2)
+     selected-tags
+     ))
   t)
 
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
@@ -371,7 +373,8 @@
     (remove-tag-from-candidate-list tag-id id-prefix)
     (let ((selected-tag-ids (get-currently-selected-tag-ids id-prefix)))
       (when (/= "filter-" id-prefix)
-        (ps:chain selected-tag-ids (push tag-id)))
+        (ps:chain selected-tag-ids (push tag-id))
+        (add-selected-tag-id-to-selected-filter-tag-ids tag-id))
       (render-selected-tags selected-tag-ids id-prefix)))
   t)
 

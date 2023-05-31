@@ -671,11 +671,11 @@ todo webapp - remove #\Return from imported todos
 *** Add and Import buttons
 - <button id="todo-add-btn" />
 - <button>Import...</button>
-** TODO Next set of changes <2023-05-13 Sat>
-- [ ] There are 2 "filter-selected-tags".
+** DONE Next set of changes <2023-05-13 Sat>
+- [X] There are 2 "filter-selected-tags".
   - One of them is in the *newly independent* =render-tag-entry= (ln 129)
     - Called directly from =init=.
-    - I think we want to keep this one.
+      - I think we want to keep this one.
   - One of them is in the *newly created* =render-tag-summary= (ln 242)
     - Called directly from =init=.
     - [X] Removed
@@ -684,17 +684,18 @@ todo webapp - remove #\Return from imported todos
       - Maybe this is the one we *get rid of*.
   - One of them is in the *existing* =render-tag-content= (ln 484)
     - This one isn't used as part of filtering - it's used with entry.
-  - [ ] Only display *one*.
+  - [X] Only display *one*.
   - Ideal layout
     - [X] Selected tags
     - [ ] Add new / tag filter input area.
       - [ ] Make search-tags independent.
       - [ ] Make render-tag-entry independent.
 	- [ ] Change add button to clearly say "Add New Tag".
-    - [-] Candidate area
+    - [X] Candidate area
       - [X] Change position
-      - [ ] Get rid of show more / less
-- [ ] Go back to "main" todo screen when done with tags.
+      - [X] Get rid of show more / less
+        - Made it default to "show less"
+- [X] Go back to "main" todo screen when done with tags.
 ** DONE Changes starting on <2023-05-05 Fri>
 - [X] Add ID to for "todo-new-entry-and-import"
 - [X] Make new hidden div "tag-filter-content"
@@ -729,5 +730,11 @@ todo webapp - remove #\Return from imported todos
 **** TODO Todo text
 - [ ] Display the text so it can be seen which item is being updated.
   - [ ] Handle new todos appropriately.
+* TODO issues as of <2023-05-30 Tue>
+- [ ] If no selected tags, impossible to bring up tag screen
+  - Because the click handler was added to each entry.
+    - [ ] Can we add the click handler to the div / container element?
+- [ ] "Tags associated with this todo item"
+  - Why does it say that??
 * TODO Forgot Password
 * TODO Reset Password
