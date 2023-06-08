@@ -57,6 +57,10 @@
   "Shortand for JS version of SUBSEQ"
   `(ps:chain ,seq (slice ,start ,end)))
 
+(define-for-ps zerop* (number)
+  "Like cl-zerop"
+  (= 0 number))
+
 (defmacro define-dispatchable-functions (name args &body body)
   (let ((function-name (read-from-string (concatenate 'string "make-" (string name)))))
     (flet ((get-dispatchable-functions (acc cur)

@@ -730,11 +730,15 @@ todo webapp - remove #\Return from imported todos
 **** TODO Todo text
 - [ ] Display the text so it can be seen which item is being updated.
   - [ ] Handle new todos appropriately.
-* TODO issues as of <2023-05-30 Tue>
-- [ ] If no selected tags, impossible to bring up tag screen
+* DONE issues as of <2023-05-30 Tue>
+- [X] If no selected tags, impossible to bring up tag screen
   - Because the click handler was added to each entry.
-    - [ ] Can we add the click handler to the div / container element?
-- [ ] "Tags associated with this todo item"
+    - [X] Can we add the click handler to the div / container element?
+    - [X] Change text if not tags selected
+- [X] "Tags associated with this todo item"
   - Why does it say that??
+* TODO Issues as of <2023-06-07 Wed>
+- [ ] When adding a new todo tags double up
+- [ ] An item without any tags is filtered out.
 * TODO Forgot Password
 * TODO Reset Password

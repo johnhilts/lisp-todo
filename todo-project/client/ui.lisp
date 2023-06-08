@@ -240,7 +240,7 @@
          (parent-element (ps:chain document (get-element-by-id "todo-filter"))))
     ;; (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
     (jfh-web::with-html-elements
-        (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
+        (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;") (onclick . "(show-tag-area)")))
     (render-selected-tags-summary (get-selected-filter-tag-ids) summary-tag-id-prefix))
   t)
 
@@ -289,8 +289,9 @@
                     (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
                     (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL"))))
         (t
-         (jfh-web::with-html-elements
-             (div (style . "margin: 5px;") (progn "Tags associated with this To-Do Item:"))))))
+         (let ((select-tags-caption (if (zerop* (length selected-tags)) "Add Tags to Filter..." "Selected Tags")))
+	   (jfh-web::with-html-elements
+             (div (style . "margin: 5px;") (progn select-tags-caption)))))))
     (when import-selected-tags
       (setf (ps:@ import-selected-tags value) selected-tag-ids))
     (map*
@@ -299,11 +300,9 @@
            (jfh-web::with-html-elements
                (span (id . "(progn tag-id)")
                      (style . "margin: 5px;margin-top: 5px;display:inline-block;")
-                     (a (onclick . "(show-tag-area)") "(ps:@ tag text)"))))
+                     (a "(ps:@ tag text)"))))
          t)
-     ;; (subseq* selected-tags 0 2)
-     selected-tags
-     ))
+     selected-tags))
   t)
 
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
@@ -342,7 +341,10 @@
                      (style . "margin: 5px;margin-top: 5px;border-style:double;border-color:green;padding: 10px;display:inline-block;")
                      (a (onclick . "(remove-tag-from-selected tag candidate-tag-id-prefix)") "(ps:@ tag text)"))))
          t)
-     selected-tags))
+     selected-tags)
+    (when selected-tags
+      (jfh-web::with-html-elements
+	(div (p (style . "margin: 5px;margin-top: 5px;padding: 10px;display:inline-block;") "Click a tag to remove it.")))))
   t)
 
 (define-for-ps remove-tag-from-candidate-list (tag-id id-prefix)
