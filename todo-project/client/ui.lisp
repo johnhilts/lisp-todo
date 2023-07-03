@@ -195,7 +195,7 @@
          (tag-todos (get-all-tag-todos))
          (tag-todo-matches-selection (lambda (tag-todo) (>= (position-if* (lambda (selected-tag-id) (= selected-tag-id (ps:@ tag-todo tag-id))) selected-tag-ids) 0)))
          (matching-tag-todos (if (length selected-tag-ids) (remove-if-not* #'tag-todo-matches-selection tag-todos) tag-todos))
-         (matching-todo-ids (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos)))
+         (matching-todo-ids (if (length selected-tag-ids) (map* #'(lambda (tag-todo) (ps:@ tag-todo todo-id)) matching-tag-todos) (map* (lambda (todo) (ps:@ todo id)) (get-all-todos)))))
     (render-todos-filtered-by-tags (get-filter-todo-ids matching-todo-ids selected-tag-ids matching-tag-todos (get-filter-tag-match-type))))
   t)
 
