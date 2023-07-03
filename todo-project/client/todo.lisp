@@ -62,9 +62,9 @@
              (todo-item  (ps:create text todo-text done false id next-id)))
         (todo-items 'add-todo todo-item)
         (clear-field todo)
-        (render-filter-tag-todos "filter-")
         (send-new-todo-item-to-server todo-item)
         (add-associate-tags-to-todo next-id (get-currently-selected-tag-ids "new-todo-"))
+        (render-filter-tag-todos "filter-")
         (funcall *show-tag-content-handler*)))
     ;; NOTE - calling .focus() outside of the callback *synchronously* so that the keyboard will appear when using iOS
     (ps:chain todo (focus)))

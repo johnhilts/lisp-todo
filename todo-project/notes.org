@@ -752,5 +752,8 @@ todo webapp - remove #\Return from imported todos
     - Use like this =(move-tag-from-candidate-to-selected tag id-prefix)
       - =(remove-if-not* (lambda (tag) (find* (ps:@ tag id) (get-selected-filter-tag-ids))) (get-all-tags))=
 - [X] An item without any tags is filtered out.
+* TODO Issues as of <2023-07-03 Mon>
+- [X] After adding an item the list doesn't refresh with the new item.
+- [ ] Still need to apply new tag UI to todo adds and edits.
 * TODO Forgot Password
 * TODO Reset Password
