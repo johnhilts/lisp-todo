@@ -36,6 +36,11 @@
   "Add selected tag ID to the selected tag IDs to filter the todo list"
   (selected-filter-tag-ids 'add-tag-id selected-tag-id))
 
+(define-for-ps adjoin-selected-tag-id-to-selected-filter-tag-ids (selected-tag-id)
+  "Add selected tag ID to the selected tag IDs to filter the todo list *if* the tag isn't already in the list"
+  (unless (>= (position* selected-tag-id (get-selected-filter-tag-ids)) 0)
+    (selected-filter-tag-ids 'add-tag-id selected-tag-id)))
+
 (define-for-ps send-new-tag-item-to-server (tag-item)
   "save new tag on server"
   (send-to-server *tag-api-endpoint* "POST" tag-item))

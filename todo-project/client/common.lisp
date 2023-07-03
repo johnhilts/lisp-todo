@@ -25,6 +25,10 @@
   "Support CL style remove that transpiles into the correct JS forms"
   `(remove-if-not* #'(lambda (e) (not (= e ,item))) ,seq))
 
+(defpsmacro position* (item seq)
+  "Support CL style position that transpiles into the correct JS forms such as indexOf"
+  `(ps:chain ,seq (index-of ,item)))
+
 (defpsmacro position-if* (predicate seq)
   "Support CL style position-if that transpiles into the correct JS forms such as findIndex"
   `(ps:chain ,seq (find-index ,predicate)))

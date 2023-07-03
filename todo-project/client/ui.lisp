@@ -376,7 +376,7 @@
     (let ((selected-tag-ids (get-currently-selected-tag-ids id-prefix)))
       (when (/= "filter-" id-prefix)
         (ps:chain selected-tag-ids (push tag-id))
-        (add-selected-tag-id-to-selected-filter-tag-ids tag-id))
+        (adjoin-selected-tag-id-to-selected-filter-tag-ids tag-id))
       (render-selected-tags selected-tag-ids id-prefix)))
   t)
 

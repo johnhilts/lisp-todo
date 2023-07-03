@@ -738,7 +738,14 @@ todo webapp - remove #\Return from imported todos
 - [X] "Tags associated with this todo item"
   - Why does it say that??
 * TODO Issues as of <2023-06-07 Wed>
-- [ ] When adding a new todo tags double up
+- [X] When adding a new todo, tags double up.
+  - Code: =(add-associate-tags-to-todo next-id (get-currently-selected-tag-ids "new-todo-"))=
+    - [X] Find out how are the tags for "new-todo-" getting set?
+    - [X] is =get-currently-selected-tag-ids= innocent?
+      - It *looks* innocent ...
+    - [X] is =add-associate-tags-to-todo= innocent?
+      - Yes, it is.
+- [ ] Auto-populate the tags for new todos with the globally selected todos.
 - [ ] An item without any tags is filtered out.
 * TODO Forgot Password
 * TODO Reset Password
