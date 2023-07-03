@@ -737,7 +737,7 @@ todo webapp - remove #\Return from imported todos
     - [X] Change text if not tags selected
 - [X] "Tags associated with this todo item"
   - Why does it say that??
-* TODO Issues as of <2023-06-07 Wed>
+* DONE Issues as of <2023-06-07 Wed>
 - [X] When adding a new todo, tags double up.
   - Code: =(add-associate-tags-to-todo next-id (get-currently-selected-tag-ids "new-todo-"))=
     - [X] Find out how are the tags for "new-todo-" getting set?
@@ -751,6 +751,6 @@ todo webapp - remove #\Return from imported todos
     - It's called =move-tag-from-candidate-to-selected=
     - Use like this =(move-tag-from-candidate-to-selected tag id-prefix)
       - =(remove-if-not* (lambda (tag) (find* (ps:@ tag id) (get-selected-filter-tag-ids))) (get-all-tags))=
-- [ ] An item without any tags is filtered out.
+- [X] An item without any tags is filtered out.
 * TODO Forgot Password
 * TODO Reset Password
