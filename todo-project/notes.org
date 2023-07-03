@@ -745,7 +745,12 @@ todo webapp - remove #\Return from imported todos
       - It *looks* innocent ...
     - [X] is =add-associate-tags-to-todo= innocent?
       - Yes, it is.
-- [ ] Auto-populate the tags for new todos with the globally selected todos.
+- [X] Auto-populate the tags for new todos with the globally selected todos.
+  - [X] Use =get-currently-selected-tag-ids=.
+  - [X] Add those tag IDs to where they would've been added by the click handler
+    - It's called =move-tag-from-candidate-to-selected=
+    - Use like this =(move-tag-from-candidate-to-selected tag id-prefix)
+      - =(remove-if-not* (lambda (tag) (find* (ps:@ tag id) (get-selected-filter-tag-ids))) (get-all-tags))=
 - [ ] An item without any tags is filtered out.
 * TODO Forgot Password
 * TODO Reset Password
