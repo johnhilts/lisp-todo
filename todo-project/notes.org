@@ -754,6 +754,34 @@ todo webapp - remove #\Return from imported todos
 - [X] An item without any tags is filtered out.
 * TODO Issues as of <2023-07-03 Mon>
 - [X] After adding an item the list doesn't refresh with the new item.
-- [ ] Still need to apply new tag UI to todo adds and edits.
+- [-] Still need to apply new tag UI to todo adds and edits.
+  - [X] Add close link to selected tags box
+    - It should
+      - [X] In =render-tag-summary=, instead of unconditionally calling =get-selected-filter-tag-ids= as an argument to =render-selected-tags-summary=, 
+	- call whatever we need for new-todo if that's the current context.
+	  - Call this: =(get-currently-selected-tag-ids "new-todo-")=
+	    - Which is also being called in =return-from-tag-ui=
+	- =get-selected-filter-tag-ids= gets its info from global selected-filter-tag-ids
+      - [X] What happens when you click a selected tag in the tag UI?
+	- [X] Make sure it gets reflected in the new-todo-summary selected tags
+      - [X] run showTagArea("new-todo-", false)
+      - [X] initialize the selected summary
+	- [X] The "new-todo-" selection summary should default to the global if nothing has been selected yet.
+	  - [X] Only do this once
+	    - Per page load.
+	    - Even better would be when the global filter's selection has changed.
+	  - [X] Subsequent selection should honor user input.
+            - How it works now *summary*
+              - render-tag-summary
+                - (render-selected-tags-summary (get-selected-filter-tag-ids) summary-tag-id-prefix)
+                  - get-selected-filter-tag-ids data ultimately derives from the *global* selected tag ID list
+            - How it works now *tag ui*
+              - init
+                - render-tag-area
+                  - (render-selected-tags (get-currently-selected-tag-ids id-prefix) id-prefix)
+                    - get-currently-selected-tag-ids gets its "data" from UI elements
+                      - [ ] We need to call this to (re-)populate the summary, especially after we "close" the tag UI
+    - [X] update the selected summary
+  - [ ] Implement for todo edits
 * TODO Forgot Password
 * TODO Reset Password

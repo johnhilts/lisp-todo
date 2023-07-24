@@ -30,6 +30,7 @@
                 (:tbody :id "todo-list-body" (:tr (:td "(To-do list empty)"))))))
       (:div :id "todo-filter")
       (:div :id "filter-tag-content" :hidden "true")
+      (:div :id "new-todo-tag-content" :hidden "true")
       (:div :id "todo-new-entry-and-import"
        (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
        (:div :id "new-todo-tag-content" :hidden "true"

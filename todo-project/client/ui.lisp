@@ -70,8 +70,9 @@
     #'(lambda () 
         (render-tag-filter)
 	(render-tag-entry "filter-")
-        (render-tag-summary)
+        (render-tag-summary "filter-")
         (set-filter-tag-match-type-and-re-render-filter (get-filter-tag-match-type))
+	(render-tag-area "new-todo-")
         t)))
 
 (define-for-ps render-app-settings ()
@@ -104,12 +105,15 @@
 
 (define-for-ps render-tag-filter-ui ()
   "render html elements for tag filter - this is the new one"
-  (let ((parent-element (ps:chain document (get-element-by-id "filter-tag-content"))))
-    (jfh-web::with-html-elements
-        (div
-         (div (id . "filter-tag-candidate-area")
-              (div (id . "filter-tag-candidates-selected"))
-              (div (id . "filter-tag-candidates") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))))))
+  (flet ((render-tag-filter-ui-by-area (id-prefix)
+	   (let ((parent-element (ps:chain document (get-element-by-id (+ id-prefix "tag-content")))))
+	     (jfh-web::with-html-elements
+		 (div
+		  (div (id . "(+ id-prefix \"tag-candidate-area\")")
+		       (div (id . "(+ id-prefix \"tag-candidates-selected\")"))
+		       (div (id . "(+ id-prefix \"tag-candidates\")") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))))))))
+    (render-tag-filter-ui-by-area "filter-")
+    (render-tag-filter-ui-by-area "new-todo-"))
   t)
 
 (define-for-ps render-tag-entry (id-prefix)
@@ -233,16 +237,29 @@
                               (map* #'each-todo-with-all-tags-match-flag ;; are all the selected tags in the tag ID list for this todo?
                                     (map* #'each-todo-with-tag-id-flags todos-with-flattened-tag-ids))))))))
 
-(define-for-ps render-tag-summary ()
+(define-for-ps render-tag-summary (id-prefix)
   "Renders page level tag filter summary."
-  (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id "filter-tag-candidates"))) ;; can we s/filter/summary?
-         (summary-tag-id-prefix "summary-")
-         (parent-element (ps:chain document (get-element-by-id "todo-filter"))))
-    ;; (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
-    (jfh-web::with-html-elements
-        (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;") (onclick . "(show-tag-area)")))
-    (render-selected-tags-summary (get-selected-filter-tag-ids) summary-tag-id-prefix))
-  t)
+  (flet ((get-parent-element-id ()
+	   (cond
+	     ((= "filter-" id-prefix) "todo-filter")
+	     ((= "new-todo-" id-prefix) "todo-new-entry-and-import")
+	 (tag-content-visible ()
+           (and
+	    tag-summary-area
+	    (> (length (ps:@ tag-summary-area id)) 0))))
+    (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
+           (summary-tag-id-prefix (+ id-prefix "summary-"))
+           (parent-element (ps:chain document (get-element-by-id (get-parent-element-id))))
+	   (tag-summary-area (ps:chain document (get-element-by-id (+ summary-tag-id-prefix "selected-tags")))))
+
+      (when (tag-content-visible)
+	(clear-children (ps:chain document (get-element-by-id (+ summary-tag-id-prefix "selected-tags")))))
+      (unless (tag-content-visible)
+	(jfh-web::with-html-elements
+            (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;") (onclick . "(show-tag-area id-prefix t)"))))
+      (let ((selected-tag-ids (if (= "filter-" id-prefix) (get-selected-filter-tag-ids) (get-currently-selected-tag-ids id-prefix))))
+	(render-selected-tags-summary selected-tag-ids summary-tag-id-prefix)))
+    t))
 
 (define-for-ps render-tag-filter ()
   "Renders page level tag filter."
@@ -255,55 +272,68 @@
     (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix))
   t)
 
+(define-for-ps render-tag-area (id-prefix)
+  "Renders tag area."
+  (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
+         (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected")))))
+    (render-tag-candidates (get-all-tags) filter-tag-candidates-area id-prefix #'search-for-tag)
+    (jfh-web::with-html-elements
+        (div (id . "(+ id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;")))
+    (render-selected-tags (get-currently-selected-tag-ids id-prefix) id-prefix))
+  t)
+
 (define-for-ps get-tag-content-area-element (id-prefix)
   "get the element that contains the tag area"
   (ps:chain document (get-element-by-id (+ id-prefix "tag-content"))))
 
-(define-for-ps show-tag-area ()
-  (setf (ps:@ (ps:chain document (get-element-by-id "todo-list-area")) hidden) t)
-  (setf (ps:@ (ps:chain document (get-element-by-id "todo-filter")) hidden) t)
-  (setf (ps:@ (ps:chain document (get-element-by-id "todo-new-entry-and-import")) hidden) t)
-  (setf (ps:@ (ps:chain document (get-element-by-id "filter-tag-content")) hidden) nil))
+(define-for-ps show-tag-area (id-prefix show-tags)
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-list-area")) hidden) show-tags)
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-filter")) hidden) show-tags)
+  (setf (ps:@ (ps:chain document (get-element-by-id "todo-new-entry-and-import")) hidden) show-tags)
+  (setf (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-content"))) hidden) (not show-tags))
+  (ps:chain window (scroll-To 0 0)))
 
 (define-for-ps render-selected-tags-summary (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"
-  (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
-         (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) (get-all-tags))) selected-tag-ids))
-         (selected-tags-element parent-element)
-         (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
-    (when selected-tags-element
-      (clear-children parent-element)
-      (cond
-        ((= "import-todo-" candidate-tag-id-prefix)
-         (jfh-web::with-html-elements
-             (div (div (style . "margin: 5px;") "Tags to associate with imported To-Do Items:"))))
-        ((= "filter-" candidate-tag-id-prefix)
-         (jfh-web::with-html-elements
-             (div
-              (span (style . "margin: 5px;margin-top: 5px;padding: 2px;display:inline-block;") "Filter:")
-              (span (id . "match-any")
-                    (style . "color:red; margin-left:10px; margin-right:15px; text-decoration:underline;")
-                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'any)") "ANY")
-              (span "|")
-              (span (id . "match-all")
-                    (style . "margin-left:15px; margin-right:15px; text-decoration:underline;")
-                    (onclick . "(set-filter-tag-match-type-and-re-render-filter 'all)") "ALL"))))
-        (t
-         (let ((select-tags-caption (if (zerop* (length selected-tags)) "Add Tags to Filter..." "Selected Tags")))
-	   (jfh-web::with-html-elements
-             (div (style . "margin: 5px;") (progn select-tags-caption)))))))
-    (when import-selected-tags
-      (setf (ps:@ import-selected-tags value) selected-tag-ids))
-    (map*
-     #'(lambda (tag)
-         (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
+  (flet ((get-select-tags-caption ()
+	   (if (>= (ps:chain candidate-tag-id-prefix (index-of "todo")) 0)
+	       (if (zerop* (length selected-tags)) "Add Tags to this item..." "Selected Tags for this Item")
+	       (if (zerop* (length selected-tags)) "Add Tags to Filter..." "Selected Tags"))))
+    (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
+           (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) (get-all-tags))) selected-tag-ids))
+           (selected-tags-element parent-element)
+           (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
+      (when selected-tags-element
+	(clear-children parent-element)
+	(cond
+          ((= "import-todo-" candidate-tag-id-prefix)
            (jfh-web::with-html-elements
-               (span (id . "(progn tag-id)")
-                     (style . "margin: 5px;margin-top: 5px;display:inline-block;")
-                     (a "(ps:@ tag text)"))))
-         t)
-     selected-tags))
+               (div (div (style . "margin: 5px;") "Tags to associate with imported To-Do Items:"))))
+          (t
+           (let ((select-tags-caption (get-select-tags-caption)))
+	     (jfh-web::with-html-elements
+		 (div (style . "margin: 5px;") (progn select-tags-caption)))))))
+      (when import-selected-tags
+	(setf (ps:@ import-selected-tags value) selected-tag-ids))
+      (map*
+       #'(lambda (tag)
+           (let ((tag-id (+ candidate-tag-id-prefix *selected-tag-text* (ps:@ tag id))))
+             (jfh-web::with-html-elements
+		 (span (id . "(progn tag-id)")
+                       (style . "margin: 5px;margin-top: 5px;display:inline-block;")
+                       (a "(ps:@ tag text)"))))
+           t)
+       selected-tags)))
   t)
+
+(define-for-ps return-from-tag-ui (id-prefix)
+  (show-tag-area id-prefix f)
+  (cond
+    ;; how to "focus" on a div?
+    ((= "new-todo-" id-prefix)
+     (selected-tag-ids-for-current-todo 'initialize-tag-ids (get-currently-selected-tag-ids "new-todo-"))
+     (render-tag-content-for-new-todo)
+     (ps:chain (ps:chain document (get-element-by-id "todo-content")) (focus)))))
 
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"
@@ -344,7 +374,9 @@
      selected-tags)
     (when selected-tags
       (jfh-web::with-html-elements
-	(div (p (style . "margin: 5px;margin-top: 5px;padding: 10px;display:inline-block;") "Click a tag to remove it.")))))
+	  (div
+	   (p (style . "margin: 5px;margin-top: 5px;padding: 10px;display:inline-block;") "Click a tag to remove it.")
+	   (p (style . "float:right;margin: 5px;margin-top: 5px;padding: 10px;display:inline-block;") (a (onclick . "(return-from-tag-ui candidate-tag-id-prefix)") "Return"))))))
   t)
 
 (define-for-ps remove-tag-from-candidate-list (tag-id id-prefix)
@@ -463,11 +495,27 @@
 
 (define-for-ps render-tag-content-for-new-todo (event)
   "Render tag content to use when adding a new todo item."
-  (render-tag-content "new-todo-"))
+  (populate-selected-tags-content-area-for-todos "new-todo-")
+  (render-tag-summary "new-todo-"))
 
 (define-for-ps render-tag-content-for-edit-todo (todo-id index)
   "Render tag content to use when editing a todo item."
   (render-tag-content (+ "edit-todo-" index "-") todo-id))
+
+(define-for-ps populate-selected-tags-content-area-for-todos (id-prefix &optional todo-id)
+  (labels ((get-new-todo-selected-tag-ids-from-global-filter ()
+	     (let ((global-selected-tags (remove-if-not* (lambda (tag) (find* (ps:@ tag id) (get-selected-filter-tag-ids))) (get-all-tags))))
+	       (map* (lambda (tag) (ps:@ tag id)) global-selected-tags))))
+    (flet ((get-selected-tag-ids-for-this-todo ()
+	     (let ((selected-tag-ids-for-this-todo (get-all-selected-tag-ids-for-current-todo)))
+	       (if (and selected-tag-ids-for-this-todo (> (length selected-tag-ids-for-this-todo) 0))
+		   selected-tag-ids-for-this-todo
+		   (if todo-id
+		       (get-tag-id-list-by-todo-id (get-all-tag-todos) todo-id)
+		       (get-new-todo-selected-tag-ids-from-global-filter))))))
+      (let ((tag-ids-for-this-todo (get-selected-tag-ids-for-this-todo)))
+	(render-selected-tags tag-ids-for-this-todo id-prefix)
+	(selected-tag-ids-for-current-todo 'initialize-tag-ids tag-ids-for-this-todo)))))
 
 (define-for-ps render-tag-content (id-prefix &optional todo-id)
   "render tag entry, selected tags, and tag candidates."
