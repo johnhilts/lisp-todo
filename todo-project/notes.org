@@ -783,5 +783,56 @@ todo webapp - remove #\Return from imported todos
                       - [ ] We need to call this to (re-)populate the summary, especially after we "close" the tag UI
     - [X] update the selected summary
   - [ ] Implement for todo edits
+    - When running =(render-tag-area "edit-todo-0-")= the "-selected" element isn't found.
+      - It exists for "new-todo-".
+	- Where / How does "new-todo-" generate the "-selected" element?
+	  - =RENDER-TAG-AREA= is where =new-todo-selected-tags= is generated - on page load.
+	  - =RENDER-TAG-FILTER-UI= is where =new-todo-tag-candidates-selected= is generated.
+	    - "this is the new one"
+	    - called from =GET-APP-SETTINGS-FROM-SERVER= in the local callback.
+	    - called on page load.
+      - [ ] Need a version of the flet =RENDER-TAG-FILTER-UI-BY-AREA= for "edit-todo-N".
+	- [ ] It has to be dynamically generated everytime so that if the todo list is regenerated client side, the tags UI for it also is without any clashes.
+	  - [ ] So whenever we render the "edit-todo-" stuff, we can also (re-)render the tags UI for that todo.
+	  - [ ] Test by calling:
+	    - [ ] The new function - call it =RENDER-TAG-FILTER-UI-BY-AREA-INDEPENDENT= for now
+	    - [ ] Then =renderTagArea("edit-todo-1-");= in JS.
+	    - [ ] Then =populateSelectedTagsContentAreaForTodos("edit-todo-1-", 925);=, also in JS.
+	  - [ ] Why doesn't render-tag-summary work?
+	    - [ ] Look at placeholder "????" - what's supposed to go there??
+      - I think fixing this will also fix =(populate-selected-tags-content-area-for-todos "edit-todo-0-")=
+- [ ] Can't add new tags when adding a todo
+  - Available for the global filter though ...
+    - Adding a new tag goes at the bottom the Tag UI
 * TODO Forgot Password
 * TODO Reset Password
+* macros to use at some point (from *ME*)
+#+begin_src common-lisp
+(ps:defpsmacro scase-with-do* (str &rest body)
+  "Shortand for JS version of SCASE"
+  (flet ((get-cond-expressions (str)
+	   (let ((result-var ()))
+	     (dolist (item body (nreverse result-var))
+	       (if (equal 't (car item))
+		   (push `(t ,(cadr item)) result-var)
+		   (push `((= ,str ,(car item)) ,(cadr item)) result-var))))))
+    (let ((str-var (gensym))
+	  (str-val str))
+      `(let ((,str-var ,str-val))
+	 (cond
+	   ,@(get-cond-expressions str-var))))))
+
+(defmacro scase-with-do (str &rest body)
+  "Shortand for JS version of SCASE"
+  (flet ((get-cond-expressions (str)
+	   (let ((result-var ()))
+	     (dolist (item body (nreverse result-var))
+	       (if (equal 't (car item))
+		   (push `(t ,(cadr item)) result-var)
+		   (push `((string-equal ,str ,(car item)) ,(cadr item)) result-var))))))
+    (let ((str-var (gensym))
+	  (str-val str))
+      `(let ((,str-var ,str-val))
+	 (cond
+	   ,@(get-cond-expressions str-var))))))
+#+end_src
