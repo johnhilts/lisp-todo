@@ -31,14 +31,15 @@
       (:div :id "todo-filter")
       (:div :id "filter-tag-content" :hidden "true")
       (:div :id "new-todo-tag-content" :hidden "true")
+      (:div :id "edit-todo-tag-content" :hidden "true")
       (:div :id "todo-new-entry-and-import"
        (:textarea :id "todo-content" :placeholder "Enter Todo info here." :rows "5" :cols "100")
-       (:div :id "new-todo-tag-content" :hidden "true"
-             (:div :id "new-todo-tag-candidates" :class "tag-display"))
+       ;; (:div :id "new-todo-tag-content" :hidden "true"
+       ;;       (:div :id "new-todo-tag-candidates" :class "tag-display"))
        (:button :id "todo-add-btn" "Add")
        (:button :style "margin-left: 30px;" :onclick (who:str(ps-inline (setf (@ location href) "/import"))) "Import ..."))))))
 
-(define-protected-page (todo-page "/todos") ()
+ (define-protected-page (todo-page "/todos") ()
   "HTTP endpoint for todo list"
   (make-todo-page authenticated-user))
 
