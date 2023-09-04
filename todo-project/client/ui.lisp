@@ -123,7 +123,8 @@
 		       (div (id . "(+ id-prefix \"tag-candidates-selected\")"))
 		       (div (id . "(+ id-prefix \"tag-candidates\")") (style . "border-style:solid;border-color:green;padding:5px;margin-top: 5px;"))))))))
     (render-tag-filter-ui-by-area "filter-")
-    (render-tag-filter-ui-by-area "new-todo-"))
+    (render-tag-filter-ui-by-area "new-todo-")
+    (render-tag-filter-ui-by-area "edit-todo-"))
   t)
 
 (define-for-ps render-tag-entry (id-prefix)
@@ -285,7 +286,9 @@
     (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix))
   t)
 
-(define-for-ps render-tag-area (id-prefix)
+;; (if todo-id (ps:chain document (get-element-by-id "edit-todo-tag-content")) (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
+;; (if todo-id filter-tag-candidates-area (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected"))))
+(define-for-ps render-tag-area (id-prefix &optional todo-id)
   "Renders tag area."
   (let* ((filter-tag-candidates-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates"))))
          (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected")))))
@@ -347,6 +350,10 @@
     ((= "new-todo-" id-prefix)
      (selected-tag-ids-for-current-todo 'initialize-tag-ids (get-currently-selected-tag-ids "new-todo-"))
      (render-tag-content-for-new-todo)
+     (ps:chain (ps:chain document (get-element-by-id "todo-content")) (focus)))
+    ((= "edit-todo-" id-prefix)
+     (selected-tag-ids-for-current-todo 'initialize-tag-ids (get-currently-selected-tag-ids "edit-todo-"))
+     (render-tag-content-for-edit-todo)
      (ps:chain (ps:chain document (get-element-by-id "todo-content")) (focus)))))
 
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
@@ -515,9 +522,10 @@
 (define-for-ps render-tag-content-for-edit-todo (todo-id index)
   "Render tag content to use when editing a todo item."
   ;; (render-tag-content (+ "edit-todo-" index "-") todo-id)
-  (let ((id-prefix (+ "edit-todo-" index "-")))
+  (let ((id-prefix "edit-todo-";; (+ "edit-todo-" index "-")
+		   ))
     (render-tag-filter-ui-by-area-independent id-prefix)
-    (render-tag-area id-prefix)
+    (render-tag-area id-prefix todo-id)
     (populate-selected-tags-content-area-for-todos id-prefix todo-id)
     (render-tag-summary id-prefix)))
 
@@ -539,7 +547,7 @@
 
 (define-for-ps render-tag-content (id-prefix &optional todo-id)
   "render tag entry, selected tags, and tag candidates."
-  (let ((tag-content-area (get-tag-content-area-element id-prefix))
+  (let ((tag-content-area (if todo-id (ps:chain document (get-element-by-id "edit-todo-tag-content")) (get-tag-content-area-element id-prefix)))
         (tag-candidate-area (ps:chain document (get-element-by-id (+ id-prefix "tag-candidates")))))
     (labels ((search-tags (event)
                (let* ((search-input (ps:@ (ps:chain document (get-element-by-id (+ id-prefix "tag-input"))) value))
