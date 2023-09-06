@@ -804,6 +804,296 @@ todo webapp - remove #\Return from imported todos
 - [ ] Can't add new tags when adding a todo
   - Available for the global filter though ...
     - Adding a new tag goes at the bottom the Tag UI
+* TODO Starting of Tags UI <2023-09-05 Tue>
+** General Plan 
+*** Remove existing tag functions
+- [ ] Start out by emptying all of them.
+- [ ] Possibly delete them completely.
+- [ ] Come up with different flow for tag UI.
+- [ ] What about data structures?
+  - Will figure it out as we do the data operations.
+*** Layout
+- I like the basic layout /ideas/ that I have implemented.
+- It's just a matter of fixing the logic, really.
+** Logic
+*** Global Filter
+**** Background
+- App Settings contains these fields
+  - SELECTED-FILTER-TAG-IDS
+    - tag IDs
+  - FILTER-TAG-MATCH-TYPE
+    - "all", "any"
+**** Requirements
+- [ ] On App Settings load, populate and display the global filters.
+***** Data Requirements
+- [ ] Load tags list from server tag list.
+  - [ ] Fill out what the operations are for this.
+    - [ ] How to access the global tag list.
+    - [ ] How to update the global tag list.
+    - [ ] How to get the list of global tags that aren't selected for the global filter.
+- [ ] Load selected tags for the global filter from App Settings.
+  - [ ] Fill out what the operations are for this.
+    - [ ] How to access the selected global filter tag list.
+    - [ ] How to update the selected global filter tag list.
+- [ ] Tag Input.
+  - [ ] Filter candidate tags.
+  - [ ] Add new tag.
+    - [ ] To global tag list.
+    - [ ] To selected tags.
+***** Display Requirements
+  - [ ] Display tag summary.
+    - [ ] Click the tag summary
+      - [ ] Hides everything except for Tag UI.
+    - [ ] Display selected tags.
+      - [ ] Get tags from selected global filter tag list.
+    - [ ] Display UI to filter candidate tags and add new tags.
+      - +Note: this is *new* ... not currently doing this!+
+    - [ ] Display candidates tags.
+      - [ ] Get tags from the global tag list that aren't already selected.
+*** New Todo
+**** Background
+- There is a tag-todo list with all the todo/tag ID pairs.
+**** Requirements
+***** Data Requirements
+- [ ] Load tags list from server tag list.
+  - This will feed the tag candidates list.
+  - [ ] How to access the tag candidates list for the *new todo*.
+  - [ ] How to update the tag candidates list for the *new todo*.
+- [ ] Load selected tags for the global filter from App Settings.
+  - [ ] The new todo *defaults* will be the same as the global filter.
+    - [ ] How to access the selected tag list for the *new todo*.
+    - [ ] How to update the selected tag list for the *new todo*.
+- [ ] Tag Input.
+  - [ ] Filter candidate tags for *new todo*.
+  - [ ] Add new tag.
+    - [ ] To *global* tag list.
+    - [ ] Update candidate tag list for *new todo*.
+    - [ ] To selected tags for *new todo*.
+***** Display Requirements
+- [ ] On New Todo UI load, *immediately* show Tag Summary.
+  - [ ] Display tag summary *immediately*.
+    - [ ] Click the tag summary
+      - [ ] Hides everything except for Tag UI.
+    - [ ] Display selected tags.
+    - [ ] Display UI to filter candidate tags and add new tags.
+    - [ ] Display candidates tags.
+*** Edit Todo
+**** Background
+- There is a tag-todo list with all the todo/tag ID pairs.
+**** Requirements
+***** Data Requirements
+- [ ] Load tags list from server tag-todo list for *current todo item*.
+  - This will feed the tag candidates list.
+  - [ ] How to access the tag candidates list for the *current todo item*.
+  - [ ] How to update the tag candidates list for the *current todo item*.
+- [ ] Load selected tags for the global filter from App Settings.
+  - [ ] The new todo *defaults* will be the same as the global filter.
+    - [ ] How to access the selected tag list for the *current todo item*.
+    - [ ] How to update the selected tag list for the *current todo item*.
+- [ ] Tag Input.
+  - [ ] Filter candidate tags for *current todo item*.
+  - [ ] Add new tag.
+    - [ ] To *global* tag list.
+    - [ ] Update candidate tag list for *current todo item*.
+    - [ ] To selected tags for *current todo item*.
+***** Display Requirements
+- [ ] On New Todo UI load, *immediately* show Tag Summary.
+  - [ ] Display tag summary *immediately*.
+    - [ ] Click the tag summary
+      - [ ] Hides everything except for Tag UI.
+    - [ ] Display selected tags.
+    - [ ] Display UI to filter candidate tags and add new tags.
+    - [ ] Display candidates tags.
+** All Data Operations
+*** General
+- [X] Get all tags
+#+begin_src lisp
+(get-all-tags)
+#+end_src
+- [X] Get all tag-todo items.
+#+begin_src lisp
+(get-all-tag-todos)
+#+end_src
+*** Global Filter
+- [ ] Get Global Filter Tag Candidates.
+#+begin_src lisp
+  ;; get the tags from (get-all-tags) that haven't been selected yet
+  (block 'existing
+  (let ((show-more (tag-mru-items 'get-show-more))
+		      (candidate-tags-all-or-top (if is-search candidate-tags (if show-more (get-all-tags) (tag-mru-items 'get-tags-in-mru candidate-tags)))))
+    (remove-if-not*
+     (lambda (tag) (< (position-if* (lambda (app-tag-id) (= (ps:@ tag id) app-tag-id)) (get-selected-filter-tag-ids))
+		      0))
+     candidate-tags-all-or-top)))
+
+  (block 'new!
+    (define-for-ps get-candidate-tags (tags selected-tag-ids)
+      (flet ((tag-id-in-selected-tag-ids (tag)
+	       (<
+		(position-if* (lambda (tag-id) (= (ps:@ tag id) tag-id)) selected-tag-ids)
+		0)))
+	(remove-if-not* #'tag-id-in-selected-tag-ids tags))))
+#+end_src
+- [ ] Get Global Filter Selected Tags.
+#+begin_src lisp
+;;; current
+(get-selected-filter-tag-ids)
+
+;;; new
+***same***
+#+end_src
+- [-] Update Global Filter Tag Lists.
+  - [X] Move tag from candidates to selected.
+    - *Current*: move-tag-from-candidate-to-selected
+    - *New*: need to split move-tag-from-candidate-to-selected between data and UI
+      - move-tag-from-candidate-to-selected - wrapper
+	- move-tag-id with args for candidates and selected and tag-id
+      - update-tag-ui-for-move-tag-from-candidate-to-selected
+	- Similar to current move-tag-from-candidate-to-selected, but might change "id-prefix"
+  - [ ] Move tag from selected to candidates.
+    - *Current*: ??
+    - *New*: move-tag-id
+  - [ ] Add newly input tag to candidate list.
+    - This might be "automatic".
+    - *Current*
+      - =RENDER-TAG-ENTRY=
+	- Create elements to support adding new tags.
+	- =ADD-TAG ID-PREFIX=
+	  - click handler.
+    - *New*
+      - ***SAME***
+      - /but/ we might want to separate the data and UI parts.
+  - [ ] Add newly input tag to selected list.
+    - Same as previous.
+*** New Todo
+- [X] Get Global Filter Tag Candidates.
+  - [X] Has to reflect what's been selected.
+    - [X] Even if not saved permanently yet.
+- [X] Get Global Filter Selected Tags.
+  - [X] Has to reflect what's been selected.
+    - [X] Even if not saved permanently yet.
+- [ ] Update New Todo Tag Lists.
+  - [ ] Move tag from *new todo* candidates to selected.
+  - [ ] Move tag from *new todo* selected to candidates.
+  - [ ] Add newly input tag to *new todo* candidate list.
+  - [ ] Add newly input tag to *global* candidate list.
+    - This might be "automatic".
+  - [ ] Add newly input tag to *new todo* selected list.
+  - [ ] Add selected todos to *new todo*'s tag list when saving.
+*** Edit Todo
+- [ ] Get Tag Candidates for *current todo item*.
+  - [ ] Has to reflect what's been selected.
+    - [ ] Even if not saved permanently yet.
+- [ ] Get Selected Tags for *current todo item*.
+- [ ] Update Tag Lists for *current todo item*.
+  - [ ] Move tag from *current todo item* candidates to selected.
+  - [ ] Move tag from *current todo item* selected to candidates.
+  - [ ] Add newly input tag to *current todo item* candidate list.
+  - [ ] Add newly input tag to *global* candidate list.
+    - This might be "automatic".
+  - [ ] Add newly input tag to *current todo item* selected list.
+  - [ ] Add selected todos to *current todo item*'s tag list when saving.
+    - It should be more of a "replace" than an "add".
+** Existing
+*** init
+**** get-app-settings-from-server
+***** render-app-settings
+- (init-selected-filter-tag-ids (@ app-settings selected-filter-tag-ids))
+- (setf *filter-tag-match-type* (@ app-settings filter-tag-match-type))
+***** render-tag-filter-ui
+- "render html elements for tag filter - *this is the new one*"
+**** render-tag-filter
+- (get-element-by-id "filter-tag-candidates")
+- (parent-element (ps:chain document (get-element-by-id (+ (ps:@ filter-tag-candidates-area id) "-selected"))))
+- (render-tag-candidates (get-all-tags) filter-tag-candidates-area candidate-tag-id-prefix #'search-for-tag)
+- +*note* currently *don't* have the tag input for the global input.+
+- (render-selected-tags (get-currently-selected-tag-ids candidate-tag-id-prefix) candidate-tag-id-prefix)
+**** render-tag-entry "filter-"
+**** render-tag-summary "filter-"
+**** render-tag-area "new-todo"
+- Similar to render-tag-filter
+*** "filter" <button-click>
+**** filter-todos
+***** render-filter-tag-todos
+****** render-todos-filtered-by-tags
+******* (render-todo-list filtered-todos)
+*** render-tag-content - *UNREFERENCED*
+*** get-todos-matching-all-selected-tags
+*** render-tag-summary "Renders page level tag filter summary."
+*** show-tag-area
+- toggle visibility for UI elements
+*** return-from-tag-ui
+- return link handler
+*** All tag functions
+render-tag-filter-ui-by-area-independent
+render-tag-filter-ui
+render-tag-entry
+get-filter-tag-match-type
+render-filter-tag-match-type
+set-filter-tag-match-type-and-re-render-filter
+render-todos-filtered-by-tags
+get-filter-todo-ids
+search-for-tag
+render-filter-tag-todos
+get-todos-matching-all-selected-tags
+render-tag-summary
+render-tag-filter
+render-tag-area
+get-tag-content-area-element
+show-tag-area
+render-selected-tags-summary
+return-from-tag-ui
+render-selected-tags
+remove-tag-from-candidate-list
+- get-currently-selected-tag-ids
+  - meant to work with multiple
+  - "Get selected tags from UI elements."
+    - booo!
+move-tag-from-candidate-to-selected
+remove-tag-from-selected
+remove-tag-from-todo
+display-candidate-tag
+render-tag-candidates
+render-tag-content-for-new-todo
+render-tag-content-for-edit-todo
+populate-selected-tags-content-area-for-todos
+render-tag-content
+render-tag-content-for-import-todo
+tag-items
+get-all-tags
+get-tags-matching-search-input
+get-tag-id-list-by-todo-id
+add-selected-tag-id-to-selected-filter-tag-ids
+adjoin-selected-tag-id-to-selected-filter-tag-ids
+send-new-tag-item-to-server
+get-filter-tags
+selected-tag-ids-for-current-todo
+get-all-selected-tag-ids-for-current-todo
+get-tag-list-from-server
+add-tag
+tag-todo-items
+get-all-tag-todos
+get-tags-todo-association-list-by-tag-id
+get-tag-todo-index-by-id
+remove-tag-todo-by-index
+get-todo-id-list-from-tag-todos
+send-new-tag-todo-item-to-server
+send-new-tags-todo-item-to-server
+send-updated-tags-todo-item-to-server
+delete-tag-todo-item-on-server
+get-tag-todo-associaton-list-from-server
+add-associate-tags-to-todo
+edit-associate-tags-to-todo
+add-associate-tag-to-todo
+delete-tag-todo
+selected-filter-tag-ids
+get-selected-filter-tag-ids
+init-selected-filter-tag-ids
+remove-tag-id-from-selected-filter-tag-ids
+tag-mru-items
+get-tag-mru
+get-tag-mru-list-from-server
+get-todos-filtered-by-tags-for-single-todo-id
 * TODO Forgot Password
 * TODO Reset Password
 * macros to use at some point (from *ME*)

@@ -55,6 +55,24 @@
            (= (position-if* #'(lambda (id) (= id tag-id)) tag-ids) index)))
     (remove-if-not* #'get-tags-by-tag-id (map* #'get-tag-id-list selected-filter-tag-todo-ids))))
 
+(define-dispatchable-functions candidate-tag-ids-for-current-todo (tag-ids)
+  ((get-tag-ids ()
+                tag-ids)
+
+   (initialize-tag-ids (new-tag-ids)
+                       (setq tag-ids new-tag-ids))
+   
+   (add-tag-id (tag-id)
+               (push* tag-id tag-ids))))
+
+(define-for-ps candidate-tag-ids-for-current-todo (op &rest parameters)
+  "Handle boilerplate function calls to consume the list of candidate tag IDs for the current todo item"
+  (apply (funcall *candidate-tag-ids-for-current-todo* op) parameters))
+
+(define-for-ps get-all-candidate-tag-ids-for-current-todo ()
+  "Get list of all tags"
+  (candidate-tag-ids-for-current-todo 'get-tag-ids))
+
 (define-dispatchable-functions selected-tag-ids-for-current-todo (tag-ids)
   ((get-tag-ids ()
                 tag-ids)

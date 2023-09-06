@@ -12,6 +12,7 @@
     (defparameter *candidate-tag-text* "candidate-tag")
     (defparameter *selected-tag-text* "selected-tag")
 
+    (defparameter *candidate-tag-ids-for-current-todo* (make-candidate-tag-ids-for-current-todo (list)))
     (defparameter *selected-tag-ids-for-current-todo* (make-selected-tag-ids-for-current-todo (list)))
     (defparameter *selected-filter-tag-ids* (make-selected-filter-tag-ids (list)))
     ;; (defparameter *max-candidate-tag-show-count* 10)
