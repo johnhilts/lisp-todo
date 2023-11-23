@@ -272,7 +272,7 @@
 	(unless (tag-content-visible)
 	  (jfh-web::with-html-elements
               (div (id . "(+ summary-tag-id-prefix \"selected-tags\")") (class . "tag-display") (style . "border-color: green;border-style:solid;") (onclick . "(show-tag-area id-prefix t)"))))
-	(let ((selected-tag-ids (if (= "filter-" id-prefix) (get-selected-filter-tag-ids) (get-currently-selected-tag-ids id-prefix))))
+	(let ((selected-tag-ids (if (= "filter-" id-prefix) (get-selected-filter-tag-ids) (get-currently-selected-tag-ids id-prefix)))) ;; TODO: change here next
 	  (render-selected-tags-summary selected-tag-ids summary-tag-id-prefix)))
       t)))
 
@@ -360,7 +360,8 @@
 (define-for-ps render-selected-tags (selected-tag-ids &optional (candidate-tag-id-prefix ""))
   "render the tags selected to go with the current todo item"
   (let* ((parent-element (ps:chain document (get-element-by-id (+ candidate-tag-id-prefix "selected-tags"))))
-         (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) (get-all-tags))) selected-tag-ids))
+	 (all-tags (get-all-tags))
+	 (selected-tags (map* #'(lambda (selected-tag-id) (find-if* #'(lambda (tag) (= (ps:@ tag id) selected-tag-id)) all-tags)) selected-tag-ids))
          (selected-tags-element parent-element)
          (import-selected-tags (ps:chain document (get-element-by-id "import-selected-tags"))))
     (when selected-tags-element
@@ -541,8 +542,16 @@
 		   ;; (if todo-id
 		   ;;     (get-tag-id-list-by-todo-id (get-all-tag-todos) todo-id)
 		   ;;     (get-new-todo-selected-tag-ids-from-global-filter))
-		   (get-new-todo-selected-tag-ids-from-global-filter)))))
-      (let ((tag-ids-for-this-todo (get-selected-tag-ids-for-this-todo)))
+		   (get-new-todo-selected-tag-ids-from-global-filter))))
+	   (get-selected-tag-ids-by-todo-type (id-prefix &optional todo-id)
+	     (cond ((= "new-todo-")
+		    (initialize-tag-ids-for-todo-item "new-todo"))
+		   ((= "edit-todo-")
+		    (initialize-tag-ids-for-todo-item "edit-todo")))
+	     (get-all-selected-tag-ids-for-current-todo)))
+      (let ((tag-ids-for-this-todo (get-selected-tag-ids-by-todo-type id-prefix)
+	      ;; (get-selected-tag-ids-for-this-todo)
+				   ))
 	(render-selected-tags tag-ids-for-this-todo id-prefix)
 	(selected-tag-ids-for-current-todo 'initialize-tag-ids tag-ids-for-this-todo)))))
 

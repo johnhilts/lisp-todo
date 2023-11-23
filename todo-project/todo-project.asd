@@ -61,6 +61,7 @@
                (:file "client/tag")
                (:file "client/recipe")
                (:file "client/ui")
+               (:file "client/tag-ui")
                (:file "server/html")
                (:file "main")))
 

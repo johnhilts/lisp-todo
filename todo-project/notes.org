@@ -950,7 +950,7 @@ todo webapp - remove #\Return from imported todos
 	- move-tag-id with args for candidates and selected and tag-id
       - update-tag-ui-for-move-tag-from-candidate-to-selected
 	- Similar to current move-tag-from-candidate-to-selected, but might change "id-prefix"
-  - [ ] Move tag from selected to candidates.
+  - [X] Move tag from selected to candidates.
     - *Current*: ??
     - *New*: move-tag-id
   - [ ] Add newly input tag to candidate list.
@@ -972,10 +972,15 @@ todo webapp - remove #\Return from imported todos
 - [X] Get Global Filter Selected Tags.
   - [X] Has to reflect what's been selected.
     - [X] Even if not saved permanently yet.
-- [ ] Update New Todo Tag Lists.
-  - [ ] Move tag from *new todo* candidates to selected.
-  - [ ] Move tag from *new todo* selected to candidates.
-  - [ ] Add newly input tag to *new todo* candidate list.
+- [-] Update New Todo Tag Lists.
+  - [X] Move tag from *new todo* candidates to selected.
+  - [X] Move tag from *new todo* selected to candidates.
+  - [-] Add newly input tag to *new todo* candidate list.
+    - [X] Data: add tag ID to list
+      - Used adjoin.
+    - [ ] UI
+      - [ ] Should call the data part.
+      - [ ] Do necessary UI manipulations.
   - [ ] Add newly input tag to *global* candidate list.
     - This might be "automatic".
   - [ ] Add newly input tag to *new todo* selected list.
@@ -1094,6 +1099,15 @@ tag-mru-items
 get-tag-mru
 get-tag-mru-list-from-server
 get-todos-filtered-by-tags-for-single-todo-id
+* TODO Next things to look at
+** TODO todo edit
+ - [ ] Seems to be showing the same tags as the global filter.
+   - Even after clicking on the tags.
+ - [ ] Position of the tag summary for the todo chosen for edit
+   - [ ] Why does it always show up at the top?
+   - [ ] Can we get it to display below the todo that we want to edit?
+** TODO global filter
+- [ ] Click on the global tag summary -> add / remove tags -> return to main screen -> the global filter doesn't always match the changes in the tag UI screen.
 * TODO Forgot Password
 * TODO Reset Password
 * macros to use at some point (from *ME*)
